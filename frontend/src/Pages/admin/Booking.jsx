@@ -5455,11 +5455,16 @@ useEffect(() => {
             const targetBikeId =
               downloadingBooking.bike_id?._id || downloadingBooking.bike_id;
             const matchingBike = bikes?.find((b) => b._id === targetBikeId);
-           const rentalBikeModel =
+          //  const rentalBikeModel =
              
-             matchingBike?.model ||
-             downloadingBooking.bike_id?.model ||
-             "Scooter";
+          //    matchingBike?.model ||
+          //    downloadingBooking.bike_id?.model ||
+          //    "Scooter";
+             const rentalBikeModel =
+              matchingBike?.model ||
+              downloadingBooking.bike_id?.model ||
+              downloadingBooking.cluster_id?.name ||
+              "Scooter";   
             // const issuedTimestamp = downloadingBooking.createdAt
             //   ? new Date(downloadingBooking.createdAt)
             //   : new Date();

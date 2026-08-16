@@ -193,7 +193,8 @@ const bookingSchema = new mongoose.Schema(
   bike_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Bike",
-    required: true,
+    // required: true,
+    required: false,
   },
 
   // Customer Info (❌ removed required)

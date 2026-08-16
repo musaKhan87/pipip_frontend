@@ -655,7 +655,9 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
         const booking = await createBooking.mutateAsync({
           // bike_id: bike._id,
           bike_id: isCluster ? null : bike._id,
-        cluster_id: isCluster ? bike._id : null,
+          cluster_id: isCluster ? bike._id : null,
+          vehicle_make_model: bike?.name || bike?.model || "Bike",
+        // cluster_id: isCluster ? bike._id : null,
           customer_id: customer._id,
           start_datetime: new Date(startDate).toISOString(),
           end_datetime: new Date(endDate).toISOString(),
