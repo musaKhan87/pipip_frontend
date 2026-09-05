@@ -177,6 +177,16 @@ const menuItems = [
   { path: "/admin/panel/settings", icon: Settings, label: "Settings" },
 ];
 
+
+const investorMenuItems = [
+  {
+    path: "/admin/panel/investor-orders",
+    icon: ClipboardList,
+    label: "Orders & Revenue",
+  },
+  { path: "/admin/panel/bikes", icon: Bike, label: "My Bikes" },
+];
+
 export default function AdminSidebar({ unreadCount }) {
   const [collapsed, setCollapsed] = useState(false);
   const { signOut, user, role } = useAuth();
@@ -191,6 +201,10 @@ export default function AdminSidebar({ unreadCount }) {
   const handleNavigation = () => {
     navigate("/#home");
   }
+
+    const currentMenuItems = role === "investor"
+    ? investorMenuItems
+    : menuItems.filter((item) => !(role === "staff" && item.label === "Reports"));
 
   return (
     <>
@@ -254,43 +268,74 @@ export default function AdminSidebar({ unreadCount }) {
                     "flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200",
                     isActive
                       ? "gradient-sunset text-primary-foreground shadow-golden font-semibold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted", */}
+              {currentMenuItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.end}
+                onClick={() => setCollapsed(false)}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                    isActive
+                      ? "gradient-sunset text-primary-foreground shadow-golden font-semibold"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                  
                   )
-                }
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </div>
-                {item.label === "Notifications" && unreadCount > 0 && (
-                  <span className="bg-rose-500 text-white text-[10px] font-bold min-w-[20px] h-[20px] flex items-center justify-center rounded-full px-1">
-                    {unreadCount}
-                  </span>
-                )}
-              </NavLink>
-            ))} */}
+            //     }
+            //   >
+            //     <div className="flex items-center gap-3">
+            //       <item.icon className="w-5 h-5" />
+            //       <span>{item.label}</span>
+            //     </div>
+            //     {item.label === "Notifications" && unreadCount > 0 && (
+            //       <span className="bg-rose-500 text-white text-[10px] font-bold min-w-[20px] h-[20px] flex items-center justify-center rounded-full px-1">
+            //         {unreadCount}
+            //       </span>
+            //     )}
+            //   </NavLink>
+            // ))} */}
 
-            {menuItems
-              .filter((item) => !(role === "staff" && item.label === "Reports"))
-              .map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  end={item.end}
-                  onClick={() => setCollapsed(false)}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                      isActive
-                        ? "gradient-sunset text-primary-foreground shadow-golden font-semibold"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted",
-                    )
-                  }
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </NavLink>
-              ))}
+            // {/* {menuItems
+            //   .filter((item) => !(role === "staff" && item.label === "Reports"))
+            //   .map((item) => (
+            //     <NavLink
+            //       key={item.path}
+            //       to={item.path}
+            //       end={item.end}
+            //       onClick={() => setCollapsed(false)}
+            //       className={({ isActive }) =>
+            //         cn(
+            //           "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+            //           isActive
+            //             ? "gradient-sunset text-primary-foreground shadow-golden font-semibold"
+            //             : "text-muted-foreground hover:text-foreground hover:bg-muted", */}
+            //               {currentMenuItems.map((item) => (
+            //   <NavLink
+            //     key={item.path}
+            //     to={item.path}
+            //     end={item.end}
+            //     onClick={() => setCollapsed(false)}
+            //     className={({ isActive }) =>
+            //       cn(
+            //         "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+            //         isActive
+            //           ? "gradient-sunset text-primary-foreground shadow-golden font-semibold"
+            //           : "text-muted-foreground hover:text-foreground hover:bg-muted",
+            //         )
+            //       }
+            //     >
+            //       <item.icon className="w-5 h-5" />
+            //       <span>{item.label}</span>
+            //     </NavLink>
+            //   ))} 
+             }
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
           </nav>
 
           {/* User */}

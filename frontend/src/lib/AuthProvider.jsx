@@ -114,8 +114,10 @@ export function AuthProvider({ children }) {
     signUp,
     signOut,
     isAdmin: role === "admin",
-    isStaff: role === "staff",
+    isStaff: role === "staff", 
+    isInvestor: role === "investor",
     isAdminOrStaff: role === "admin" || role === "staff",
+     hasPanelAccess: role === "admin" || role === "staff" || role === "investor",
   };
 
   return (

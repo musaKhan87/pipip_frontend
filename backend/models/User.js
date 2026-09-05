@@ -7,7 +7,8 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ["admin", "staff", "user"],
+      // enum: ["admin", "staff", "user"],
+       enum: ["admin", "staff", "user", "investor"],
       default: "staff", // Default to staff for admin panel signups
     },
     assigned_areas: [

@@ -2249,7 +2249,8 @@ export default function Bikes() {
   const { data: bikes, isLoading } = useBikes();
   const { data: bookings } = useBookings();
   const { data: areas } = useAreas();
-  const { user, isStaff } = useAuth();
+  // const { user, isStaff } = useAuth();
+    const { user, isStaff, isInvestor } = useAuth();
   const displayAreas = isStaff
     ? (user?.assigned_areas || [])
     : (areas || []);
@@ -2694,7 +2695,7 @@ const filteredBikes = (bikes || []).filter((bike) => {
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
           {/* <DialogTrigger asChild>
             <Button className="gradient-sunset text-primary-foreground"> */}
-            <Button
+            {/* <Button
               className="gradient-sunset text-primary-foreground"
               onClick={() => {
                 setEditingBike(null);
@@ -2712,7 +2713,30 @@ const filteredBikes = (bikes || []).filter((bike) => {
               }}>
               <Plus className="w-4 h-4 mr-2" />
               Add Bike
-            </Button>
+            </Button> */}
+
+            {!isInvestor && (
+          <Button
+            className="gradient-sunset text-primary-foreground"
+            onClick={() => {
+              setEditingBike(null);
+              setSelectedFile(null);
+              setExtraFiles([]);
+              setExtraPreviews([]);
+              const defaultAreaId = isStaff && user?.assigned_areas?.length > 0
+                ? (user.assigned_areas[0]._id || user.assigned_areas[0])
+                : "";
+              setFormData({
+                ...initialFormData,
+                area_id: defaultAreaId,
+              });
+              setIsOpen(true);
+            }}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Bike
+          </Button>
+        )}
+
           {/* </DialogTrigger> */}
           <DialogContent className="max-w-2xl bg-card border-border max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
@@ -3668,11 +3692,13 @@ const filteredBikes = (bikes || []).filter((bike) => {
                       variant="outline"
                       size="sm"
                       onClick={() => setViewingBike(bike)}
-                      className="border-border hover:border-primary"
+                      // className="border-border hover:border-primary"
+                       className="border-border hover:border-primary flex-1"
                     >
-                      <Eye className="w-4 h-4 mr-1" /> View
+                      {/* <Eye className="w-4 h-4 mr-1" /> View */}
+                       <Eye className="w-4 h-4 mr-1" /> View Details
                     </Button>
-                    <Button
+                    {/* <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(bike)}
@@ -3687,7 +3713,27 @@ const filteredBikes = (bikes || []).filter((bike) => {
                       className="text-destructive hover:text-destructive hover:bg-destructive/10 border-border"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </Button>
+                    </Button> */}
+                      {!isInvestor && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(bike)}
+                          className="flex-1 border-border hover:border-primary"
+                        >
+                          <Edit className="w-4 h-4 mr-1" /> Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(bike._id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 border-border"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -459,6 +459,7 @@ export default function Settings() {
                     <SelectContent>
                       <SelectItem value="staff">Staff</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="investor">Investor</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -486,10 +487,24 @@ export default function Settings() {
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className={`shrink-0 p-2 rounded-full ${staff.role === "admin" ? "bg-purple-100" : "bg-blue-100"}`}
+                        // className={`shrink-0 p-2 rounded-full ${staff.role === "admin" ? "bg-purple-100" : "bg-blue-100"}`}
+                         className={`shrink-0 p-2 rounded-full ${
+                          staff.role === "admin"
+                            ? "bg-purple-100"
+                            : staff.role === "investor"
+                            ? "bg-emerald-100"
+                            : "bg-blue-100"
+                        }`}
                       >
                         <Shield
-                          className={`w-4 h-4 ${staff.role === "admin" ? "text-purple-600" : "text-blue-600"}`}
+                          // className={`w-4 h-4 ${staff.role === "admin" ? "text-purple-600" : "text-blue-600"}`}
+                           className={`w-4 h-4 ${
+                            staff.role === "admin"
+                              ? "text-purple-600"
+                              : staff.role === "investor"
+                              ? "text-emerald-600"
+                              : "text-blue-600"
+                          }`}
                         />
                       </div>
                       <div className="min-w-0">

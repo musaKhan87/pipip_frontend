@@ -21,15 +21,24 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { signIn, user, isAdminOrStaff, loading: authLoading } = useAuth();
+  // const { signIn, user, isAdminOrStaff, loading: authLoading } = useAuth();
+    const { signIn, user, role, hasPanelAccess, isInvestor, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect if user is already logged in as admin/staff
-    if (!authLoading && user && isAdminOrStaff) {
-      navigate("/admin/panel");
+    // // Redirect if user is already logged in as admin/staff
+    // if (!authLoading && user && isAdminOrStaff) {
+    //   navigate("/admin/panel");
+    // Redirect if user is already logged in
+    if (!authLoading && user && hasPanelAccess) {
+      if (isInvestor || role === "investor") {
+        navigate("/admin/panel/investor-orders");
+      } else {
+        navigate("/admin/panel");
+      }
     }
-  }, [user, isAdminOrStaff, authLoading, navigate]);
+  // }, [user, isAdminOrStaff, authLoading, navigate]);
+  }, [user, hasPanelAccess, isInvestor, role, authLoading, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

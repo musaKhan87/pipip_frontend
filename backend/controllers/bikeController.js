@@ -101,6 +101,15 @@ const getBikes = async (req, res) => {
         const user = await User.findById(decoded.id);
         if (user && user.role === "staff") {
           filter.area_id = { $in: user.assigned_areas };
+        
+           } else if (user && user.role === "investor") {
+          const escapeRegex = (text) => text ? text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+          const nameRegex = new RegExp(`^${escapeRegex(user.fullName)}$`, 'i');
+          const emailRegex = new RegExp(`^${escapeRegex(user.email)}$`, 'i');
+          filter.$or = [
+            { bike_owner: { $regex: nameRegex } },
+            { bike_owner: { $regex: emailRegex } }
+          ]; 
         }
       } catch (err) {
         // ignore jwt errors

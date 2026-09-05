@@ -751,30 +751,68 @@ exports.getAllBookings = async (req, res) => {
         { bike_id: { $in: bikeIds } },
         { cluster_id: { $in: clusterIds } }
       ];
+     } else if (req.user && req.user.role === "investor") {
+      const escapeRegex = (text) => text ? text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+      const nameRegex = new RegExp(`^${escapeRegex(req.user.fullName)}$`, 'i');
+      const emailRegex = new RegExp(`^${escapeRegex(req.user.email)}$`, 'i');
+      const investorBikes = await Bike.find({
+        $or: [
+          { bike_owner: { $regex: nameRegex } },
+          { bike_owner: { $regex: emailRegex } }
+        ]
+      }).select("_id");
+      const investorBikeIds = investorBikes.map((b) => b._id);
+      filter.bike_id = { $in: investorBikeIds };
     }
+
+      
+  
+    
+      const isInvestor = req.user && req.user.role === "investor";
+
     const bookings = await Booking.find(filter)
-      .populate("customer_id", "name phone email")
-      .populate("bike_id", "model number_plate")
+      // .populate("customer_id", "name phone email")
+      // .populate("bike_id", "model number_plate")
+       .populate("customer_id", isInvestor ? "" : "name phone email")
+      .populate("bike_id", "bike_name model number_plate bike_owner")
       .populate("cluster_id")
       .sort({ createdAt: -1 });
 
     const formatted = bookings.map((b) => {
       const bookingObj = b.toObject();
 
+         if (isInvestor) {
+        delete bookingObj.customer_name;
+        delete bookingObj.contact_number;
+        delete bookingObj.customer_email;
+        delete bookingObj.customer_location;
+        delete bookingObj.customer_id;
+        delete bookingObj.customer_license_files;
+        delete bookingObj.customer_id_proof_files;
+        delete bookingObj.payment_screenshot;
+        delete bookingObj.remarks;
+      }
+
       // ✅ Add formatted IST strings for the frontend to display easily
       return {
         ...bookingObj,
-        customers: b.customer_id,
+        // customers: b.customer_id,
+         customers: isInvestor ? null : b.customer_id,
         bikes: b.bike_id,
         // Format for display: "21/04/2026, 7:00:00 pm"
-        start_datetime_display: b.start_datetime.toLocaleString("en-IN", {
+        // start_datetime_display: b.start_datetime.toLocaleString("en-IN", {
+           start_datetime_display: b.start_datetime ? b.start_datetime.toLocaleString("en-IN", {
           timeZone: "Asia/Kolkata",
           hour12: true,
-        }),
-        end_datetime_display: b.end_datetime.toLocaleString("en-IN", {
+        // }),
+        // end_datetime_display: b.end_datetime.toLocaleString("en-IN", {
+                }) : "",
+        end_datetime_display: b.end_datetime ? b.end_datetime.toLocaleString("en-IN", {
+
           timeZone: "Asia/Kolkata",
           hour12: true,
-        }),
+        // }),
+        }) : "",
       };
     });
 

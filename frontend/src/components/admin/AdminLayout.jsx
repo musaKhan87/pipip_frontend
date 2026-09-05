@@ -76,7 +76,9 @@ const getBackendUrl = () => {
 const BACKEND_URL = getBackendUrl();
 
 export default function AdminLayout() {
-  const { user, isAdminOrStaff, loading } = useAuth();
+
+  // const { user, isAdminOrStaff, loading } = useAuth();
+  const { user,  isAdminOrStaff,hasPanelAccess, loading } = useAuth();
   const location = useLocation();
   const scrollRef = useRef(null); // Create a reference to the scrollable area
 
@@ -242,7 +244,8 @@ export default function AdminLayout() {
     return <Navigate to="/admin" state={{ from: "/admin/panel" }} replace />;
   }
 
-  if (!isAdminOrStaff) {
+  // if (!isAdminOrStaff) {
+   if (!hasPanelAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center p-8 bg-card border border-border rounded-2xl shadow-golden max-w-md">

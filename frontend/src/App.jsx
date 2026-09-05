@@ -28,6 +28,7 @@ import NotificationsCenter from "./Pages/admin/Notifications";
 import Clusters from "./Pages/admin/Clusters";
 import Expenses from "./Pages/admin/Expenses";
 import AboutPage from "./Pages/AboutPage";
+import InvestorOrders from "./Pages/admin/InvestorOrders";
 
 
 
@@ -73,6 +74,7 @@ const App = () => {
           <Route path="expenses" element={<Expenses />} />
           <Route index element={<Dashboard />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="investor-orders" element={<InvestorOrders />} />
           </Route>
            
 
