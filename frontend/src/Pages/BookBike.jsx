@@ -203,9 +203,27 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
         return;
       }
 
+
+
       const totalHours = differenceInHours(end, start);
       if (totalHours < 3) {
         setAvailabilityMessage("⚠️ Minimum booking duration is 3 hours");
+        setIsAvailable(false);
+        return;
+      }
+
+      const isTimeInInactiveHours = (dateTimeStr) => {
+        if (!dateTimeStr) return false;
+        const date = new Date(dateTimeStr);
+        const hour = date.getHours();
+        const minutes = date.getMinutes();
+        if (hour > 22 || hour < 10) return true;
+        if (hour === 22 && minutes > 0) return true;
+        return false;
+      };
+
+      if (isTimeInInactiveHours(startDate) || isTimeInInactiveHours(endDate)) {
+        setAvailabilityMessage("⚠️ Bookings are not available during inactive hours (10:00 PM to 10:00 AM)");
         setIsAvailable(false);
         return;
       }
