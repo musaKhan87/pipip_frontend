@@ -125,7 +125,8 @@ const Header = () => {
     { id: "home", label: "Home", type: "section" },
     // { id: "about", label: "About", type: "section" },
     { id: "/about", label: "About", type: "page" },
-    { id: "pricing", label: "Pricing", type: "section" },
+    // { id: "pricing", label: "Pricing", type: "section" },
+     { id: "/pricing", label: "Pricing", type: "page" },
     { id: "/catalog", label: "Catalog", type: "page" }, // Direct page link
     { id: "/contact", label: "Contact", type: "page" },
   ];

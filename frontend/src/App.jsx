@@ -29,6 +29,7 @@ import Clusters from "./Pages/admin/Clusters";
 import Expenses from "./Pages/admin/Expenses";
 import AboutPage from "./Pages/AboutPage";
 import InvestorOrders from "./Pages/admin/InvestorOrders";
+import PricingPage from "./Pages/PricingPage";
 
 
 
@@ -56,6 +57,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="*" element={<NotFound />} />
           <Route path="/catalog" element={<Catalog />} />

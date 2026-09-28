@@ -90,7 +90,7 @@ const Index = () => {
         </section>
         <FeaturedBikes />
         {/* <About /> */}
-        <Pricing />
+        {/* <Pricing /> */}
         {/* <RentalForm /> */}
         {/* <FAQ /> */}
       </main>

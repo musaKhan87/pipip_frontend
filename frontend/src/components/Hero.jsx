@@ -384,11 +384,13 @@ useEffect(() => {
                   Rent a Scooter
                 </Button>
               </NavLink>
-              <a href="#pricing">
+              {/* <a href="#pricing"> */}
+               <NavLink to="/pricing">
                 <Button variant="glass" size="xl">
                   View Pricing
                 </Button>
-              </a>
+              {/* </a> */}
+              </NavLink>
             </motion.div>
 
             {/* Payment info */}

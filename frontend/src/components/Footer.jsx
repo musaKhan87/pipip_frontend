@@ -56,7 +56,8 @@ const Footer = () => {
                 { label: "Home", href: "/#home" },
                 // { label: "About Us", href: "/#about" },
                  { label: "About Us", href: "/about" },
-                { label: "Pricing", href: "/#pricing" },
+                // { label: "Pricing", href: "/#pricing" },
+                { label: "Pricing", href: "/pricing" },
                 { label: "Catalog", href: "/catalog" },
                 { label: "Contact", href: "/contact" },
               ].map((link) => (
