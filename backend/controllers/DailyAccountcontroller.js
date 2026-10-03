@@ -155,7 +155,7 @@ exports.getEntries = async (req, res) => {
 
     const entries = await DailyAccount.find(query)
       .populate("filled_by", "fullName email")
-      .sort({ date: -1, createdAt: -1 });
+      .sort({ date: -1, createdAt: -1 }).lean();
 
     res.json(entries);
   } catch (error) {

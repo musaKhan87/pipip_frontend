@@ -34,6 +34,9 @@ const vehicleServiceHistorySchema = new mongoose.Schema(
   }
 );
 
+vehicleServiceHistorySchema.index({ bike_id: 1, service_date: -1 });
+vehicleServiceHistorySchema.index({ service_date: -1 });
+
 module.exports = mongoose.model(
   "VehicleServiceHistory",
   vehicleServiceHistorySchema

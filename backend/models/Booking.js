@@ -327,4 +327,14 @@ cluster_id: {
 { timestamps: true }
 );
 
+bookingSchema.index({ createdAt: -1 });
+bookingSchema.index({ status: 1, createdAt: -1 });
+bookingSchema.index({ bike_id: 1, status: 1, start_datetime: 1, end_datetime: 1 });
+bookingSchema.index({ cluster_id: 1, status: 1, start_datetime: 1, end_datetime: 1 });
+bookingSchema.index({ customer_id: 1, createdAt: -1 });
+bookingSchema.index({ payment_order_id: 1 });
+bookingSchema.index({ contact_number: 1 });
+bookingSchema.index({ customer_name: 1 });
+bookingSchema.index({ start_datetime: 1, end_datetime: 1 });
+
 module.exports = mongoose.model("Booking", bookingSchema);

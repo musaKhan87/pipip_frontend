@@ -742,10 +742,15 @@ exports.getAllBookings = async (req, res) => {
   try {
     // const bookings = await Booking.find()
     const filter = {};
+
+    if (req.query.status && req.query.status !== "all") {
+      filter.status = req.query.status;
+    }
+
     if (req.user && req.user.role === "staff") {
-      const bikesInAreas = await Bike.find({ area_id: { $in: req.user.assigned_areas } }).select("_id");
+      const bikesInAreas = await Bike.find({ area_id: { $in: req.user.assigned_areas } }).select("_id").lean();
       const bikeIds = bikesInAreas.map((b) => b._id);
-      const clustersInAreas = await Cluster.find({ area_id: { $in: req.user.assigned_areas } }).select("_id");
+      const clustersInAreas = await Cluster.find({ area_id: { $in: req.user.assigned_areas } }).select("_id").lean();
       const clusterIds = clustersInAreas.map((c) => c._id);
       filter.$or = [
         { bike_id: { $in: bikeIds } },
@@ -760,7 +765,7 @@ exports.getAllBookings = async (req, res) => {
           { bike_owner: { $regex: nameRegex } },
           { bike_owner: { $regex: emailRegex } }
         ]
-      }).select("_id");
+      }).select("_id").lean();
       const investorBikeIds = investorBikes.map((b) => b._id);
       filter.bike_id = { $in: investorBikeIds };
     }
@@ -776,38 +781,55 @@ exports.getAllBookings = async (req, res) => {
        .populate("customer_id", isInvestor ? "" : "name phone email")
       .populate("bike_id", "bike_name model number_plate bike_owner")
       .populate("cluster_id")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 }).lean();
 
     const formatted = bookings.map((b) => {
-      const bookingObj = b.toObject();
+      // const bookingObj = b.toObject();
 
-         if (isInvestor) {
-        delete bookingObj.customer_name;
-        delete bookingObj.contact_number;
-        delete bookingObj.customer_email;
-        delete bookingObj.customer_location;
-        delete bookingObj.customer_id;
-        delete bookingObj.customer_license_files;
-        delete bookingObj.customer_id_proof_files;
-        delete bookingObj.payment_screenshot;
-        delete bookingObj.remarks;
+      //    if (isInvestor) {
+      //   delete bookingObj.customer_name;
+      //   delete bookingObj.contact_number;
+      //   delete bookingObj.customer_email;
+      //   delete bookingObj.customer_location;
+      //   delete bookingObj.customer_id;
+      //   delete bookingObj.customer_license_files;
+      //   delete bookingObj.customer_id_proof_files;
+      //   delete bookingObj.payment_screenshot;
+      //   delete bookingObj.remarks;
+      // }
+      if (isInvestor) {
+        delete b.customer_name;
+        delete b.contact_number;
+        delete b.customer_email;
+        delete b.customer_location;
+        delete b.customer_id;
+        delete b.customer_license_files;
+        delete b.customer_id_proof_files;
+        delete b.payment_screenshot;
+        delete b.remarks;
       }
 
       // ✅ Add formatted IST strings for the frontend to display easily
       return {
-        ...bookingObj,
-        // customers: b.customer_id,
-         customers: isInvestor ? null : b.customer_id,
+        // ...bookingObj,
+        // // customers: b.customer_id,
+        //  customers: isInvestor ? null : b.customer_id,
+        ...b,
+        customers: isInvestor ? null : b.customer_id,
         bikes: b.bike_id,
         // Format for display: "21/04/2026, 7:00:00 pm"
         // start_datetime_display: b.start_datetime.toLocaleString("en-IN", {
-           start_datetime_display: b.start_datetime ? b.start_datetime.toLocaleString("en-IN", {
+          //  
+          start_datetime_display: b.start_datetime ? new Date(b.start_datetime).toLocaleString("en-IN", {
           timeZone: "Asia/Kolkata",
           hour12: true,
         // }),
         // end_datetime_display: b.end_datetime.toLocaleString("en-IN", {
-                }) : "",
-        end_datetime_display: b.end_datetime ? b.end_datetime.toLocaleString("en-IN", {
+        //         }) : "",
+        // end_datetime_display: b.end_datetime ? b.end_datetime.toLocaleString("en-IN", {
+
+        }) : "",
+        end_datetime_display: b.end_datetime ? new Date(b.end_datetime).toLocaleString("en-IN", {
 
           timeZone: "Asia/Kolkata",
           hour12: true,

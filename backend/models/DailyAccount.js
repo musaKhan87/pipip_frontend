@@ -45,4 +45,7 @@ const DailyAccountSchema = new mongoose.Schema(
   }
 );
 
+DailyAccountSchema.index({ date: -1, entry_type: 1 });
+DailyAccountSchema.index({ filled_by: 1, date: -1 });
+
 module.exports = mongoose.model("DailyAccount", DailyAccountSchema);

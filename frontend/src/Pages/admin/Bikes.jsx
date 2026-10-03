@@ -3393,6 +3393,8 @@ const filteredBikes = (bikes || []).filter((bike) => {
                     <img
                       src={viewingBike.image_url}
                       alt={viewingBike.model}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -3604,6 +3606,8 @@ const filteredBikes = (bikes || []).filter((bike) => {
                     <img
                       src={bike.image_url}
                       alt={bike.model}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                     />
                   ) : (

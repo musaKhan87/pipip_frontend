@@ -52,19 +52,51 @@ exports.createCustomer = async (req, res) => {
 
 
 
-exports.getCustomer= async (req, res) => {
-  const search = req.query.search || "";
+// exports.getCustomer= async (req, res) => {
+//   const search = req.query.search || "";
 
-  const customers = await Customer.find({
-    $or: [
-      { name: { $regex: search, $options: "i" } },
-      { phone: { $regex: search, $options: "i" } },
-    ],
+// exports.getCustomer = async (req, res) => {
+//   try {
+//     const search = req.query.search ? req.query.search.trim() : "";
+//     const query = {};
 
-  }).sort({ createdAt: -1 });
+//   const customers = await Customer.find({
+//     $or: [
+//       { name: { $regex: search, $options: "i" } },
+//       { phone: { $regex: search, $options: "i" } },
+//     ],
 
-  res.json(customers);
-}
+//   }).sort({ createdAt: -1 });
+
+//   res.json(customers);
+// }
+// };
+
+
+exports.getCustomer = async (req, res) => {
+  try {
+    const search = req.query.search ? req.query.search.trim() : "";
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const customers = await Customer.find(query)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json(customers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 
 /* ================= UPDATE CUSTOMER ================= */
 // exports.updateCustomer = async (req, res) => {

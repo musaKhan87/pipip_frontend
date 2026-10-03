@@ -115,7 +115,8 @@ const getBikes = async (req, res) => {
         // ignore jwt errors
       }
     }
-    const bikes = await Bike.find(filter);
+    // const bikes = await Bike.find(filter);
+    const bikes = await Bike.find(filter).sort({ createdAt: -1 }).lean();
     res.status(200).json(bikes);
   } catch (error) {
     res.status(500).json({ message: "Server error" });

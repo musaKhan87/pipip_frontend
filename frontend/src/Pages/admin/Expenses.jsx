@@ -112,9 +112,18 @@ export default function Expenses() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [remainingInvoices, setRemainingInvoices] = useState([]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 24;
+
   const { data: expenses, isLoading } = useExpenses(searchQuery);
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
+
+  const totalPages = Math.ceil((expenses?.length || 0) / ITEMS_PER_PAGE) || 1;
+  const paginatedExpenses = expenses?.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const handleInvoiceChange = (e) => {
     const files = Array.from(e.target.files);
@@ -601,7 +610,11 @@ export default function Expenses() {
                 <Input
                   placeholder="Search by name, category, receiver, date (YYYY-MM-DD)..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  // onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="pl-10 bg-input border-border"
                 />
               </div>
@@ -807,8 +820,9 @@ export default function Expenses() {
                 <p className="text-sm">Submit your first expense claim using the button above.</p>
               </Card>
             ) : (
+              <>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {expenses?.map((exp) => (
+                {paginatedExpenses?.map((exp) => (
                   <Card
                     key={exp._id}
                     className="bg-card border-border hover:border-primary/50 transition-colors cursor-pointer"
@@ -866,7 +880,40 @@ export default function Expenses() {
                     </CardContent>
                   </Card>
                 ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between border-t border-border/60 pt-4 px-1">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+                      {Math.min(currentPage * ITEMS_PER_PAGE, expenses?.length || 0)} of{" "}
+                      {expenses?.length || 0} expenses
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm font-medium px-2">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                      >
+                        Next
+                      </Button>
+                    </div>
               </div>
+              )}
+              </>
             )}
 
             {/* Claim details overlay */}

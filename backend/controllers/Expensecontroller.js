@@ -101,7 +101,7 @@ exports.getExpenses = async (req, res) => {
 
     const expenses = await Expense.find(query)
       .populate("created_by", "fullName email")
-      .sort({ expense_date: -1 });
+      .sort({ expense_date: -1 }).lean();
 
     res.json(expenses);
   } catch (error) {

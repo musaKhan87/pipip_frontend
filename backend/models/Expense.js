@@ -71,4 +71,8 @@ const ExpenseSchema = new mongoose.Schema(
   }
 );
 
+ExpenseSchema.index({ expense_date: -1 });
+ExpenseSchema.index({ created_by: 1, expense_date: -1 });
+ExpenseSchema.index({ expense_category: 1 });
+
 module.exports = mongoose.model("Expense", ExpenseSchema);

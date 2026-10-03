@@ -1573,6 +1573,8 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
                           key={currentImgIndex}
                           src={clusterImages[currentImgIndex]}
                           alt={bike?.name || "Cluster"}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-fill absolute inset-0"
                           initial={{ opacity: 0, x: 20 }}
                           animate={{ opacity: 1, x: 0 }}
@@ -1616,6 +1618,8 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
                       alt={bike.model}
                       // src={isCluster ? bike?.bikes?.[0]?.image_url : bike?.image_url}
                       // alt={bike?.name || bike?.model}
+                      loading="lazy"
+                          decoding="async"
                       className="w-full h-full object-cover"
                     />
                   ) : (

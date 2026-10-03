@@ -82,8 +82,14 @@ const bikeSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Area",
     },
+
   },
   { timestamps: true }
 );
+
+bikeSchema.index({ status: 1 });
+bikeSchema.index({ area_id: 1 });
+bikeSchema.index({ bike_owner: 1 });
+bikeSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Bike", bikeSchema);

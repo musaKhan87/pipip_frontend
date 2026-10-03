@@ -163,7 +163,10 @@ exports.getBookingStats = async (req, res) => {
       query.start_datetime = { $gte: start, $lte: end };
     }
 
-    const bookings = await Booking.find(query);
+    // const bookings = await Booking.find(query);
+    const bookings = await Booking.find(query)
+      .select("status total_amount")
+      .lean();
 
     const stats = {
       total_bookings: bookings.length,

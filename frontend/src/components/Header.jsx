@@ -201,27 +201,37 @@ const Header = () => {
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border"
+      // className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border"
+      className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border gpu-accelerated"
     >
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      {/* <div className="container mx-auto px-4 py-4 flex items-center justify-between"> */}
+      <div className="container mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
         {/* Logo - Clicks back to home top */}
         <button
           onClick={() => handleNavigation({ id: "home", type: "section" })}
+          className="flex items-center gap-2"
+          aria-label="Pipip Home"
         >
           <img
             src="/logo.jpeg"
             alt="Pipip Logo"
-            className="h-20 w-20 object-cover rounded-full"
+            // className="h-20 w-20 object-cover rounded-full"
+            width="64"
+            height="64"
+            decoding="async"
+            className="h-16 w-16 sm:h-20 sm:w-20 object-cover rounded-full"
           />
         </button>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-16">
+        {/* <nav className="hidden md:flex items-center gap-16"> */}
+        <nav className="hidden md:flex items-center gap-12 lg:gap-16">
           {navLinks.map((link) => (
             <button
               key={link.id}
               onClick={() => handleNavigation(link)}
-              className={`transition-colors font-medium ${
+              // className={`transition-colors font-medium ${
+              className={`transition-colors font-medium text-sm lg:text-base ${
                 location.pathname === link.id
                   ? "text-primary"
                   : "text-foreground/80 hover:text-primary"
@@ -244,7 +254,10 @@ const Header = () => {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden text-foreground p-2"
+          // className="md:hidden text-foreground p-2"
+          className="md:hidden text-foreground p-2 rounded-lg hover:bg-muted/50 transition-colors"
+        
+          aria-label="Toggle Navigation Menu"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? (
@@ -262,17 +275,20 @@ const Header = () => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden bg-card border-b border-border overflow-hidden"
+            // transition={{ duration: 0.3 }}
+            // className="md:hidden bg-card border-b border-border overflow-hidden"
+            transition={{ duration: 0.25 }}
+            className="md:hidden bg-card/95 backdrop-blur-md border-b border-border overflow-hidden"
           >
-            <nav className="container mx-auto px-4 py-4 flex flex-col gap-4">
+            <nav className="container mx-auto px-4 py-4 flex flex-col gap-3">
               {navLinks.map((link) => (
                 <button
                   key={link.id}
                   onClick={() => handleNavigation(link)}
-                  className={`text-left transition-colors font-medium py-2 ${
+                  className={`text-left transition-colors font-medium py-2 px-3 rounded-lg hover:bg-muted/50 ${
                     location.pathname === link.id
-                      ? "text-primary"
+                      ? "text-primary bg-primary/10"
+                      
                       : "text-foreground/80"
                   }`}
                 >
@@ -280,8 +296,8 @@ const Header = () => {
                 </button>
               ))}
 
-              <a href="tel:9967406205">
-                <Button variant="hero" size="lg" className="w-full gap-2">
+              <a href="tel:9967406205" className="mt-2">
+                <Button variant="hero" size="lg" className="w-full gap-2 py-3">
                   <Phone className="w-4 h-4" />
                   Call Now
                 </Button>

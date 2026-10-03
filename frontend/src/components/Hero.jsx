@@ -260,13 +260,16 @@ useEffect(() => {
           src={heroImage}
           // alt="Pipip Scooter in Mumbai"
           alt="Self drive bike rental in Mumbai - Pipip scooty on rent"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
           className="w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/50 pointer-events-none" />
       </div>
 
       {/* Stars decoration */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
+      {/* <div className="absolute inset-0 z-0 overflow-hidden">
         {[...Array(20)].map((_, i) => (
           <motion.div
             key={i}
@@ -275,6 +278,19 @@ useEffect(() => {
               top: `${Math.random() * 50}%`,
               left: `${Math.random() * 100}%`,
               animationDelay: `${Math.random() * 3}s`,
+            }}
+          />
+        ))}
+      </div> */}
+      <div className="hidden sm:block absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        {[...Array(15)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-foreground/60 rounded-full animate-twinkle"
+            style={{
+              top: `${(i * 19) % 50}%`,
+              left: `${(i * 37) % 100}%`,
+              animationDelay: `${(i % 3)}s`,
             }}
           />
         ))}
@@ -412,7 +428,8 @@ useEffect(() => {
             className="w-full lg:w-auto max-w-md lg:ml-auto"
           >
             {/* Changed bg-card/95 to bg-white/5 for glass effect */}
-            <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl">
+            {/* <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl"> */}
+            <div className="bg-card/90 sm:bg-white/5 backdrop-blur-md sm:backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl">
               <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                 <span className="w-8 h-8 rounded-lg gradient-sunset flex items-center justify-center">
                   🛵

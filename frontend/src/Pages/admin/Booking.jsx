@@ -2492,23 +2492,60 @@ useEffect(() => {
   }, [searchParams, bookings]);
 
 
-  const filteredBookings = bookings
-    ?.filter((booking) => {
-      if (activeTab === "all") return true;
-      return booking.status === activeTab;
-    })
-    ?.filter((booking) => {
-      if (!searchQuery) return true;
+  // const filteredBookings = bookings
+  //   ?.filter((booking) => {
+  //     if (activeTab === "all") return true;
+  //     return booking.status === activeTab;
+  //   })
+  //   ?.filter((booking) => {
+  //     if (!searchQuery) return true;
 
-      const query = searchQuery.toLowerCase();
-      return (
-        booking._id?.toLowerCase().includes(query) ||
-        booking.customers?.name?.toLowerCase().includes(query) ||
-        booking.customers?.phone?.includes(query) ||
-        booking.bikes?.model?.toLowerCase().includes(query) ||
-        booking.bikes?.number_plate?.toLowerCase().includes(query)
-      );
-    });
+  //     const query = searchQuery.toLowerCase();
+  //     return (
+  //       booking._id?.toLowerCase().includes(query) ||
+  //       booking.customers?.name?.toLowerCase().includes(query) ||
+  //       booking.customers?.phone?.includes(query) ||
+  //       booking.bikes?.model?.toLowerCase().includes(query) ||
+  //       booking.bikes?.number_plate?.toLowerCase().includes(query)
+  //     );
+  //   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const BOOKINGS_PER_PAGE = 20;
+
+  
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery]);
+
+  const filteredBookings = useMemo(() => {
+    return (
+      bookings
+        ?.filter((booking) => {
+          if (activeTab === "all") return true;
+          return booking.status === activeTab;
+        })
+        ?.filter((booking) => {
+          if (!searchQuery) return true;
+
+          const query = searchQuery.toLowerCase();
+          return (
+            booking._id?.toLowerCase().includes(query) ||
+            booking.customers?.name?.toLowerCase().includes(query) ||
+            booking.customers?.phone?.includes(query) ||
+            booking.bikes?.model?.toLowerCase().includes(query) ||
+            booking.bikes?.number_plate?.toLowerCase().includes(query)
+          );
+        }) || []
+    );
+  }, [bookings, activeTab, searchQuery]);
+
+  const totalPages = Math.ceil((filteredBookings?.length || 0) / BOOKINGS_PER_PAGE) || 1;
+  const paginatedBookings = useMemo(() => {
+    const start = (currentPage - 1) * BOOKINGS_PER_PAGE;
+    return filteredBookings.slice(start, start + BOOKINGS_PER_PAGE);
+  }, [filteredBookings, currentPage]);
 
   // Filtered customers for search
   const filteredCustomers = useMemo(() => {
@@ -4768,7 +4805,7 @@ useEffect(() => {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredBookings?.map((booking, index) => {
+          {paginatedBookings?.map((booking, index) => {
             const isOnline = booking.booking_source === "online";
             const isPartner = booking.booking_source === "partner";
             const isExpanded = expandedBookingId === booking._id;
@@ -4778,7 +4815,8 @@ useEffect(() => {
                 key={booking._id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.02, duration: 0.3 }}
+                // transition={{ delay: index * 0.02, duration: 0.3 }}
+                transition={{ delay: Math.min(index, 6) * 0.02, duration: 0.2 }}
               >
                 <Card
                   className={`group overflow-hidden border transition-all duration-200 hover:shadow-lg ${
@@ -5358,6 +5396,40 @@ useEffect(() => {
               </p>
             </div>
           )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-border/60 pt-4 px-1 bg-background/50 rounded-lg p-2">
+              <p className="text-sm text-muted-foreground">
+                Showing {(currentPage - 1) * BOOKINGS_PER_PAGE + 1}–
+                {Math.min(currentPage * BOOKINGS_PER_PAGE, filteredBookings.length)} of{" "}
+                {filteredBookings.length} bookings
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm font-medium px-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+
+
         </div>
       )}
 

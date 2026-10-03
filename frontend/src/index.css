@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Righteous&display=swap');
-
 @layer base {
   :root {
     /* Deep navy blue theme inspired by Mumbai night */
@@ -89,21 +87,48 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
 
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Poppins', sans-serif;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+
+  /* Eliminate 300ms mobile tap delay */
+  button, a, input, select, textarea, [role="button"], .cursor-pointer {
+    touch-action: manipulation;
+  }
+
+  /* Native iOS inertial momentum scrolling */
+  .overflow-y-auto, .overflow-x-auto, .overflow-auto, main, div {
+    -webkit-overflow-scrolling: touch;
   }
 }
 
 @layer utilities {
   .font-display {
     font-family: 'Righteous', cursive;
+  }
+
+  /* Content visibility for offscreen mobile rendering performance */
+  .content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 600px;
+  }
+
+  .gpu-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
   }
 
   .gradient-sunset {

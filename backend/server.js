@@ -40,6 +40,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const compression = require("compression");
 const http = require("http"); // 👈 NEW: Required to attach Socket.io to Express
 const { Server } = require("socket.io"); // 👈 NEW: Socket.io Server import
 const connectDB = require("./config/db");
@@ -82,6 +83,7 @@ app.set("io", io);
 
 
 // Middlewares
+app.use(compression());
 app.use(cors());
 
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
