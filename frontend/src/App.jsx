@@ -142,6 +142,7 @@ const Reports = lazy(() => import("./Pages/admin/Reports"));
 const Expenses = lazy(() => import("./Pages/admin/Expenses"));
 const Settings = lazy(() => import("./Pages/admin/Settings"));
 const InvestorOrders = lazy(() => import("./Pages/admin/InvestorOrders"));
+const PricingPage = lazy(() => import("./Pages/PricingPage"));
 
 // Lightweight Suspense Loader
 const PageLoader = () => (
@@ -184,6 +185,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<AboutPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
               <Route path="/admin" element={<AdminLogin />} />
               <Route path="/catalog" element={<Catalog />} />
               <Route path="/book/:bikeId" element={<BookBike />} />
