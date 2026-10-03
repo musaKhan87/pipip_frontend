@@ -1,10 +1,3 @@
-// import { defineConfig } from 'vite'
-// import react from '@vitejs/plugin-react'
-
-// // https://vite.dev/config/
-// export default defineConfig({
-//   plugins: [react()],
-// })
 
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -20,29 +13,38 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router-dom/')) {
+          const normId = id.replace(/\\/g, '/');
+          if (normId.includes('/node_modules/')) {
+            if (
+              normId.includes('/react/') ||
+              normId.includes('/react-dom/') ||
+              normId.includes('/react-router/') ||
+              normId.includes('/react-router-dom/') ||
+              normId.includes('/scheduler/') ||
+              normId.includes('/@radix-ui/') ||
+              normId.includes('/use-sync-external-store/')
+            ) {
               return 'vendor-react';
             }
-            if (id.includes('@tanstack/react-query')) {
+            if (normId.includes('/@tanstack/react-query')) {
               return 'vendor-query';
             }
-            if (id.includes('framer-motion')) {
+            if (normId.includes('/framer-motion/')) {
               return 'vendor-animation';
             }
-            if (id.includes('lucide-react')) {
+            if (normId.includes('/lucide-react/')) {
               return 'vendor-icons';
             }
-            if (id.includes('recharts') || id.includes('d3-')) {
+            if (normId.includes('/recharts/') || normId.includes('/d3-')) {
               return 'vendor-charts';
             }
-            if (id.includes('jspdf') || id.includes('html2canvas')) {
+            if (normId.includes('/jspdf/') || normId.includes('/html2canvas/')) {
               return 'vendor-pdf';
             }
-            if (id.includes('date-fns')) {
+            if (normId.includes('/date-fns/')) {
               return 'vendor-date';
             }
-            if (id.includes('socket.io-client')) {
+            if (normId.includes('/socket.io-client/')) {
               return 'vendor-socket';
             }
           }
