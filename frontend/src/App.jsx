@@ -141,6 +141,7 @@ const NotificationsCenter = lazy(() => import("./Pages/admin/Notifications"));
 const Reports = lazy(() => import("./Pages/admin/Reports"));
 const Expenses = lazy(() => import("./Pages/admin/Expenses"));
 const Settings = lazy(() => import("./Pages/admin/Settings"));
+const Managers = lazy(() => import("./Pages/admin/Managers"));
 const InvestorOrders = lazy(() => import("./Pages/admin/InvestorOrders"));
 const PricingPage = lazy(() => import("./Pages/PricingPage"));
 
@@ -208,6 +209,7 @@ const App = () => {
                 <Route path="reports" element={<Reports />} />
                 <Route path="expenses" element={<Expenses />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="managers" element={<Managers />} />
                 <Route path="investor-orders" element={<InvestorOrders />} />
               </Route>
 

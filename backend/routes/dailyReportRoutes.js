@@ -5,24 +5,22 @@ const {
   getSettings,
   updateSettings,
 } = require("../controllers/dailyReportController");
-const { protect, adminOnly } = require("../middleware/auth");
+const { protect, adminOnly, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
 
-// Apply protect and adminOnly middleware to all routes below
 router.use(protect);
-router.use(adminOnly);
 
 // GET live today's automated totals
-router.get("/today", getTodayReport);
+router.get("/today", authorizeRoles("super_admin", "admin", "manager"), getTodayReport);
 
 // GET historical reports list
-router.get("/history", getHistoricalReports);
+router.get("/history", authorizeRoles("super_admin", "admin", "manager"), getHistoricalReports);
 
-// GET report configuration settings
-router.get("/settings", getSettings);
+// GET report configuration settings (Super Admin only)
+router.get("/settings", adminOnly, getSettings);
 
-// POST/PUT update configuration settings
-router.post("/settings", updateSettings);
+// POST/PUT update configuration settings (Super Admin only)
+router.post("/settings", adminOnly, updateSettings);
 
 module.exports = router;

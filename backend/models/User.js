@@ -7,9 +7,12 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: {
       type: String,
-      // enum: ["admin", "staff", "user"],
-       enum: ["admin", "staff", "user", "investor"],
-      default: "staff", // Default to staff for admin panel signups
+      enum: ["super_admin", "admin", "manager", "staff", "user", "investor"],
+      default: "staff",
+    },
+    areaId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Area",
     },
     assigned_areas: [
       {
@@ -17,8 +20,23 @@ const UserSchema = new mongoose.Schema(
         ref: "Area",
       },
     ],
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
+    },
   },
   { timestamps: true },
 );
+
+// Sync areaId and assigned_areas before saving
+UserSchema.pre("save", function (next) {
+  if (this.areaId && (!this.assigned_areas || this.assigned_areas.length === 0)) {
+    this.assigned_areas = [this.areaId];
+  } else if (this.assigned_areas && this.assigned_areas.length > 0 && !this.areaId) {
+    this.areaId = this.assigned_areas[0];
+  }
+  next();
+});
 
 module.exports = mongoose.model("User", UserSchema);

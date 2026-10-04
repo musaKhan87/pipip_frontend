@@ -1,4 +1,6 @@
 const Expense = require("../models/Expense");
+const User = require("../models/User");
+const { getUserAreaIds } = require("../middleware/auth");
 
 // CREATE a new expense
 exports.createExpense = async (req, res) => {
@@ -12,6 +14,7 @@ exports.createExpense = async (req, res) => {
       expense_amount,
       approver_name,
       remarks,
+      area_id,
     } = req.body;
 
     // Handle uploaded files
@@ -21,6 +24,9 @@ exports.createExpense = async (req, res) => {
     }
 
     const paymentProof = req.files?.payment_proof?.[0]?.path || null;
+
+    const userAreaIds = getUserAreaIds(req.user);
+    const assignedAreaId = area_id || (userAreaIds && userAreaIds[0]) || null;
 
     const expense = await Expense.create({
       expense_date,
@@ -34,6 +40,7 @@ exports.createExpense = async (req, res) => {
       invoice_proofs: invoiceProofs,
       payment_proof: paymentProof,
       created_by: req.user._id,
+      area_id: assignedAreaId,
     });
 
     res.status(201).json(expense);
@@ -48,13 +55,27 @@ exports.getExpenses = async (req, res) => {
     const { search } = req.query;
     let query = {};
 
-    // Role-based visibility: Staff can only see their own expenses; Super Admin (admin) sees everything
-    if (req.user.role !== "admin") {
-      query.created_by = req.user._id;
+    // Role-based visibility: Super Admin sees all; Area Manager and Staff see area expenses
+    if (req.user.role !== "super_admin" && req.user.role !== "admin") {
+      const userAreaIds = getUserAreaIds(req.user);
+
+      const areaUsers = await User.find({
+        $or: [
+          { areaId: { $in: userAreaIds } },
+          { assigned_areas: { $in: userAreaIds } }
+        ]
+      }).select("_id").lean();
+
+      const userIdsInArea = areaUsers.map((u) => u._id);
+
+      query.$or = [
+        { area_id: { $in: userAreaIds } },
+        { created_by: { $in: [...userIdsInArea, req.user._id] } }
+      ];
     }
 
     if (search) {
-      const orConditions = [
+      const searchConditions = [
         { expense_name: { $regex: search, $options: "i" } },
         { expense_category: { $regex: search, $options: "i" } },
         { expense_done_by: { $regex: search, $options: "i" } },
@@ -69,7 +90,7 @@ exports.getExpenses = async (req, res) => {
         const startOfDay = new Date(searchDate.getFullYear(), searchDate.getMonth(), searchDate.getDate(), 0, 0, 0, 0);
         const endOfDay = new Date(searchDate.getFullYear(), searchDate.getMonth(), searchDate.getDate(), 23, 59, 59, 999);
         
-        orConditions.push({
+        searchConditions.push({
           expense_date: { $gte: startOfDay, $lte: endOfDay }
         });
       }
@@ -77,7 +98,7 @@ exports.getExpenses = async (req, res) => {
       // 2. Handle searching a simple number (like "12") to match day, month, or year
       const num = parseInt(search, 10);
       if (!isNaN(num)) {
-        orConditions.push(
+        searchConditions.push(
           { $expr: { $eq: [{ $dayOfMonth: "$expense_date" }, num] } },
           { $expr: { $eq: [{ $month: "$expense_date" }, num] } },
           { $expr: { $eq: [{ $year: "$expense_date" }, num] } }
@@ -91,16 +112,26 @@ exports.getExpenses = async (req, res) => {
       ];
       const monthIndex = monthNames.findIndex((m) => m.startsWith(search.toLowerCase()));
       if (monthIndex !== -1) {
-        orConditions.push({
+        searchConditions.push({
           $expr: { $eq: [{ $month: "$expense_date" }, monthIndex + 1] }
         });
       }
 
-      query.$or = orConditions;
+      if (query.$or) {
+        query = {
+          $and: [
+            { $or: query.$or },
+            { $or: searchConditions }
+          ]
+        };
+      } else {
+        query.$or = searchConditions;
+      }
     }
 
     const expenses = await Expense.find(query)
       .populate("created_by", "fullName email")
+      .populate("area_id", "name city")
       .sort({ expense_date: -1 }).lean();
 
     res.json(expenses);
@@ -112,14 +143,21 @@ exports.getExpenses = async (req, res) => {
 // GET single expense detail
 exports.getExpenseById = async (req, res) => {
   try {
-    const expense = await Expense.findById(req.params.id).populate("created_by", "fullName email");
+    const expense = await Expense.findById(req.params.id)
+      .populate("created_by", "fullName email")
+      .populate("area_id", "name city");
+
     if (!expense) {
       return res.status(404).json({ message: "Expense not found" });
     }
 
-    // Role check: Staff cannot view other staff members' expenses
-    if (req.user.role !== "admin" && expense.created_by._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Access denied to this expense record" });
+    if (req.user.role !== "super_admin" && req.user.role !== "admin") {
+      const userAreaIds = getUserAreaIds(req.user);
+      const isCreator = expense.created_by._id.toString() === req.user._id.toString();
+      const isSameArea = userAreaIds.some((aId) => aId.toString() === expense.area_id?._id?.toString() || aId.toString() === expense.area_id?.toString());
+      if (!isCreator && !isSameArea) {
+        return res.status(403).json({ message: "Access denied to this expense record" });
+      }
     }
 
     res.json(expense);
@@ -136,9 +174,13 @@ exports.updateExpense = async (req, res) => {
       return res.status(404).json({ message: "Expense not found" });
     }
 
-    // Role check: Staff cannot update other staff members' expenses
-    if (req.user.role !== "admin" && expense.created_by.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Access denied to edit this expense record" });
+    if (req.user.role !== "super_admin" && req.user.role !== "admin") {
+      const userAreaIds = getUserAreaIds(req.user);
+      const isCreator = expense.created_by.toString() === req.user._id.toString();
+      const isSameArea = userAreaIds.some((aId) => aId.toString() === expense.area_id?.toString());
+      if (!isCreator && !isSameArea) {
+        return res.status(403).json({ message: "Access denied to edit this expense record" });
+      }
     }
 
     const {

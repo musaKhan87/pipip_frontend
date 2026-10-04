@@ -65,6 +65,10 @@ const ExpenseSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    area_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Area",
+    },
   },
   {
     timestamps: true,
@@ -73,6 +77,7 @@ const ExpenseSchema = new mongoose.Schema(
 
 ExpenseSchema.index({ expense_date: -1 });
 ExpenseSchema.index({ created_by: 1, expense_date: -1 });
+ExpenseSchema.index({ area_id: 1, expense_date: -1 });
 ExpenseSchema.index({ expense_category: 1 });
 
 module.exports = mongoose.model("Expense", ExpenseSchema);

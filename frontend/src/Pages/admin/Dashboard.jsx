@@ -51,7 +51,7 @@ const statusColors = {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { user, role } = useAuth();
 
   const [selectedFleet, setSelectedFleet] = useState(null);
   const [fleetSearch, setFleetSearch] = useState("");
@@ -285,13 +285,22 @@ const maintenanceBikes =
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-display text-gradient-sunset">
-            Dashboard
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-display text-gradient-sunset">
+              Dashboard
+            </h1>
+            {user?.areaId?.name && (
+              <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs py-1 px-2.5 rounded-full font-medium">
+                📍 {user.areaId.name} Area
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground">
-            Welcome back! Here's your rental overview.
+            {role === "manager"
+              ? `Showing real-time rental overview for ${user?.areaId?.name || "assigned area"}`
+              : "Welcome back! Here's your rental overview."}
           </p>
         </div>
         <p className="text-sm text-muted-foreground">

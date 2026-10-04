@@ -1,6 +1,10 @@
-const Booking = require("../models/Booking"); // Adjust paths as per your project
+const Booking = require("../models/Booking");
 const Bike = require("../models/Bike");
+const Cluster = require("../models/Cluster");
+const Expense = require("../models/Expense");
+const User = require("../models/User");
 const mongoose = require("mongoose");
+const { getUserAreaIds } = require("../middleware/auth");
 const {
   startOfDay,
   endOfDay,
@@ -11,134 +15,17 @@ const {
   subDays,
 } = require("date-fns");
 
-// 1. General Dashboard Stats
-// exports.getBookingStats = async (req, res) => {
-//   try {
-//     // const { period = "all" } = req.query;
-//     const { period = "all", startDate, endDate } = req.query;
-//     let query = {};
-
-//     // Date Filtering Logic
-   
-//     // if (startDate && endDate) {
-//     //   query.createdAt = {
-//     //     $gte: startOfDay(new Date(startDate)),
-//     //     $lte: endOfDay(new Date(endDate)),
-//     //   };
-//     // } else if (period !== "all") {
-//     //   if (period === "today") {
-//     //     start = startOfDay(now);
-//     //     end = endOfDay(now);
-//     //   } else if (period === "week") {
-//     //     start = startOfWeek(now);
-//     //     end = endOfWeek(now);
-//     //   } else if (period === "month") {
-//     //     start = startOfMonth(now);
-//     //     end = endOfMonth(now);
-//     //   }
-
-//     // Custom date range takes priority over period
-//     if (startDate && endDate) {
-//       query.createdAt = {
-//         $gte: startOfDay(new Date(startDate)),
-//         $lte: endOfDay(new Date(endDate)),
-//       };
-//     } else if (period !== "all") {
-//       let start, end;
-//       const now = new Date();
-//       if (period === "today") {
-//         start = startOfDay(now);
-//         end = endOfDay(now);
-//       } else if (period === "week") {
-//         start = startOfWeek(now);
-//         end = endOfWeek(now);
-//       } else if (period === "month") {
-//         start = startOfMonth(now);
-//         end = endOfMonth(now);
-//       }
-
-//       query.createdAt = { $gte: start, $lte: end };
-//     }
-
-//     const bookings = await Booking.find(query);
-
-//     const stats = {
-//       total_bookings: bookings.length,
-//       pending_bookings: bookings.filter((b) => b.status === "pending").length,
-//       active_bookings: bookings.filter((b) =>
-//         ["active", "confirmed"].includes(b.status),
-//       ).length,
-//       completed_bookings: bookings.filter((b) => b.status === "completed")
-//         .length,
-//       cancelled_bookings: bookings.filter((b) => b.status === "cancelled")
-//         .length,
-//       total_revenue: bookings
-//         .filter((b) => b.status === "completed")
-//         .reduce((sum, b) => sum + (b.total_amount || 0), 0),
-//     };
-
-//     res.json(stats);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
-// exports.getBookingStats = async (req, res) => {
-//   try {
-//     const { period = "all", startDate, endDate } = req.query;
-//     let query = {};
-
-//     // Custom date range takes priority over period
-//     if (startDate && endDate) {
-//       query.createdAt = {
-//         $gte: startOfDay(new Date(startDate)),
-//         $lte: endOfDay(new Date(endDate)),
-//       };
-//     } else if (period !== "all") {
-//       let start, end;
-//       const now = new Date();
-//       if (period === "today") {
-//         start = startOfDay(now);
-//         end = endOfDay(now);
-//       } else if (period === "week") {
-//         start = startOfWeek(now);
-//         end = endOfWeek(now);
-//       } else if (period === "month") {
-//         start = startOfMonth(now);
-//         end = endOfMonth(now);
-//       }
-//       query.createdAt = { $gte: start, $lte: end };
-//     }
-
-//     const bookings = await Booking.find(query);
-
-//     const stats = {
-//       total_bookings: bookings.length,
-//       pending_bookings: bookings.filter((b) => b.status === "pending").length,
-//       active_bookings: bookings.filter((b) =>
-//         ["active", "confirmed"].includes(b.status),
-//       ).length,
-//       completed_bookings: bookings.filter((b) => b.status === "completed")
-//         .length,
-//       cancelled_bookings: bookings.filter((b) => b.status === "cancelled")
-//         .length,
-//       total_revenue: bookings
-//         .filter((b) => b.status === "completed")
-//         .reduce((sum, b) => sum + (b.total_amount || 0), 0),
-//     };
-
-//     res.json(stats);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
 exports.getBookingStats = async (req, res) => {
   try {
     const { period = "all", startDate, endDate } = req.query;
     let query = {};
 
-    // Use start_datetime so it matches your bike-revenue logic perfectly
+    // 1. Role Check: Reject Staff from accessing dashboard stats
+    if (req.user && req.user.role === "staff") {
+      return res.status(403).json({ message: "Access denied: Staff cannot access dashboard stats" });
+    }
+
+    // 2. Date filtering logic
     if (startDate && endDate) {
       const start = new Date(startDate);
       start.setHours(0, 0, 0, 0);
@@ -163,10 +50,56 @@ exports.getBookingStats = async (req, res) => {
       query.start_datetime = { $gte: start, $lte: end };
     }
 
-    // const bookings = await Booking.find(query);
+    // 3. Area Manager Data Isolation
+    let areaBikeIds = [];
+    let areaClusterIds = [];
+    let userAreaIds = null;
+
+    if (req.user && req.user.role === "manager") {
+      userAreaIds = getUserAreaIds(req.user);
+
+      const areaBikes = await Bike.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
+      areaBikeIds = areaBikes.map((b) => b._id);
+
+      const areaClusters = await Cluster.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
+      areaClusterIds = areaClusters.map((c) => c._id);
+
+      query.$or = [
+        { bike_id: { $in: areaBikeIds } },
+        { cluster_id: { $in: areaClusterIds } }
+      ];
+    }
+
     const bookings = await Booking.find(query)
-      .select("status total_amount")
+      .select("status total_amount bike_id cluster_id")
       .lean();
+
+    // 4. Area-specific bike metrics
+    let bikeFilter = {};
+    if (req.user && req.user.role === "manager" && userAreaIds) {
+      bikeFilter.area_id = { $in: userAreaIds };
+    }
+    const totalBikesCount = await Bike.countDocuments(bikeFilter);
+    const availableBikesCount = await Bike.countDocuments({ ...bikeFilter, status: "available" });
+
+    // 5. Area-specific expense metrics
+    let expenseFilter = {};
+    if (req.user && req.user.role === "manager" && userAreaIds) {
+      const areaUsers = await User.find({
+        $or: [
+          { areaId: { $in: userAreaIds } },
+          { assigned_areas: { $in: userAreaIds } }
+        ]
+      }).select("_id").lean();
+      const userIdsInArea = areaUsers.map((u) => u._id);
+
+      expenseFilter.$or = [
+        { area_id: { $in: userAreaIds } },
+        { created_by: { $in: [...userIdsInArea, req.user._id] } }
+      ];
+    }
+    const expenses = await Expense.find(expenseFilter).select("expense_amount").lean();
+    const totalExpensesAmount = expenses.reduce((sum, e) => sum + (e.expense_amount || 0), 0);
 
     const stats = {
       total_bookings: bookings.length,
@@ -174,13 +107,14 @@ exports.getBookingStats = async (req, res) => {
       active_bookings: bookings.filter((b) =>
         ["active", "confirmed"].includes(b.status),
       ).length,
-      completed_bookings: bookings.filter((b) => b.status === "completed")
-        .length,
-      cancelled_bookings: bookings.filter((b) => b.status === "cancelled")
-        .length,
+      completed_bookings: bookings.filter((b) => b.status === "completed").length,
+      cancelled_bookings: bookings.filter((b) => b.status === "cancelled").length,
       total_revenue: bookings
         .filter((b) => b.status === "completed")
         .reduce((sum, b) => sum + (b.total_amount || 0), 0),
+      total_bikes: totalBikesCount,
+      available_bikes: availableBikesCount,
+      total_expenses: totalExpensesAmount,
     };
 
     res.json(stats);

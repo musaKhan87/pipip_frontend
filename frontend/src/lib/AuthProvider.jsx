@@ -106,6 +106,11 @@ export function AuthProvider({ children }) {
     setRole(null);
   };
 
+  const isSuperAdmin = role === "super_admin" || role === "admin";
+  const isManager = role === "manager";
+  const isStaff = role === "staff";
+  const isInvestor = role === "investor";
+
   const value = {
     user,
     role,
@@ -113,11 +118,17 @@ export function AuthProvider({ children }) {
     signIn,
     signUp,
     signOut,
-    isAdmin: role === "admin",
-    isStaff: role === "staff", 
-    isInvestor: role === "investor",
-    isAdminOrStaff: role === "admin" || role === "staff",
-     hasPanelAccess: role === "admin" || role === "staff" || role === "investor",
+    isSuperAdmin,
+    isAdmin: isSuperAdmin,
+    isManager,
+    isStaff,
+    isInvestor,
+    isAdminOrStaff: isSuperAdmin || isManager || isStaff,
+    hasPanelAccess: isSuperAdmin || isManager || isStaff || isInvestor,
+    hasDashboardAccess: isSuperAdmin || isManager,
+    hasReportsAccess: isSuperAdmin || isManager,
+    hasSettingsAccess: isSuperAdmin,
+    hasManagerAccess: isSuperAdmin,
   };
 
   return (

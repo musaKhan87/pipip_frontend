@@ -45,18 +45,19 @@ const User = require("../models/User");
 // };
 
 
+const { getUserAreaIds } = require("../middleware/auth");
+
 const createBike = async (req, res) => {
   try {
-
-    if (req.user && req.user.role === "staff") {
-      const hasArea = req.user.assigned_areas.some(
-        (area) => area._id.toString() === req.body.area_id?.toString()
+    if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
+      const userAreaIds = getUserAreaIds(req.user);
+      const hasArea = userAreaIds?.some(
+        (areaId) => areaId.toString() === req.body.area_id?.toString()
       );
       if (!hasArea) {
         return res.status(403).json({ message: "Access denied: You are not assigned to this area" });
       }
     }
-
 
     // Main image handle karein
     const image_url = req.files?.image_url ? req.files.image_url[0].path : null;
@@ -73,49 +74,45 @@ const createBike = async (req, res) => {
       extra_images: extraImagePaths,
     });
 
-    
-
     res.status(201).json(bike);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-
-
-
-
-
-
 /**
- * PUBLIC: Get All Bikes
+ * Get All Bikes (with area-based isolation for manager & staff)
  */
 const getBikes = async (req, res) => {
   try {
-    // const bikes = await Bike.find();
     const filter = {};
-    if (req.headers.authorization?.startsWith("Bearer")) {
+    let currentUser = req.user;
+
+    if (!currentUser && req.headers.authorization?.startsWith("Bearer")) {
       try {
         const token = req.headers.authorization.split(" ")[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id);
-        if (user && user.role === "staff") {
-          filter.area_id = { $in: user.assigned_areas };
-        
-           } else if (user && user.role === "investor") {
-          const escapeRegex = (text) => text ? text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
-          const nameRegex = new RegExp(`^${escapeRegex(user.fullName)}$`, 'i');
-          const emailRegex = new RegExp(`^${escapeRegex(user.email)}$`, 'i');
-          filter.$or = [
-            { bike_owner: { $regex: nameRegex } },
-            { bike_owner: { $regex: emailRegex } }
-          ]; 
-        }
+        currentUser = await User.findById(decoded.id).populate("assigned_areas").populate("areaId");
       } catch (err) {
         // ignore jwt errors
       }
     }
-    // const bikes = await Bike.find(filter);
+
+    if (currentUser) {
+      if (currentUser.role === "staff" || currentUser.role === "manager") {
+        const userAreaIds = getUserAreaIds(currentUser);
+        filter.area_id = { $in: userAreaIds };
+      } else if (currentUser.role === "investor") {
+        const escapeRegex = (text) => text ? text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+        const nameRegex = new RegExp(`^${escapeRegex(currentUser.fullName)}$`, 'i');
+        const emailRegex = new RegExp(`^${escapeRegex(currentUser.email)}$`, 'i');
+        filter.$or = [
+          { bike_owner: { $regex: nameRegex } },
+          { bike_owner: { $regex: emailRegex } }
+        ];
+      }
+    }
+
     const bikes = await Bike.find(filter).sort({ createdAt: -1 }).lean();
     res.status(200).json(bikes);
   } catch (error) {
@@ -124,44 +121,24 @@ const getBikes = async (req, res) => {
 };
 
 /**
- * ADMIN: Update Bike
+ * Update Bike
  */
-// const updateBike = async (req, res) => {
-//   try {
-//     const updateData = { ...req.body };
-
-//     if (req.file) {
-//       updateData.image_url = req.file.path;
-//     }
-
-//     const bike = await Bike.findByIdAndUpdate(
-//       req.params.id,
-//       updateData,
-//       { new: true }
-//     );
-
-//     res.status(200).json(bike);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-
 const updateBike = async (req, res) => {
   try {
     const bike = await Bike.findById(req.params.id);
     if (!bike) return res.status(404).json({ message: "Not found" });
 
-    if (req.user && req.user.role === "staff") {
-      const hasOldArea = req.user.assigned_areas.some(
-        (area) => area._id.toString() === bike.area_id?.toString()
+    if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
+      const userAreaIds = getUserAreaIds(req.user);
+      const hasOldArea = userAreaIds?.some(
+        (areaId) => areaId.toString() === bike.area_id?.toString()
       );
       if (!hasOldArea) {
         return res.status(403).json({ message: "Access denied: You are not assigned to the bike's current area" });
       }
       if (req.body.area_id) {
-        const hasNewArea = req.user.assigned_areas.some(
-          (area) => area._id.toString() === req.body.area_id.toString()
+        const hasNewArea = userAreaIds?.some(
+          (areaId) => areaId.toString() === req.body.area_id.toString()
         );
         if (!hasNewArea) {
           return res.status(403).json({ message: "Access denied: You cannot move the bike to an unassigned area" });
@@ -182,14 +159,11 @@ const updateBike = async (req, res) => {
     // Check if frontend sent the list of images to KEEP
     if (req.body.remaining_extra_images) {
       try {
-        // Parse the stringified array sent from FormData
         finalExtraImages = JSON.parse(req.body.remaining_extra_images);
       } catch (e) {
         finalExtraImages = [];
       }
     } else {
-      // If no 'remaining' field is sent, assume we keep existing ones
-      // (Safety fallback, though frontend should always send this now)
       finalExtraImages = bike.extra_images || [];
     }
 
@@ -204,7 +178,7 @@ const updateBike = async (req, res) => {
 
     const updatedBike = await Bike.findByIdAndUpdate(
       req.params.id,
-      { $set: updateData }, // Use $set to ensure array replacement
+      { $set: updateData },
       { new: true },
     );
 
@@ -215,18 +189,18 @@ const updateBike = async (req, res) => {
   }
 };
 
-
 /**
- * ADMIN: Delete Bike
+ * Delete Bike
  */
 const deleteBike = async (req, res) => {
   try {
-
     const bike = await Bike.findById(req.params.id);
     if (!bike) return res.status(404).json({ message: "Bike not found" });
-    if (req.user && req.user.role === "staff") {
-      const hasArea = req.user.assigned_areas.some(
-        (area) => area._id.toString() === bike.area_id?.toString()
+
+    if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
+      const userAreaIds = getUserAreaIds(req.user);
+      const hasArea = userAreaIds?.some(
+        (areaId) => areaId.toString() === bike.area_id?.toString()
       );
       if (!hasArea) {
         return res.status(403).json({ message: "Access denied: You are not assigned to the bike's area" });
@@ -248,22 +222,24 @@ const getSingleBike = async (req, res) => {
       return res.status(404).json({ message: "Bike not found" });
     }
 
-    // Optional token checking for staff area restriction
-    if (req.headers.authorization?.startsWith("Bearer")) {
+    let currentUser = req.user;
+    if (!currentUser && req.headers.authorization?.startsWith("Bearer")) {
       try {
         const token = req.headers.authorization.split(" ")[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id);
-        if (user && user.role === "staff") {
-          const hasArea = user.assigned_areas.some(
-            (areaId) => areaId.toString() === bike.area_id?.toString()
-          );
-          if (!hasArea) {
-            return res.status(403).json({ message: "Access denied: You do not have access to this area" });
-          }
-        }
+        currentUser = await User.findById(decoded.id).populate("assigned_areas").populate("areaId");
       } catch (err) {
         // ignore jwt errors
+      }
+    }
+
+    if (currentUser && (currentUser.role === "staff" || currentUser.role === "manager")) {
+      const userAreaIds = getUserAreaIds(currentUser);
+      const hasArea = userAreaIds?.some(
+        (areaId) => areaId.toString() === bike.area_id?.toString()
+      );
+      if (!hasArea) {
+        return res.status(403).json({ message: "Access denied: You do not have access to this area" });
       }
     }
 
@@ -280,3 +256,8 @@ module.exports = {
   deleteBike,
   getSingleBike,
 };
+
+
+
+
+

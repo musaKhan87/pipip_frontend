@@ -1,13 +1,15 @@
 const Cluster = require("../models/Cluster");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { getUserAreaIds } = require("../middleware/auth");
 
 // CREATE cluster
 exports.createCluster = async (req, res) => {
   try {
-    if (req.user && req.user.role === "staff") {
-      const hasArea = req.user.assigned_areas.some(
-        (area) => area._id.toString() === req.body.area_id?.toString()
+    if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
+      const userAreaIds = getUserAreaIds(req.user);
+      const hasArea = userAreaIds?.some(
+        (areaId) => areaId.toString() === req.body.area_id?.toString()
       );
       if (!hasArea) {
         return res.status(403).json({ message: "Access denied: You are not assigned to this area" });
@@ -26,17 +28,21 @@ exports.createCluster = async (req, res) => {
 exports.getClusters = async (req, res) => {
   try {
     const filter = {};
-    if (req.headers.authorization?.startsWith("Bearer")) {
+    let currentUser = req.user;
+
+    if (!currentUser && req.headers.authorization?.startsWith("Bearer")) {
       try {
         const token = req.headers.authorization.split(" ")[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id);
-        if (user && user.role === "staff") {
-          filter.area_id = { $in: user.assigned_areas };
-        }
+        currentUser = await User.findById(decoded.id).populate("assigned_areas").populate("areaId");
       } catch (err) {
         // ignore jwt errors
       }
+    }
+
+    if (currentUser && (currentUser.role === "staff" || currentUser.role === "manager")) {
+      const userAreaIds = getUserAreaIds(currentUser);
+      filter.area_id = { $in: userAreaIds };
     }
 
     const clusters = await Cluster.find(filter)
@@ -60,21 +66,24 @@ exports.getClusterById = async (req, res) => {
       return res.status(404).json({ message: "Cluster not found" });
     }
 
-    if (req.headers.authorization?.startsWith("Bearer")) {
+    let currentUser = req.user;
+    if (!currentUser && req.headers.authorization?.startsWith("Bearer")) {
       try {
         const token = req.headers.authorization.split(" ")[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id);
-        if (user && user.role === "staff") {
-          const hasArea = user.assigned_areas.some(
-            (areaId) => areaId.toString() === cluster.area_id?.toString()
-          );
-          if (!hasArea) {
-            return res.status(403).json({ message: "Access denied: You do not have access to this cluster's area" });
-          }
-        }
+        currentUser = await User.findById(decoded.id).populate("assigned_areas").populate("areaId");
       } catch (err) {
         // ignore jwt errors
+      }
+    }
+
+    if (currentUser && (currentUser.role === "staff" || currentUser.role === "manager")) {
+      const userAreaIds = getUserAreaIds(currentUser);
+      const hasArea = userAreaIds?.some(
+        (areaId) => areaId.toString() === cluster.area_id?._id?.toString() || areaId.toString() === cluster.area_id?.toString()
+      );
+      if (!hasArea) {
+        return res.status(403).json({ message: "Access denied: You do not have access to this cluster's area" });
       }
     }
 
@@ -93,17 +102,18 @@ exports.updateCluster = async (req, res) => {
       return res.status(404).json({ message: "Cluster not found" });
     }
 
-    if (req.user && req.user.role === "staff") {
-      const hasOldArea = req.user.assigned_areas.some(
-        (area) => area._id.toString() === cluster.area_id?.toString()
+    if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
+      const userAreaIds = getUserAreaIds(req.user);
+      const hasOldArea = userAreaIds?.some(
+        (areaId) => areaId.toString() === cluster.area_id?.toString()
       );
       if (!hasOldArea) {
         return res.status(403).json({ message: "Access denied: You are not assigned to the cluster's current area" });
       }
 
       if (req.body.area_id) {
-        const hasNewArea = req.user.assigned_areas.some(
-          (area) => area._id.toString() === req.body.area_id.toString()
+        const hasNewArea = userAreaIds?.some(
+          (areaId) => areaId.toString() === req.body.area_id.toString()
         );
         if (!hasNewArea) {
           return res.status(403).json({ message: "Access denied: You cannot move the cluster to an unassigned area" });
@@ -132,9 +142,10 @@ exports.deleteCluster = async (req, res) => {
       return res.status(404).json({ message: "Cluster not found" });
     }
 
-    if (req.user && req.user.role === "staff") {
-      const hasArea = req.user.assigned_areas.some(
-        (area) => area._id.toString() === cluster.area_id?.toString()
+    if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
+      const userAreaIds = getUserAreaIds(req.user);
+      const hasArea = userAreaIds?.some(
+        (areaId) => areaId.toString() === cluster.area_id?.toString()
       );
       if (!hasArea) {
         return res.status(403).json({ message: "Access denied: You are not assigned to the cluster's area" });

@@ -1,22 +1,33 @@
 const express = require("express");
-const { login, register, getStaff, deleteStaff, getMe , updateStaffAreas} = require("../controllers/authController");
-const { protect, adminOnly } = require("../middleware/auth");
+const {
+  login,
+  register,
+  getStaff,
+  deleteStaff,
+  getMe,
+  updateStaffAreas,
+  createManager,
+  getManagers,
+  updateManager,
+  deleteManager,
+} = require("../controllers/authController");
+const { protect, adminOnly, authorizeRoles } = require("../middleware/auth");
 const router = express.Router();
-
 
 // Public Routes
 router.post("/login", login);
 router.post("/register", register);
 router.get("/me", protect, getMe);
 
-// Protected Routes (Required Token)
-// getStaff is used by Settings.jsx to show the team
-router.get("/staff", protect, adminOnly, getStaff);
+// Manager Management Routes (Super Admin / Admin Only)
+router.post("/managers", protect, adminOnly, createManager);
+router.get("/managers", protect, adminOnly, getManagers);
+router.put("/managers/:id", protect, adminOnly, updateManager);
+router.delete("/managers/:id", protect, adminOnly, deleteManager);
 
-// deleteStaff is used by the Trash icon in Settings.jsx
-router.delete("/:id", protect, adminOnly, deleteStaff);
-
-// updateStaffAreas is used to assign/unassign areas
+// Staff Routes (Super Admin, Admin, Area Manager)
+router.get("/staff", protect, authorizeRoles("super_admin", "admin", "manager"), getStaff);
+router.delete("/:id", protect, authorizeRoles("super_admin", "admin", "manager"), deleteStaff);
 router.put("/:id/areas", protect, adminOnly, updateStaffAreas);
 
 module.exports = router;

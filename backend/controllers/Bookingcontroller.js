@@ -220,10 +220,16 @@ const Bike = require("../models/Bike");
 const Booking = require("../models/Booking");
 const Cluster = require("../models/Cluster");
 const { sendOrderAlerts } = require("./notificationController");
+const { getUserAreaIds } = require("../middleware/auth");
 
-// Helper to check if a booking belongs to a staff member's assigned areas
+// Helper to check if a booking belongs to a staff/manager's assigned areas
 const checkBookingAreaAccess = async (booking, user) => {
-  if (!user || user.role !== "staff") return true;
+  if (!user || user.role === "super_admin" || user.role === "admin") return true;
+  if (user.role !== "staff" && user.role !== "manager") return true;
+
+  const userAreaIds = getUserAreaIds(user);
+  if (!userAreaIds || userAreaIds.length === 0) return false;
+
   let areaId = null;
   if (booking.bike_id) {
     const bike = await Bike.findById(booking.bike_id);
@@ -233,8 +239,8 @@ const checkBookingAreaAccess = async (booking, user) => {
     if (cluster) areaId = cluster.area_id;
   }
   if (!areaId) return false;
-  return user.assigned_areas.some(
-    (assignedArea) => (assignedArea._id?.toString() || assignedArea.toString()) === areaId.toString()
+  return userAreaIds.some(
+    (assignedAreaId) => assignedAreaId.toString() === areaId.toString()
   );
 };
 
@@ -536,9 +542,10 @@ exports.adminCreateBooking = async (req, res) => {
       return res.status(404).json({ message: "Bike not found" });
     }
 
-    if (req.user && req.user.role === "staff") {
-      const hasBikeArea = req.user.assigned_areas.some(
-        (area) => (area._id?.toString() || area.toString()) === bike.area_id?.toString()
+    if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
+      const userAreaIds = getUserAreaIds(req.user);
+      const hasBikeArea = userAreaIds?.some(
+        (areaId) => areaId.toString() === bike.area_id?.toString()
       );
       if (!hasBikeArea) {
         return res.status(403).json({ message: "Access denied: You cannot create bookings for bikes in unassigned areas" });
@@ -747,10 +754,11 @@ exports.getAllBookings = async (req, res) => {
       filter.status = req.query.status;
     }
 
-    if (req.user && req.user.role === "staff") {
-      const bikesInAreas = await Bike.find({ area_id: { $in: req.user.assigned_areas } }).select("_id").lean();
+    if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
+      const userAreaIds = getUserAreaIds(req.user);
+      const bikesInAreas = await Bike.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
       const bikeIds = bikesInAreas.map((b) => b._id);
-      const clustersInAreas = await Cluster.find({ area_id: { $in: req.user.assigned_areas } }).select("_id").lean();
+      const clustersInAreas = await Cluster.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
       const clusterIds = clustersInAreas.map((c) => c._id);
       filter.$or = [
         { bike_id: { $in: bikeIds } },

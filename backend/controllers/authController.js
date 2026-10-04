@@ -7,7 +7,7 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
 };
 
-// Add this to controllers/authController.js
+// @desc    Get current user profile
 exports.getMe = async (req, res) => {
   try {
     // req.user is populated by the 'protect' middleware
@@ -21,10 +21,20 @@ exports.getMe = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    // const user = await User.findOne({ email });
-    const user = await User.findOne({ email }).populate("assigned_areas");
+    const user = await User.findOne({ email })
+      .populate("assigned_areas")
+      .populate("areaId");
 
-    if (user && (await bcrypt.compare(password, user.password))) {
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    if (user.status === "inactive") {
+      return res.status(403).json({ message: "Account is inactive. Please contact administrator." });
+    }
+
+    if (await bcrypt.compare(password, user.password)) {
+      const primaryArea = user.areaId || (user.assigned_areas && user.assigned_areas[0]);
       res.json({
         token: generateToken(user._id),
         user: {
@@ -32,7 +42,9 @@ exports.login = async (req, res) => {
           fullName: user.fullName,
           email: user.email,
           role: user.role,
+          areaId: primaryArea ? (primaryArea._id || primaryArea) : null,
           assigned_areas: user.assigned_areas || [],
+          status: user.status || "active",
         },
       });
     } else {
@@ -46,8 +58,7 @@ exports.login = async (req, res) => {
 // @desc    Register a new user (Signup)
 exports.register = async (req, res) => {
   try {
-    // const { fullName, email, password, role } = req.body;
-    const { fullName, email, password, role , assigned_areas } = req.body;
+    const { fullName, email, password, role, areaId, assigned_areas } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists)
@@ -56,36 +67,171 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const areas = assigned_areas || (areaId ? [areaId] : []);
+
     const user = await User.create({
       fullName,
       email,
       password: hashedPassword,
       role: role || "staff",
-      assigned_areas: assigned_areas || [],
+      areaId: areaId || (areas[0] || null),
+      assigned_areas: areas,
     });
 
-    res.status(201).json({ message: "User created successfully" });
+    res.status(201).json({ message: "User created successfully", user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Get all staff (Settings Page)
+// @desc    Create Area Manager (Super Admin)
+exports.createManager = async (req, res) => {
+  try {
+    const { fullName, email, password, areaId, status } = req.body;
+
+    if (!fullName || !email || !password || !areaId) {
+      return res.status(400).json({ message: "Full name, email, password, and assigned area are required." });
+    }
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "A user with this email already exists." });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const manager = await User.create({
+      fullName,
+      email,
+      password: hashedPassword,
+      role: "manager",
+      areaId: areaId,
+      assigned_areas: [areaId],
+      status: status || "active",
+    });
+
+    const populatedManager = await User.findById(manager._id)
+      .populate("areaId", "name city")
+      .populate("assigned_areas", "name city")
+      .select("-password");
+
+    res.status(201).json({ message: "Area Manager created successfully", manager: populatedManager });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all Area Managers (Super Admin)
+exports.getManagers = async (req, res) => {
+  try {
+    const managers = await User.find({ role: "manager" })
+      .populate("areaId", "name city")
+      .populate("assigned_areas", "name city")
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    res.json(managers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update Area Manager (Super Admin)
+exports.updateManager = async (req, res) => {
+  try {
+    const { fullName, email, password, areaId, status } = req.body;
+    const manager = await User.findById(req.params.id);
+
+    if (!manager || manager.role !== "manager") {
+      return res.status(404).json({ message: "Area Manager not found" });
+    }
+
+    if (fullName) manager.fullName = fullName;
+    if (email) manager.email = email;
+    if (status) manager.status = status;
+    if (areaId) {
+      manager.areaId = areaId;
+      manager.assigned_areas = [areaId];
+    }
+
+    if (password && password.trim() !== "") {
+      const salt = await bcrypt.genSalt(10);
+      manager.password = await bcrypt.hash(password, salt);
+    }
+
+    await manager.save();
+
+    const updatedManager = await User.findById(manager._id)
+      .populate("areaId", "name city")
+      .populate("assigned_areas", "name city")
+      .select("-password");
+
+    res.json({ message: "Area Manager updated successfully", manager: updatedManager });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete Area Manager (Super Admin)
+exports.deleteManager = async (req, res) => {
+  try {
+    const manager = await User.findById(req.params.id);
+    if (!manager || manager.role !== "manager") {
+      return res.status(404).json({ message: "Area Manager not found" });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: "Area Manager deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all staff (Settings Page / Area Manager Team View)
 exports.getStaff = async (req, res) => {
   try {
-    // const staff = await User.find({}).select("-password");
-    const staff = await User.find({}).populate("assigned_areas").select("-password");
+    let query = { role: "staff" };
+
+    // If Area Manager, only show staff belonging to manager's assigned area
+    if (req.user && req.user.role === "manager") {
+      const managerAreaId = req.user.areaId?._id || req.user.areaId || (req.user.assigned_areas && req.user.assigned_areas[0]);
+      if (managerAreaId) {
+        query.$or = [
+          { areaId: managerAreaId },
+          { assigned_areas: managerAreaId }
+        ];
+      }
+    } else if (req.user && req.user.role === "staff") {
+      return res.status(403).json({ message: "Access denied: Staff cannot manage or view team settings" });
+    }
+
+    const staff = await User.find(query)
+      .populate("areaId", "name city")
+      .populate("assigned_areas", "name city")
+      .select("-password")
+      .sort({ createdAt: -1 });
+
     res.json(staff);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Delete staff member (Settings Page)
+// @desc    Delete staff member
 exports.deleteStaff = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Area Manager check
+    if (req.user && req.user.role === "manager") {
+      const managerAreaId = (req.user.areaId?._id || req.user.areaId || req.user.assigned_areas?.[0])?.toString();
+      const staffAreaId = (user.areaId?._id || user.areaId || user.assigned_areas?.[0])?.toString();
+      if (managerAreaId !== staffAreaId) {
+        return res.status(403).json({ message: "Access denied: Cannot delete staff from another area" });
+      }
+    }
 
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: "User removed successfully" });
@@ -97,12 +243,20 @@ exports.deleteStaff = async (req, res) => {
 // @desc    Update staff member's assigned areas
 exports.updateStaffAreas = async (req, res) => {
   try {
-    const { assigned_areas } = req.body;
+    const { assigned_areas, areaId } = req.body;
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
-    user.assigned_areas = assigned_areas || [];
+
+    const areas = assigned_areas || (areaId ? [areaId] : []);
+    user.assigned_areas = areas;
+    user.areaId = areaId || areas[0] || null;
+
     await user.save();
-    const updatedUser = await User.findById(req.params.id).populate("assigned_areas").select("-password");
+    const updatedUser = await User.findById(req.params.id)
+      .populate("areaId", "name city")
+      .populate("assigned_areas", "name city")
+      .select("-password");
+
     res.json({ message: "Staff areas updated successfully", user: updatedUser });
   } catch (error) {
     res.status(500).json({ message: error.message });

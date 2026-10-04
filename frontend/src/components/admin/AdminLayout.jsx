@@ -244,8 +244,7 @@ export default function AdminLayout() {
     return <Navigate to="/admin" state={{ from: "/admin/panel" }} replace />;
   }
 
-  // if (!isAdminOrStaff) {
-   if (!hasPanelAccess) {
+  if (!hasPanelAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center p-8 bg-card border border-border rounded-2xl shadow-golden max-w-md">
@@ -262,6 +261,62 @@ export default function AdminLayout() {
         </div>
       </div>
     );
+  }
+
+  // Role-based route protection
+  const userRole = user?.role;
+  const currentPath = location.pathname.toLowerCase().replace(/\/$/, "");
+
+  // Staff route restrictions
+  if (userRole === "staff") {
+    if (currentPath === "/admin/panel") {
+      return <Navigate to="/admin/panel/bikes" replace />;
+    }
+    const staffRestrictedPaths = [
+      "/admin/panel/reports",
+      "/admin/panel/settings",
+      "/admin/panel/managers",
+      "/admin/panel/investor-orders"
+    ];
+    if (staffRestrictedPaths.some((p) => currentPath.startsWith(p))) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center p-8 bg-card border border-border rounded-2xl shadow-golden max-w-md">
+            <h2 className="text-2xl font-bold text-destructive mb-2">Access Denied</h2>
+            <p className="text-muted-foreground mb-4">
+              Staff members do not have permission to view this page.
+            </p>
+            <a href="/admin/panel/bikes" className="text-primary hover:underline font-semibold">
+              Go to Bikes View
+            </a>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Manager route restrictions
+  if (userRole === "manager") {
+    const managerRestrictedPaths = [
+      "/admin/panel/settings",
+      "/admin/panel/managers",
+      "/admin/panel/investor-orders"
+    ];
+    if (managerRestrictedPaths.some((p) => currentPath.startsWith(p))) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center p-8 bg-card border border-border rounded-2xl shadow-golden max-w-md">
+            <h2 className="text-2xl font-bold text-destructive mb-2">Access Denied</h2>
+            <p className="text-muted-foreground mb-4">
+              Area Managers do not have permission to access global settings or manager administration.
+            </p>
+            <a href="/admin/panel" className="text-primary hover:underline font-semibold">
+              Return to Dashboard
+            </a>
+          </div>
+        </div>
+      );
+    }
   }
 
   const unreadCount = logs.filter((log) => !log.read).length;
