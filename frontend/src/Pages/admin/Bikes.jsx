@@ -2249,11 +2249,23 @@ export default function Bikes() {
   const { data: bikes, isLoading } = useBikes();
   const { data: bookings } = useBookings();
   const { data: areas } = useAreas();
-  // const { user, isStaff } = useAuth();
-    const { user, isStaff, isInvestor } = useAuth();
-  const displayAreas = isStaff
-    ? (user?.assigned_areas || [])
+  const { user, isStaff, isInvestor, isManager } = useAuth();
+  const displayAreas = (isStaff || isManager)
+    ? (user?.assigned_areas && user.assigned_areas.length > 0
+        ? user.assigned_areas
+        : user?.areaId
+          ? [user.areaId]
+          : [])
     : (areas || []);
+
+  useEffect(() => {
+    if ((isStaff || isManager) && displayAreas.length > 0) {
+      const assignedAreaId = displayAreas[0]._id || displayAreas[0];
+      if (areaFilter === "all" || areaFilter !== assignedAreaId) {
+        setAreaFilter(assignedAreaId);
+      }
+    }
+  }, [isStaff, isManager, displayAreas]);
   const createBike = useCreateBike();
   const updateBike = useUpdateBike();
   const deleteBike = useDeleteBike();
@@ -2723,8 +2735,8 @@ const filteredBikes = (bikes || []).filter((bike) => {
               setSelectedFile(null);
               setExtraFiles([]);
               setExtraPreviews([]);
-              const defaultAreaId = isStaff && user?.assigned_areas?.length > 0
-                ? (user.assigned_areas[0]._id || user.assigned_areas[0])
+              const defaultAreaId = (isStaff || isManager) && displayAreas?.length > 0
+                ? (displayAreas[0]._id || displayAreas[0])
                 : "";
               setFormData({
                 ...initialFormData,
@@ -2921,7 +2933,7 @@ const filteredBikes = (bikes || []).filter((bike) => {
                           setFormData({ ...formData, area_id: value })
                         }
 
-                        disabled={isStaff && user?.assigned_areas?.length <= 1}
+                        disabled={(isStaff || isManager) && displayAreas?.length <= 1}
 
                       >
                         <SelectTrigger className="bg-input border-border">
@@ -3262,19 +3274,26 @@ const filteredBikes = (bikes || []).filter((bike) => {
           />
         </div>
         <div className="flex gap-2">
-          <Select value={areaFilter} onValueChange={setAreaFilter}>
-            <SelectTrigger className="w-40 bg-input border-border">
+          <Select
+            value={areaFilter}
+            onValueChange={setAreaFilter}
+            disabled={(isStaff || isManager) && displayAreas?.length <= 1}
+          >
+            <SelectTrigger className="w-52 bg-input border-border">
               <MapPin className="w-4 h-4 mr-2 text-primary" />
-              <SelectValue placeholder="All Areas" />
+              <SelectValue placeholder="Select Area" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Areas</SelectItem>
-              {/* {areas?.map((area) => ( */}
-              {displayAreas?.map((area) => (
-                <SelectItem key={area._id} value={area._id}>
-                  {area.name}
-                </SelectItem>
-              ))}
+              {!(isStaff || isManager) && <SelectItem value="all">All Areas</SelectItem>}
+              {displayAreas?.map((area) => {
+                const id = area._id || area;
+                const name = area.name || area.city || "Assigned Area";
+                return (
+                  <SelectItem key={id} value={id}>
+                    {name}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>

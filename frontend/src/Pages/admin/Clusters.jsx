@@ -62,10 +62,14 @@ export default function Clusters() {
   const { data: clusters, isLoading: clustersLoading } = useClusters();
   const { data: bikes, isLoading: bikesLoading } = useBikes();
   const { data: areas } = useActiveAreas();
-  const { user, isStaff } = useAuth();
+  const { user, isStaff, isManager } = useAuth();
 
-  const displayAreas = isStaff
-    ? (user?.assigned_areas || [])
+  const displayAreas = (isStaff || isManager)
+    ? (user?.assigned_areas && user.assigned_areas.length > 0
+        ? user.assigned_areas
+        : user?.areaId
+          ? [user.areaId]
+          : [])
     : (areas || []);
 
   const createClusterMutation = useCreateCluster();
@@ -191,8 +195,8 @@ export default function Clusters() {
               className="gradient-sunset text-primary-foreground font-semibold"
               onClick={() => {
                 setEditingClusterId(null);
-                const defaultAreaId = isStaff && user?.assigned_areas?.length > 0
-                  ? (user.assigned_areas[0]._id || user.assigned_areas[0])
+                const defaultAreaId = (isStaff || isManager) && displayAreas?.length > 0
+                  ? (displayAreas[0]._id || displayAreas[0])
                   : "";
                 setFormData({
                   name: "",
@@ -228,7 +232,7 @@ export default function Clusters() {
                     <Select
                       value={formData.area_id}
                       onValueChange={(v) => setFormData({ ...formData, area_id: v, bikes: [] })}
-                      disabled={isStaff && user?.assigned_areas?.length <= 1}
+                      disabled={(isStaff || isManager) && displayAreas?.length <= 1}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select Area" />
