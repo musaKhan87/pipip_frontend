@@ -491,8 +491,14 @@ const maintenanceBikes =
                               {booking.bike_id?.number_plate}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Customer: {booking.customer_id?.name}
+                              Customer: {booking.customer_id?.name || "N/A"}
                             </p>
+                            {(booking.areaName || booking.bike_id?.area_id?.name || booking.cluster_id?.area_id?.name) && (
+                              <p className="text-xs text-primary font-medium flex items-center gap-1 mt-0.5">
+                                <MapPin className="w-3 h-3 text-primary inline" />
+                                Area: {booking.areaName || booking.bike_id?.area_id?.name || booking.cluster_id?.area_id?.name}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-3">

@@ -335,73 +335,87 @@ exports.getEndingSoon = async (req, res) => {
   try {
     const now = new Date();
 
-    // ⭐ Change window to 3 days
+    // 1-3 days window for active ending-soon bookings
     const threeDaysLater = new Date(
-      now.getTime() + 1 * 24 * 60 * 60 * 1000
+      now.getTime() + 3 * 24 * 60 * 60 * 1000
     );
 
-    // Find active bookings ending within 3 days
-    const bookings = await Booking.find({
+    let query = {
       status: "active",
       end_datetime: {
         $gte: now,
         $lte: threeDaysLater,
       },
-    })
-      .populate(
-        "bike_id",
-        "model number_plate image_url"
-      )
-      .populate(
-        "customer_id",
-        "name phone"
-      )
+    };
+
+    // Area Manager / Staff Isolation
+    if (req.user && (req.user.role === "manager" || req.user.role === "staff")) {
+      const userAreaIds = getUserAreaIds(req.user);
+      if (userAreaIds && userAreaIds.length > 0) {
+        const areaBikes = await Bike.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
+        const areaBikeIds = areaBikes.map((b) => b._id);
+
+        const areaClusters = await Cluster.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
+        const areaClusterIds = areaClusters.map((c) => c._id);
+
+        query.$or = [
+          { bike_id: { $in: areaBikeIds } },
+          { cluster_id: { $in: areaClusterIds } }
+        ];
+      }
+    }
+
+    // Find active bookings ending soon with populated area details
+    const bookings = await Booking.find(query)
+      .populate({
+        path: "bike_id",
+        select: "model number_plate image_url area_id",
+        populate: {
+          path: "area_id",
+          select: "name city",
+        },
+      })
+      .populate("customer_id", "name phone")
+      .populate({
+        path: "cluster_id",
+        select: "name area_id",
+        populate: {
+          path: "area_id",
+          select: "name city",
+        },
+      })
       .sort({ end_datetime: 1 });
 
-    // Calculate remaining time
-    const results = bookings.map(
-      (booking) => {
+    // Calculate remaining time and attach area name
+    const results = bookings.map((booking) => {
+      const remainingMinutes = Math.round(
+        (new Date(booking.end_datetime).getTime() - now.getTime()) / (60 * 1000)
+      );
 
-        const remainingMinutes =
-          Math.round(
-            (new Date(
-              booking.end_datetime
-            ).getTime() -
-              now.getTime()) /
-              (60 * 1000)
-          );
+      const remainingDays = Math.ceil(remainingMinutes / (60 * 24));
 
-        const remainingDays =
-          Math.ceil(
-            remainingMinutes /
-              (60 * 24)
-          );
+      const areaObj =
+        booking.bike_id?.area_id ||
+        booking.cluster_id?.area_id ||
+        null;
 
-        return {
-          ...booking._doc,
+      const areaName = areaObj?.name
+        ? `${areaObj.name}${areaObj.city ? ` (${areaObj.city})` : ""}`
+        : null;
 
-          minutesRemaining:
-            remainingMinutes > 0
-              ? remainingMinutes
-              : 0,
-
-          daysRemaining:
-            remainingDays > 0
-              ? remainingDays
-              : 0,
-        };
-
-      }
-    );
+      return {
+        ...booking._doc,
+        areaName,
+        minutesRemaining: remainingMinutes > 0 ? remainingMinutes : 0,
+        daysRemaining: remainingDays > 0 ? remainingDays : 0,
+      };
+    });
 
     res.json(results);
-
   } catch (error) {
-
     res.status(500).json({
       error: error.message,
     });
-
   }
 };
 

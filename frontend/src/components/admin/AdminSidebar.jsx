@@ -72,7 +72,7 @@ const allMenuItems = [
     path: "/admin/panel/areas",
     icon: MapPin,
     label: "Areas",
-    roles: ["super_admin", "admin", "manager", "staff"],
+    roles: ["super_admin", "admin"],
   },
   {
     path: "/admin/panel/expenses",

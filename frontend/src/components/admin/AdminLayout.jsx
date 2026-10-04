@@ -276,6 +276,7 @@ export default function AdminLayout() {
       "/admin/panel/reports",
       "/admin/panel/settings",
       "/admin/panel/managers",
+      "/admin/panel/areas",
       "/admin/panel/investor-orders"
     ];
     if (staffRestrictedPaths.some((p) => currentPath.startsWith(p))) {
@@ -300,6 +301,7 @@ export default function AdminLayout() {
     const managerRestrictedPaths = [
       "/admin/panel/settings",
       "/admin/panel/managers",
+      "/admin/panel/areas",
       "/admin/panel/investor-orders"
     ];
     if (managerRestrictedPaths.some((p) => currentPath.startsWith(p))) {
