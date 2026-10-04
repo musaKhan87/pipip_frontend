@@ -3747,20 +3747,31 @@ useEffect(() => {
               </SelectTrigger>
               <SelectContent>
                 {/* Search Input Container */}
-                <div className="flex items-center px-3 pb-2 border-b sticky top-0 bg-popover z-50">
+                <div
+                  className="flex items-center px-3 pb-2 border-b sticky top-0 bg-popover z-50"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                   <Input
                     placeholder="Search model or plate..."
                     className="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none border-none focus-visible:ring-0"
                     value={bikeSearch}
                     onChange={(e) => setBikeSearch(e.target.value)}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
-                      // This prevents the Select from closing when pressing space
+                      // This prevents the Select from closing when typing or pressing keys
                       e.stopPropagation();
                     }}
                   />
                   {bikeSearch && (
                     <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
                       className="h-7 px-2"
@@ -3768,6 +3779,8 @@ useEffect(() => {
                         e.stopPropagation();
                         setBikeSearch("");
                       }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
                     >
                       <XCircle className="h-4 w-4" />
                     </Button>
@@ -3815,29 +3828,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Start Date/Time *</Label>
-          <Input
-            type="datetime-local"
-            className="[color-scheme:dark]"
-            value={data.start_datetime}
-            onChange={(e) =>
-              setData({ ...data, start_datetime: e.target.value })
-            }
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>End Date/Time *</Label>
-          <Input
-            type="datetime-local"
-            className="[color-scheme:dark]"
-            value={data.end_datetime}
-            onChange={(e) => setData({ ...data, end_datetime: e.target.value })}
-          />
-        </div>
-      </div> */}
-
       <div className="space-y-2">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -3846,16 +3836,10 @@ useEffect(() => {
               type="datetime-local"
               className="[color-scheme:dark]"
               value={data.start_datetime}
-              // onChange={(e) =>
-              //   setData({
-              //     ...data,
-              //     start_datetime: roundToHour(e.target.value),
-              //   })
-              // }
               onChange={(e) => {
                 setData({
                   ...data,
-                  start_datetime: roundToHour(e.target.value),
+                  start_datetime: e.target.value,
                 });
                 setHasEditedFields(true);
               }}
@@ -3867,13 +3851,10 @@ useEffect(() => {
               type="datetime-local"
               className="[color-scheme:dark]"
               value={data.end_datetime}
-              // onChange={(e) =>
-              //   setData({ ...data, end_datetime: roundToHour(e.target.value) })
-              // }
               onChange={(e) => {
                 setData({
                   ...data,
-                  end_datetime: roundToHour(e.target.value),
+                  end_datetime: e.target.value,
                 });
                 setHasEditedFields(true);
               }}

@@ -3274,28 +3274,6 @@ const filteredBikes = (bikes || []).filter((bike) => {
           />
         </div>
         <div className="flex gap-2">
-          <Select
-            value={areaFilter}
-            onValueChange={setAreaFilter}
-            disabled={(isStaff || isManager) && displayAreas?.length <= 1}
-          >
-            <SelectTrigger className="w-52 bg-input border-border">
-              <MapPin className="w-4 h-4 mr-2 text-primary" />
-              <SelectValue placeholder="Select Area" />
-            </SelectTrigger>
-            <SelectContent>
-              {!(isStaff || isManager) && <SelectItem value="all">All Areas</SelectItem>}
-              {displayAreas?.map((area) => {
-                const id = area._id || area;
-                const name = area.name || area.city || "Assigned Area";
-                return (
-                  <SelectItem key={id} value={id}>
-                    {name}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40 bg-input border-border">
               <Filter className="w-4 h-4 mr-2 text-secondary" />
