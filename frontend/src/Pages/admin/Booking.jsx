@@ -1080,6 +1080,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "../../components/ui/dialog";
+import { Popover, PopoverTrigger, PopoverContent } from "../../components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import {
   useBookings,
@@ -1345,6 +1346,7 @@ export default function Bookings() {
   const [expandedBookingId, setExpandedBookingId] = useState(null);
   const [customerSearch, setCustomerSearch] = useState("");
   const [bikeSearch, setBikeSearch] = useState("");
+  const [isBikePopoverOpen, setIsBikePopoverOpen] = useState(false);
   const [paymentPreview, setPaymentPreview] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [extraDocFiles, setExtraDocFiles] = useState([]); // Binary files
@@ -1867,12 +1869,14 @@ const [assignDialog, setAssignDialog] = useState(null);
   useEffect(() => {
     if (!isOpen) {
       setBikeSearch(""); // Reset bike search when the dialog closes
+      setIsBikePopoverOpen(false);
     }
   }, [isOpen]);
 
   useEffect(() => {
     if (!editingBooking) {
       setBikeSearch("");
+      setIsBikePopoverOpen(false);
     }
   }, [editingBooking]);
 
@@ -2567,6 +2571,7 @@ useEffect(() => {
     setLicensePreview(null);
     setCustomerSearch("");
     setBikeSearch("");
+    setIsBikePopoverOpen(false);
   };
 
   // Status transitions
@@ -3735,72 +3740,112 @@ useEffect(() => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Select Bike *</Label>
-            <Select
-              value={data.bike_id}
-              onValueChange={(v) => {
-                setData({ ...data, bike_id: v });
-                setHasEditedFields(true);
-              }}
-            >
-              <SelectTrigger className="h-11">
-                <SelectValue placeholder={bikeSearch ? `Matching (${filteredBikes.length}) bikes` : "Choose a bike"} />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                <div
-                  className="p-2 sticky top-0 bg-popover z-20 border-b border-border"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
+            <Popover open={isBikePopoverOpen} onOpenChange={setIsBikePopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={isBikePopoverOpen}
+                  className="w-full h-11 justify-between bg-input border-border font-normal text-left px-3 hover:bg-input"
                 >
+                  {(() => {
+                    const selectedBike = availableBikes?.find(
+                      (b) => b._id === data.bike_id
+                    );
+                    if (selectedBike) {
+                      return (
+                        <span className="truncate pr-2">
+                          <span className="font-medium text-foreground">
+                            {selectedBike.model}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-2">
+                            ({selectedBike.number_plate})
+                          </span>
+                        </span>
+                      );
+                    }
+                    return (
+                      <span className="text-muted-foreground">
+                        Choose a bike...
+                      </span>
+                    );
+                  })()}
+                  <ChevronDown className="w-4 h-4 text-muted-foreground opacity-70 shrink-0 ml-2" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="w-[var(--radix-popover-trigger-width)] max-w-full p-2 bg-card border-border shadow-xl rounded-xl z-50"
+              >
+                <div className="space-y-2">
                   <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     <Input
                       type="text"
                       placeholder="Search bike by model or number..."
                       value={bikeSearch}
                       onChange={(e) => setBikeSearch(e.target.value)}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onTouchStart={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className="pl-8 pr-8 h-9 text-sm bg-background border-border"
+                      className="pl-9 pr-8 h-10 text-sm bg-background border-border focus:ring-1 focus:ring-primary"
                     />
                     {bikeSearch && (
                       <button
                         type="button"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setBikeSearch("");
-                        }}
+                        onClick={() => setBikeSearch("")}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
                       >
                         <XCircle className="w-4 h-4" />
                       </button>
                     )}
                   </div>
-                </div>
-                <ScrollArea className="h-[200px]">
-                  {filteredBikes.length > 0 ? (
-                    filteredBikes.map((bike) => (
-                      <SelectItem key={bike._id} value={bike._id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{bike.model}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {bike.number_plate} {bike.bike_name ? `(${bike.bike_name})` : ""}
-                          </span>
+
+                  <ScrollArea className="h-[220px]">
+                    <div className="space-y-1 p-1">
+                      {filteredBikes.length > 0 ? (
+                        filteredBikes.map((bike) => {
+                          const isSelected = bike._id === data.bike_id;
+                          return (
+                            <button
+                              key={bike._id}
+                              type="button"
+                              onClick={() => {
+                                setData({ ...data, bike_id: bike._id });
+                                setHasEditedFields(true);
+                                setIsBikePopoverOpen(false);
+                              }}
+                              className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors flex items-center justify-between text-sm ${
+                                isSelected
+                                  ? "bg-primary/15 text-primary font-medium"
+                                  : "hover:bg-muted text-foreground"
+                              }`}
+                            >
+                              <div className="flex flex-col truncate">
+                                <span className="font-medium truncate">
+                                  {bike.model}
+                                </span>
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {bike.number_plate}{" "}
+                                  {bike.bike_name
+                                    ? `(${bike.bike_name})`
+                                    : ""}
+                                </span>
+                              </div>
+                              {isSelected && (
+                                <CheckCircle2 className="w-4 h-4 text-primary shrink-0 ml-2" />
+                              )}
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <div className="py-6 text-center text-sm text-muted-foreground">
+                          No bikes found matching "{bikeSearch}"
                         </div>
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="py-6 text-center text-sm text-muted-foreground">
-                      No bikes found matching "{bikeSearch}"
+                      )}
                     </div>
-                  )}
-                </ScrollArea>
-              </SelectContent>
-            </Select>
+                  </ScrollArea>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="space-y-2">
             <Label>Rental Type *</Label>
