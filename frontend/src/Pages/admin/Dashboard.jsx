@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Bell,
   Timer,
+  MapPin,
   Phone,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -135,151 +136,151 @@ export default function Dashboard() {
 
   // Active rentals (status-based)
 
-// const activeRentals =
-//   bookings?.filter(
-//     (booking) =>
-//       booking.status === "active"
-//   ) || [];
+  // const activeRentals =
+  //   bookings?.filter(
+  //     (booking) =>
+  //       booking.status === "active"
+  //   ) || [];
 
 
-//   // Rented Bike IDs
-//   const rentedBikeIds = new Set(
-//     activeRentals.map((booking) => booking.bike_id?._id || booking.bike_id),
-//   );
+  //   // Rented Bike IDs
+  //   const rentedBikeIds = new Set(
+  //     activeRentals.map((booking) => booking.bike_id?._id || booking.bike_id),
+  //   );
 
-//   // Maintenance Bikes
-//   const maintenanceBikeList =
-//     bikes?.filter((bike) => bike.status === "maintenance") || [];
+  //   // Maintenance Bikes
+  //   const maintenanceBikeList =
+  //     bikes?.filter((bike) => bike.status === "maintenance") || [];
 
-//   // Available Bikes
-//   const availableBikeList =
-//     bikes?.filter(
-//       (bike) => !rentedBikeIds.has(bike._id) && bike.status !== "maintenance",
-//     ) || [];
+  //   // Available Bikes
+  //   const availableBikeList =
+  //     bikes?.filter(
+  //       (bike) => !rentedBikeIds.has(bike._id) && bike.status !== "maintenance",
+  //     ) || [];
 
-//   // ✅ THIS FIXES YOUR ERROR
-//   const bookedBikeList = activeRentals;
+  //   // ✅ THIS FIXES YOUR ERROR
+  //   const bookedBikeList = activeRentals;
 
-//   // Counts
-//   const availableBikes = availableBikeList.length;
+  //   // Counts
+  //   const availableBikes = availableBikeList.length;
 
-//   const bookedBikes = bookedBikeList.length;
+  //   const bookedBikes = bookedBikeList.length;
 
-//   const maintenanceBikes = maintenanceBikeList.length;
-
-
-
-// ===============================
-// PROFESSIONAL FLEET LOGIC
-// ===============================
-
-// Active rentals (status-based)
-
-// ✅ STATUS-BASED ACTIVE RENTALS
-
-// const activeRentals =
-//   bookings?.filter(
-//     (booking) =>
-//       booking.status === "active"
-//   ) || [];
-
-// // Get rented bike IDs
-
-// const rentedBikeIds = new Set(
-//   activeRentals.map(
-//     (booking) =>
-//       booking.bike_id?._id ||
-//       booking.bike_id
-//   )
-// );
-
-// // Maintenance bikes
-
-// const maintenanceBikeList =
-//   (bikes || []).filter(
-//     (bike) =>
-//       bike.status === "maintenance"
-//   );
-
-// // Available bikes
-
-// const availableBikeList =
-//   (bikes || []).filter(
-//     (bike) =>
-//       !rentedBikeIds.has(bike._id) &&
-//       bike.status !== "maintenance"
-//   );
-
-// // Booked bikes
-
-// const bookedBikeList =
-//   activeRentals;
-
-// // Counts
-
-// const availableBikes =
-//   availableBikeList.length;
-
-// const bookedBikes =
-//   bookedBikeList.length;
-
-// const maintenanceBikes =
-//   maintenanceBikeList.length;
+  //   const maintenanceBikes = maintenanceBikeList.length;
 
 
 
-// ===============================
-// FINAL PROFESSIONAL FLEET LOGIC
-// ===============================
+  // ===============================
+  // PROFESSIONAL FLEET LOGIC
+  // ===============================
 
-// Active rentals (STATUS ONLY)
+  // Active rentals (status-based)
 
-const activeRentals =
-  (recentBookings || []).filter(
-    (booking) =>
-      booking.status === "active"
+  // ✅ STATUS-BASED ACTIVE RENTALS
+
+  // const activeRentals =
+  //   bookings?.filter(
+  //     (booking) =>
+  //       booking.status === "active"
+  //   ) || [];
+
+  // // Get rented bike IDs
+
+  // const rentedBikeIds = new Set(
+  //   activeRentals.map(
+  //     (booking) =>
+  //       booking.bike_id?._id ||
+  //       booking.bike_id
+  //   )
+  // );
+
+  // // Maintenance bikes
+
+  // const maintenanceBikeList =
+  //   (bikes || []).filter(
+  //     (bike) =>
+  //       bike.status === "maintenance"
+  //   );
+
+  // // Available bikes
+
+  // const availableBikeList =
+  //   (bikes || []).filter(
+  //     (bike) =>
+  //       !rentedBikeIds.has(bike._id) &&
+  //       bike.status !== "maintenance"
+  //   );
+
+  // // Booked bikes
+
+  // const bookedBikeList =
+  //   activeRentals;
+
+  // // Counts
+
+  // const availableBikes =
+  //   availableBikeList.length;
+
+  // const bookedBikes =
+  //   bookedBikeList.length;
+
+  // const maintenanceBikes =
+  //   maintenanceBikeList.length;
+
+
+
+  // ===============================
+  // FINAL PROFESSIONAL FLEET LOGIC
+  // ===============================
+
+  // Active rentals (STATUS ONLY)
+
+  const activeRentals =
+    (recentBookings || []).filter(
+      (booking) =>
+        booking.status === "active"
+    );
+
+  // Rented bike IDs
+
+  const rentedBikeIds = new Set(
+    activeRentals.map(
+      (booking) =>
+        booking.bike_id?._id ||
+        booking.bike_id
+    )
   );
 
-// Rented bike IDs
+  // Maintenance bikes
 
-const rentedBikeIds = new Set(
-  activeRentals.map(
-    (booking) =>
-      booking.bike_id?._id ||
-      booking.bike_id
-  )
-);
+  const maintenanceBikeList =
+    (bikes || []).filter(
+      (bike) =>
+        bike.status === "maintenance"
+    );
 
-// Maintenance bikes
+  // Available bikes
 
-const maintenanceBikeList =
-  (bikes || []).filter(
-    (bike) =>
-      bike.status === "maintenance"
-  );
+  const availableBikeList =
+    (bikes || []).filter(
+      (bike) =>
+        !rentedBikeIds.has(bike._id) &&
+        bike.status !== "maintenance"
+    );
 
-// Available bikes
+  // Counts
 
-const availableBikeList =
-  (bikes || []).filter(
-    (bike) =>
-      !rentedBikeIds.has(bike._id) &&
-      bike.status !== "maintenance"
-  );
+  const availableBikes =
+    availableBikeList.length;
 
-// Counts
+  const bookedBikeList =
+    activeRentals;
 
-const availableBikes =
-  availableBikeList.length;
+  const bookedBikes =
+    bookedBikeList.length;
 
-const bookedBikeList =
-  activeRentals;
-
-const bookedBikes =
-  bookedBikeList.length;
-
-const maintenanceBikes =
-  maintenanceBikeList.length;
+  const maintenanceBikes =
+    maintenanceBikeList.length;
 
 
   return (
@@ -463,26 +464,23 @@ const maintenanceBikes =
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className={`flex items-center justify-between p-3 rounded-lg border shadow-sm ${
-                          booking.minutesRemaining <= 30
+                        className={`flex items-center justify-between p-3 rounded-lg border shadow-sm ${booking.minutesRemaining <= 30
                             ? " bg-red-900/20 border-red-200"
                             : "bg-gray-800 border-orange-100"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className={`p-2 rounded-lg ${
-                              booking.minutesRemaining <= 30
+                            className={`p-2 rounded-lg ${booking.minutesRemaining <= 30
                                 ? "bg-red-200"
                                 : "bg-orange-200"
-                            }`}
+                              }`}
                           >
                             <Timer
-                              className={`w-4 h-4 ${
-                                booking.minutesRemaining <= 30
+                              className={`w-4 h-4 ${booking.minutesRemaining <= 30
                                   ? "text-red-600"
                                   : "text-orange-600"
-                              }`}
+                                }`}
                             />
                           </div>
                           <div>
@@ -504,11 +502,10 @@ const maintenanceBikes =
                         <div className="flex items-center gap-3">
                           <div className="text-right">
                             <p
-                              className={`font-bold ${
-                                booking.minutesRemaining <= 30
+                              className={`font-bold ${booking.minutesRemaining <= 30
                                   ? "text-red-600"
                                   : "text-orange-600"
-                              }`}
+                                }`}
                             >
                               {timeDisplay} left
                             </p>
@@ -548,7 +545,7 @@ const maintenanceBikes =
             val: `₹${stats?.total_revenue?.toLocaleString()}`,
             icon: DollarSign,
             gradient: "from-green-500 to-green-600",
-            hideForStaff : true,
+            hideForStaff: true,
           },
           {
             title: "Active Bookings",
@@ -562,31 +559,31 @@ const maintenanceBikes =
             icon: Clock,
             gradient: "from-purple-500 to-purple-600",
           },
-        // ].map((item, i) => (
-          ]
+          // ].map((item, i) => (
+        ]
           .filter((item) => !(role === "staff" && item.hideForStaff))
           .map((item, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-          >
-            <Card
-              className={`bg-gradient-to-br ${item.gradient} text-white border-0 shadow-lg`}
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
             >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm opacity-80">{item.title}</p>
-                    <p className="text-3xl font-bold">{item.val || 0}</p>
+              <Card
+                className={`bg-gradient-to-br ${item.gradient} text-white border-0 shadow-lg`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm opacity-80">{item.title}</p>
+                      <p className="text-3xl font-bold">{item.val || 0}</p>
+                    </div>
+                    <item.icon className="w-10 h-10 opacity-30" />
                   </div>
-                  <item.icon className="w-10 h-10 opacity-30" />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
       </div>
 
       {/* Fleet and Revenue Section */}
@@ -898,22 +895,22 @@ const maintenanceBikes =
                   color: "text-green-600",
                   hideForStaff: true,
                 },
-              // ].map((activity, idx) => (
-                ]
+                // ].map((activity, idx) => (
+              ]
                 .filter((item) => !(role === "staff" && item.hideForStaff))
                 .map((activity, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between border-b border-border pb-2 last:border-0"
-                >
-                  <span className="text-muted-foreground">
-                    {activity.label}
-                  </span>
-                  <span className={`font-bold ${activity.color}`}>
-                    {activity.val || 0}
-                  </span>
-                </div>
-              ))}
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between border-b border-border pb-2 last:border-0"
+                  >
+                    <span className="text-muted-foreground">
+                      {activity.label}
+                    </span>
+                    <span className={`font-bold ${activity.color}`}>
+                      {activity.val || 0}
+                    </span>
+                  </div>
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -952,9 +949,9 @@ const maintenanceBikes =
                     <p className="text-xs text-muted-foreground mt-1">
                       {booking.start_datetime
                         ? format(
-                            new Date(booking.start_datetime),
-                            "MMM d, h:mm a",
-                          )
+                          new Date(booking.start_datetime),
+                          "MMM d, h:mm a",
+                        )
                         : "N/A"}
                     </p>
                   </div>
