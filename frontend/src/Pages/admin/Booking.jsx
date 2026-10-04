@@ -1344,6 +1344,7 @@ export default function Bookings() {
   const licenseInputRef = useRef(null);
   const [expandedBookingId, setExpandedBookingId] = useState(null);
   const [customerSearch, setCustomerSearch] = useState("");
+  const [bikeSearch, setBikeSearch] = useState("");
   const [paymentPreview, setPaymentPreview] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [extraDocFiles, setExtraDocFiles] = useState([]); // Binary files
@@ -3712,253 +3713,17 @@ useEffect(() => {
 
   const availableBikes = bikes?.filter((b) => b.status !== "maintenance");
 
-  // Custom mobile-friendly Searchable Bike Select Component
-  const SearchableBikeSelect = ({ value, onChange, onFieldEdit }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-    const dropdownRef = useRef(null);
-
-    const filtered = useMemo(() => {
-      if (!availableBikes) return [];
-      if (!searchTerm.trim()) return availableBikes;
-      const q = searchTerm.toLowerCase();
-      return availableBikes.filter(
-        (bike) =>
-          bike.model?.toLowerCase().includes(q) ||
-          bike.number_plate?.toLowerCase().includes(q) ||
-          bike.bike_name?.toLowerCase().includes(q)
-      );
-    }, [searchTerm]);
-
-    const selectedBike = availableBikes?.find((b) => b._id === value);
-
-    useEffect(() => {
-      const handleClickOutside = (e) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-          setIsOpen(false);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("touchstart", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("touchstart", handleClickOutside);
-      };
-    }, []);
-
-    return (
-      <div className="relative w-full" ref={dropdownRef}>
-        <button
-          type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
-          className="w-full h-11 px-3 py-2 text-left bg-input border border-border rounded-md shadow-sm flex items-center justify-between text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          {selectedBike ? (
-            <div className="truncate pr-2">
-              <span className="font-medium text-foreground">{selectedBike.model}</span>
-              <span className="text-xs text-muted-foreground ml-2">
-                ({selectedBike.number_plate})
-              </span>
-            </div>
-          ) : (
-            <span className="text-muted-foreground">Choose a bike...</span>
-          )}
-          <ChevronDown
-            className={`w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0 ${
-              isOpen ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-
-        {isOpen && (
-          <div className="absolute z-50 left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl p-2 space-y-2 max-h-[300px] flex flex-col">
-            <div className="relative flex-shrink-0">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              <input
-                type="text"
-                autoFocus
-                placeholder="Search bike by model or number plate..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 text-sm bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
-                >
-                  <XCircle className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex-1 overflow-y-auto max-h-[220px] space-y-1 pr-1">
-              {filtered.length > 0 ? (
-                filtered.map((bike) => {
-                  const isSelected = bike._id === value;
-                  return (
-                    <button
-                      key={bike._id}
-                      type="button"
-                      onClick={() => {
-                        onChange(bike._id);
-                        if (onFieldEdit) onFieldEdit();
-                        setIsOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-md transition-colors flex items-center justify-between text-sm ${
-                        isSelected
-                          ? "bg-primary/15 text-primary font-medium"
-                          : "hover:bg-muted text-foreground"
-                      }`}
-                    >
-                      <div className="flex flex-col truncate">
-                        <span className="font-medium truncate">{bike.model}</span>
-                        <span className="text-xs text-muted-foreground truncate">
-                          {bike.number_plate}{" "}
-                          {bike.bike_name ? `(${bike.bike_name})` : ""}
-                        </span>
-                      </div>
-                      {isSelected && (
-                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 ml-2" />
-                      )}
-                    </button>
-                  );
-                })
-              ) : (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                  No bikes found matching "{searchTerm}"
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+  const filteredBikes = useMemo(() => {
+    if (!availableBikes) return [];
+    if (!bikeSearch) return availableBikes;
+    const q = bikeSearch.toLowerCase();
+    return availableBikes.filter(
+      (bike) =>
+        bike.model?.toLowerCase().includes(q) ||
+        bike.number_plate?.toLowerCase().includes(q) ||
+        bike.bike_name?.toLowerCase().includes(q)
     );
-  };
-
-  // Custom mobile-friendly Searchable Customer Select Component
-  const SearchableCustomerSelect = ({ value, onChange }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
-    const dropdownRef = useRef(null);
-
-    const filtered = useMemo(() => {
-      if (!customers) return [];
-      if (!searchTerm.trim()) return customers;
-      const q = searchTerm.toLowerCase();
-      return customers.filter(
-        (c) =>
-          c.name?.toLowerCase().includes(q) ||
-          c.phone?.includes(q) ||
-          c.email?.toLowerCase().includes(q)
-      );
-    }, [searchTerm]);
-
-    const selectedCustomer = customers?.find((c) => c._id === value);
-
-    useEffect(() => {
-      const handleClickOutside = (e) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-          setIsOpen(false);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("touchstart", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("touchstart", handleClickOutside);
-      };
-    }, []);
-
-    return (
-      <div className="relative w-full" ref={dropdownRef}>
-        <button
-          type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
-          className="w-full h-11 px-3 py-2 text-left bg-input border border-border rounded-md shadow-sm flex items-center justify-between text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          {selectedCustomer ? (
-            <div className="truncate pr-2">
-              <span className="font-medium text-foreground">{selectedCustomer.name}</span>
-              <span className="text-xs text-muted-foreground ml-2">
-                - {selectedCustomer.phone}
-              </span>
-            </div>
-          ) : (
-            <span className="text-muted-foreground">Select existing customer...</span>
-          )}
-          <ChevronDown
-            className={`w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0 ${
-              isOpen ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-
-        {isOpen && (
-          <div className="absolute z-50 left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl p-2 space-y-2 max-h-[300px] flex flex-col">
-            <div className="relative flex-shrink-0">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              <input
-                type="text"
-                autoFocus
-                placeholder="Search customer by name or phone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 text-sm bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
-                >
-                  <XCircle className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex-1 overflow-y-auto max-h-[220px] space-y-1 pr-1">
-              {filtered.length > 0 ? (
-                filtered.map((customer) => {
-                  const isSelected = customer._id === value;
-                  return (
-                    <button
-                      key={customer._id}
-                      type="button"
-                      onClick={() => {
-                        onChange(customer._id);
-                        setIsOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-md transition-colors flex items-center justify-between text-sm ${
-                        isSelected
-                          ? "bg-primary/15 text-primary font-medium"
-                          : "hover:bg-muted text-foreground"
-                      }`}
-                    >
-                      <div className="flex flex-col truncate">
-                        <span className="font-medium truncate">{customer.name}</span>
-                        <span className="text-xs text-muted-foreground truncate">
-                          {customer.phone}
-                        </span>
-                      </div>
-                      {isSelected && (
-                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 ml-2" />
-                      )}
-                    </button>
-                  );
-                })
-              ) : (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                  No customers found matching "{searchTerm}"
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
+  }, [availableBikes, bikeSearch]);
 
   // Render form fields (shared between create & edit)
   const renderFormFields = (data, setData, isEdit = false) => (
@@ -3970,11 +3735,72 @@ useEffect(() => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Select Bike *</Label>
-            <SearchableBikeSelect
+            <Select
               value={data.bike_id}
-              onChange={(v) => setData({ ...data, bike_id: v })}
-              onFieldEdit={() => setHasEditedFields(true)}
-            />
+              onValueChange={(v) => {
+                setData({ ...data, bike_id: v });
+                setHasEditedFields(true);
+              }}
+            >
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder={bikeSearch ? `Matching (${filteredBikes.length}) bikes` : "Choose a bike"} />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                <div
+                  className="p-2 sticky top-0 bg-popover z-20 border-b border-border"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      type="text"
+                      placeholder="Search bike by model or number..."
+                      value={bikeSearch}
+                      onChange={(e) => setBikeSearch(e.target.value)}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className="pl-8 pr-8 h-9 text-sm bg-background border-border"
+                    />
+                    {bikeSearch && (
+                      <button
+                        type="button"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setBikeSearch("");
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <ScrollArea className="h-[200px]">
+                  {filteredBikes.length > 0 ? (
+                    filteredBikes.map((bike) => (
+                      <SelectItem key={bike._id} value={bike._id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{bike.model}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {bike.number_plate} {bike.bike_name ? `(${bike.bike_name})` : ""}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      No bikes found matching "{bikeSearch}"
+                    </div>
+                  )}
+                </ScrollArea>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Rental Type *</Label>
@@ -4179,10 +4005,34 @@ useEffect(() => {
             </div>
           ) : (
             <div className="space-y-2">
-              <SearchableCustomerSelect
-                value={data.customer_id}
-                onChange={(v) => setData({ ...data, customer_id: v })}
+              <Input
+                placeholder="Search customer by name or phone..."
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                className="mb-2"
               />
+              <Select
+                value={data.customer_id}
+                onValueChange={(v) => setData({ ...data, customer_id: v })}
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Select existing customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <ScrollArea className="h-[200px]">
+                    {filteredCustomers.map((customer) => (
+                      <SelectItem key={customer._id} value={customer._id}>
+                        {customer.name} - {customer.phone}
+                      </SelectItem>
+                    ))}
+                    {filteredCustomers.length === 0 && (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">
+                        No customers found
+                      </div>
+                    )}
+                  </ScrollArea>
+                </SelectContent>
+              </Select>
             </div>
           )}
         </div>
