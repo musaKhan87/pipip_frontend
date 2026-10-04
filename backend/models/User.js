@@ -30,13 +30,12 @@ const UserSchema = new mongoose.Schema(
 );
 
 // Sync areaId and assigned_areas before saving
-UserSchema.pre("save", function (next) {
+UserSchema.pre("save", function () {
   if (this.areaId && (!this.assigned_areas || this.assigned_areas.length === 0)) {
     this.assigned_areas = [this.areaId];
   } else if (this.assigned_areas && this.assigned_areas.length > 0 && !this.areaId) {
     this.areaId = this.assigned_areas[0];
   }
-  next();
 });
 
 module.exports = mongoose.model("User", UserSchema);
