@@ -1,7 +1,8 @@
 import { Outlet, Navigate , useLocation } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
 import { useAuth } from "../../lib/AuthProvider";
+import { useAdminArea } from "../../lib/AreaContext";
 import { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 import { useBikes } from "../../hooks/useBikes";
@@ -321,20 +322,63 @@ export default function AdminLayout() {
     }
   }
 
+  const { isSuperAdmin } = useAuth();
+  const { areas, selectedAreaId, setSelectedAreaId } = useAdminArea();
   const unreadCount = logs.filter((log) => !log.read).length;
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
       <AdminSidebar unreadCount={unreadCount} />
 
-      <main
-        className="flex-1 p-4 lg:p-8 overflow-y-auto h-full bg-background scrollbar-hide"
-        ref={scrollRef}
-      >
-        <div className="max-w-7xl mx-auto">
-          <Outlet context={{ logs, setLogs }} />
-        </div>
-      </main>
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Global Admin Header */}
+        <header className="h-16 border-b border-border bg-card/60 backdrop-blur-md px-4 lg:px-8 flex items-center justify-between z-30 shrink-0 shadow-sm">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold text-muted-foreground hidden sm:block">
+              Pipip Control Panel
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {isSuperAdmin ? (
+              <div className="flex items-center gap-2 bg-muted/80 border border-border/80 px-3 py-1.5 rounded-xl shadow-sm hover:border-amber-500/50 transition-colors">
+                <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+                <span className="text-xs font-semibold text-muted-foreground hidden md:inline">
+                  Area:
+                </span>
+                <select
+                  value={selectedAreaId}
+                  onChange={(e) => setSelectedAreaId(e.target.value)}
+                  className="bg-transparent text-foreground text-xs font-semibold focus:outline-none cursor-pointer pr-1"
+                >
+                  <option value="all" className="bg-card text-foreground">📍 All Areas (Global)</option>
+                  {areas.map((area) => (
+                    <option key={area._id} value={area._id} className="bg-card text-foreground">
+                      📍 {area.name} {area.city ? `(${area.city})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">
+                <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+                <span className="text-xs font-semibold text-amber-400">
+                  📍 {user?.areaId?.name || user?.assigned_areas?.[0]?.name || "Assigned Area"}
+                </span>
+              </div>
+            )}
+          </div>
+        </header>
+
+        <main
+          className="flex-1 p-4 lg:p-8 overflow-y-auto h-full bg-background scrollbar-hide"
+          ref={scrollRef}
+        >
+          <div className="max-w-7xl mx-auto">
+            <Outlet context={{ logs, setLogs }} />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

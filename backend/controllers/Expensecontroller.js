@@ -1,6 +1,6 @@
 const Expense = require("../models/Expense");
 const User = require("../models/User");
-const { getUserAreaIds } = require("../middleware/auth");
+const { getUserAreaIds, getAreaScope } = require("../middleware/auth");
 
 // CREATE a new expense
 exports.createExpense = async (req, res) => {
@@ -55,21 +55,19 @@ exports.getExpenses = async (req, res) => {
     const { search } = req.query;
     let query = {};
 
-    // Role-based visibility: Super Admin sees all; Area Manager and Staff see area expenses
-    if (req.user.role !== "super_admin" && req.user.role !== "admin") {
-      const userAreaIds = getUserAreaIds(req.user);
-
+    const scope = getAreaScope(req);
+    if (scope && scope.length > 0) {
       const areaUsers = await User.find({
         $or: [
-          { areaId: { $in: userAreaIds } },
-          { assigned_areas: { $in: userAreaIds } }
+          { areaId: { $in: scope } },
+          { assigned_areas: { $in: scope } }
         ]
       }).select("_id").lean();
 
       const userIdsInArea = areaUsers.map((u) => u._id);
 
       query.$or = [
-        { area_id: { $in: userAreaIds } },
+        { area_id: { $in: scope } },
         { created_by: { $in: [...userIdsInArea, req.user._id] } }
       ];
     }

@@ -95,10 +95,52 @@ const getUserAreaIds = (user) => {
   return ids;
 };
 
+/**
+ * Unified Area Resolution Mechanism
+ * - Super Admin / Admin: Returns requested areaId (from header x-area-id or query areaId) as array, or null if 'all' / unselected.
+ * - Manager / Staff: Returns ONLY their assigned area IDs array, ignoring any request overrides.
+ */
+const getAreaScope = (req) => {
+  if (!req || !req.user) return [];
+
+  const user = req.user;
+  const isSuper = user.role === "super_admin" || user.role === "admin";
+
+  if (isSuper) {
+    const requestedArea = req.headers?.["x-area-id"] || req.query?.areaId;
+    if (
+      requestedArea &&
+      requestedArea !== "all" &&
+      requestedArea !== "undefined" &&
+      requestedArea !== "null"
+    ) {
+      return [requestedArea.toString()];
+    }
+    return null; // Null means All Areas (no restriction)
+  }
+
+  // Non-superadmin (Manager / Staff): Strictly enforce assigned area(s)
+  const ids = [];
+  if (user.areaId) {
+    const aId = user.areaId._id ? user.areaId._id.toString() : user.areaId.toString();
+    ids.push(aId);
+  }
+  if (user.assigned_areas && user.assigned_areas.length > 0) {
+    user.assigned_areas.forEach((area) => {
+      const aId = area._id ? area._id.toString() : area.toString();
+      if (!ids.includes(aId)) {
+        ids.push(aId);
+      }
+    });
+  }
+  return ids;
+};
+
 module.exports = {
   protect,
   adminOnly,
   superAdminOnly,
   authorizeRoles,
   getUserAreaIds,
+  getAreaScope,
 };

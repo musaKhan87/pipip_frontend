@@ -220,7 +220,7 @@ const Bike = require("../models/Bike");
 const Booking = require("../models/Booking");
 const Cluster = require("../models/Cluster");
 const { sendOrderAlerts } = require("./notificationController");
-const { getUserAreaIds } = require("../middleware/auth");
+const { getUserAreaIds, getAreaScope } = require("../middleware/auth");
 
 // Helper to check if a booking belongs to a staff/manager's assigned areas
 const checkBookingAreaAccess = async (booking, user) => {
@@ -754,17 +754,18 @@ exports.getAllBookings = async (req, res) => {
       filter.status = req.query.status;
     }
 
-    if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
-      const userAreaIds = getUserAreaIds(req.user);
-      const bikesInAreas = await Bike.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
+    const areaScope = req.user ? getAreaScope(req) : null;
+
+    if (areaScope && areaScope.length > 0) {
+      const bikesInAreas = await Bike.find({ area_id: { $in: areaScope } }).select("_id").lean();
       const bikeIds = bikesInAreas.map((b) => b._id);
-      const clustersInAreas = await Cluster.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
+      const clustersInAreas = await Cluster.find({ area_id: { $in: areaScope } }).select("_id").lean();
       const clusterIds = clustersInAreas.map((c) => c._id);
       filter.$or = [
         { bike_id: { $in: bikeIds } },
         { cluster_id: { $in: clusterIds } }
       ];
-     } else if (req.user && req.user.role === "investor") {
+    } else if (req.user && req.user.role === "investor") {
       const escapeRegex = (text) => text ? text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
       const nameRegex = new RegExp(`^${escapeRegex(req.user.fullName)}$`, 'i');
       const emailRegex = new RegExp(`^${escapeRegex(req.user.email)}$`, 'i');

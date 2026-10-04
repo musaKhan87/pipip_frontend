@@ -45,7 +45,7 @@ const User = require("../models/User");
 // };
 
 
-const { getUserAreaIds } = require("../middleware/auth");
+const { getUserAreaIds, getAreaScope } = require("../middleware/auth");
 
 const createBike = async (req, res) => {
   try {
@@ -81,7 +81,7 @@ const createBike = async (req, res) => {
 };
 
 /**
- * Get All Bikes (with area-based isolation for manager & staff)
+ * Get All Bikes (with area-based isolation for manager & staff & super admin area switcher)
  */
 const getBikes = async (req, res) => {
   try {
@@ -93,16 +93,18 @@ const getBikes = async (req, res) => {
         const token = req.headers.authorization.split(" ")[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         currentUser = await User.findById(decoded.id).populate("assigned_areas").populate("areaId");
+        req.user = currentUser;
       } catch (err) {
         // ignore jwt errors
       }
     }
 
     if (currentUser) {
-      if (currentUser.role === "staff" || currentUser.role === "manager") {
-        const userAreaIds = getUserAreaIds(currentUser);
-        filter.area_id = { $in: userAreaIds };
-      } else if (currentUser.role === "investor") {
+      const scope = getAreaScope(req);
+      if (scope && scope.length > 0) {
+        filter.area_id = { $in: scope };
+      }
+      if (currentUser.role === "investor") {
         const escapeRegex = (text) => text ? text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
         const nameRegex = new RegExp(`^${escapeRegex(currentUser.fullName)}$`, 'i');
         const emailRegex = new RegExp(`^${escapeRegex(currentUser.email)}$`, 'i');

@@ -145,6 +145,8 @@ const Managers = lazy(() => import("./Pages/admin/Managers"));
 const InvestorOrders = lazy(() => import("./Pages/admin/InvestorOrders"));
 const PricingPage = lazy(() => import("./Pages/PricingPage"));
 
+import { AreaProvider } from "./lib/AreaContext";
+
 // Lightweight Suspense Loader
 const PageLoader = () => (
   <div className="min-h-[60vh] w-full flex items-center justify-center">
@@ -180,7 +182,8 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
+        <AreaProvider>
+          <BrowserRouter>
           <ScrollToTop />
           <Suspense fallback={<PageLoader />}>
             <Routes>
@@ -218,8 +221,9 @@ const App = () => {
           </Suspense>
           <AnalyticsTracker />
         </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
+      </AreaProvider>
+    </AuthProvider>
+  </QueryClientProvider>
   );
 };
 

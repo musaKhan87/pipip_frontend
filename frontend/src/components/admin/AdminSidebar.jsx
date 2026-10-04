@@ -23,6 +23,7 @@ import {
 import { Button } from "../ui/button";
 import { cn } from "../../lib/util";
 import { useAuth } from "../../lib/AuthProvider";
+import { useAdminArea } from "../../lib/AreaContext";
 
 const allMenuItems = [
   {
@@ -118,6 +119,7 @@ const investorMenuItems = [
 export default function AdminSidebar({ unreadCount }) {
   const [collapsed, setCollapsed] = useState(false);
   const { signOut, user, role } = useAuth();
+  const { selectedAreaObj, selectedAreaId } = useAdminArea();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -140,6 +142,13 @@ export default function AdminSidebar({ unreadCount }) {
   }
 
   const roleTitle = role === "super_admin" ? "Super Admin" : role === "manager" ? "Area Manager" : role;
+
+  const currentAreaLabel =
+    (role === "super_admin" || role === "admin")
+      ? selectedAreaId === "all"
+        ? "All Areas"
+        : selectedAreaObj?.name || "Selected Area"
+      : user?.areaId?.name || user?.assigned_areas?.[0]?.name || "Assigned Area";
 
   return (
     <>
@@ -186,11 +195,9 @@ export default function AdminSidebar({ unreadCount }) {
                 <p className="text-xs text-muted-foreground capitalize">
                   {roleTitle} Panel
                 </p>
-                {user?.areaId?.name && (
-                  <p className="text-[11px] font-semibold text-amber-500 truncate max-w-[120px]">
-                    📍 {user.areaId.name}
-                  </p>
-                )}
+                <p className="text-[11px] font-semibold text-amber-500 truncate max-w-[120px]">
+                  📍 {currentAreaLabel}
+                </p>
               </div>
             </div>
           </div>

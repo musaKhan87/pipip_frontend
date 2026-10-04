@@ -4,7 +4,7 @@ const Cluster = require("../models/Cluster");
 const Expense = require("../models/Expense");
 const User = require("../models/User");
 const mongoose = require("mongoose");
-const { getUserAreaIds } = require("../middleware/auth");
+const { getUserAreaIds, getAreaScope } = require("../middleware/auth");
 const {
   startOfDay,
   endOfDay,
@@ -50,23 +50,36 @@ exports.getBookingStats = async (req, res) => {
       query.start_datetime = { $gte: start, $lte: end };
     }
 
-    // 3. Area Manager Data Isolation
-    let areaBikeIds = [];
-    let areaClusterIds = [];
-    let userAreaIds = null;
+    // 3. Unified Area Scope (Super Admin Selector & Manager/Staff Access Control)
+    const scope = getAreaScope(req);
+    let bikeFilter = {};
+    let expenseFilter = {};
 
-    if (req.user && req.user.role === "manager") {
-      userAreaIds = getUserAreaIds(req.user);
+    if (scope && scope.length > 0) {
+      const areaBikes = await Bike.find({ area_id: { $in: scope } }).select("_id").lean();
+      const areaBikeIds = areaBikes.map((b) => b._id);
 
-      const areaBikes = await Bike.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
-      areaBikeIds = areaBikes.map((b) => b._id);
-
-      const areaClusters = await Cluster.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
-      areaClusterIds = areaClusters.map((c) => c._id);
+      const areaClusters = await Cluster.find({ area_id: { $in: scope } }).select("_id").lean();
+      const areaClusterIds = areaClusters.map((c) => c._id);
 
       query.$or = [
         { bike_id: { $in: areaBikeIds } },
         { cluster_id: { $in: areaClusterIds } }
+      ];
+
+      bikeFilter.area_id = { $in: scope };
+
+      const areaUsers = await User.find({
+        $or: [
+          { areaId: { $in: scope } },
+          { assigned_areas: { $in: scope } }
+        ]
+      }).select("_id").lean();
+      const userIdsInArea = areaUsers.map((u) => u._id);
+
+      expenseFilter.$or = [
+        { area_id: { $in: scope } },
+        { created_by: { $in: [...userIdsInArea, req.user._id] } }
       ];
     }
 
@@ -74,30 +87,9 @@ exports.getBookingStats = async (req, res) => {
       .select("status total_amount bike_id cluster_id")
       .lean();
 
-    // 4. Area-specific bike metrics
-    let bikeFilter = {};
-    if (req.user && req.user.role === "manager" && userAreaIds) {
-      bikeFilter.area_id = { $in: userAreaIds };
-    }
     const totalBikesCount = await Bike.countDocuments(bikeFilter);
     const availableBikesCount = await Bike.countDocuments({ ...bikeFilter, status: "available" });
 
-    // 5. Area-specific expense metrics
-    let expenseFilter = {};
-    if (req.user && req.user.role === "manager" && userAreaIds) {
-      const areaUsers = await User.find({
-        $or: [
-          { areaId: { $in: userAreaIds } },
-          { assigned_areas: { $in: userAreaIds } }
-        ]
-      }).select("_id").lean();
-      const userIdsInArea = areaUsers.map((u) => u._id);
-
-      expenseFilter.$or = [
-        { area_id: { $in: userAreaIds } },
-        { created_by: { $in: [...userIdsInArea, req.user._id] } }
-      ];
-    }
     const expenses = await Expense.find(expenseFilter).select("expense_amount").lean();
     const totalExpensesAmount = expenses.reduce((sum, e) => sum + (e.expense_amount || 0), 0);
 
@@ -183,18 +175,23 @@ exports.getBikeRevenueReport = async (req, res) => {
       matchQuery.start_datetime = {};
       
       if (fromDate) {
-        // Sets time to 00:00:00.000 local time equivalent
         const start = new Date(fromDate);
         start.setHours(0, 0, 0, 0);
         matchQuery.start_datetime.$gte = start;
       }
       
       if (toDate) {
-        // Sets time to 23:59:59.999 local time equivalent
         const end = new Date(toDate);
         end.setHours(23, 59, 59, 999);
         matchQuery.start_datetime.$lte = end;
       }
+    }
+
+    const scope = getAreaScope(req);
+    if (scope && scope.length > 0) {
+      const areaBikes = await Bike.find({ area_id: { $in: scope } }).select("_id").lean();
+      const areaBikeIds = areaBikes.map((b) => b._id);
+      matchQuery.bike_id = { $in: areaBikeIds };
     }
 
     const report = await Booking.aggregate([
@@ -240,16 +237,18 @@ exports.getIdleBikesReport = async (req, res) => {
   try {
     const thirtyDaysAgo = subDays(new Date(), 30);
 
-    // Find IDs of bikes that HAVE been booked recently
     const activeBookingBikeIds = await Booking.distinct("bike_id", {
       start_datetime: { $gte: thirtyDaysAgo },
       status: { $in: ["confirmed", "active", "completed"] },
     });
 
-    // Find bikes that ARE NOT in that ID list
-    const idleBikes = await Bike.find({
-      _id: { $nin: activeBookingBikeIds },
-    });
+    const filter = { _id: { $nin: activeBookingBikeIds } };
+    const scope = getAreaScope(req);
+    if (scope && scope.length > 0) {
+      filter.area_id = { $in: scope };
+    }
+
+    const idleBikes = await Bike.find(filter);
 
     res.json(idleBikes);
   } catch (error) {
@@ -263,12 +262,21 @@ exports.getDailyRevenueReport = async (req, res) => {
     const days = parseInt(req.query.days) || 30;
     const fromDate = subDays(new Date(), days);
 
+    const matchQuery = {
+      createdAt: { $gte: fromDate },
+      status: "completed",
+    };
+
+    const scope = getAreaScope(req);
+    if (scope && scope.length > 0) {
+      const areaBikes = await Bike.find({ area_id: { $in: scope } }).select("_id").lean();
+      const areaBikeIds = areaBikes.map((b) => b._id);
+      matchQuery.bike_id = { $in: areaBikeIds };
+    }
+
     const report = await Booking.aggregate([
       {
-        $match: {
-          createdAt: { $gte: fromDate },
-          status: "completed",
-        },
+        $match: matchQuery,
       },
       {
         $group: {
@@ -348,21 +356,19 @@ exports.getEndingSoon = async (req, res) => {
       },
     };
 
-    // Area Manager / Staff Isolation
-    if (req.user && (req.user.role === "manager" || req.user.role === "staff")) {
-      const userAreaIds = getUserAreaIds(req.user);
-      if (userAreaIds && userAreaIds.length > 0) {
-        const areaBikes = await Bike.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
-        const areaBikeIds = areaBikes.map((b) => b._id);
+    // Unified Area Scope Isolation (Super Admin Area Switcher + Manager/Staff Access)
+    const scope = getAreaScope(req);
+    if (scope && scope.length > 0) {
+      const areaBikes = await Bike.find({ area_id: { $in: scope } }).select("_id").lean();
+      const areaBikeIds = areaBikes.map((b) => b._id);
 
-        const areaClusters = await Cluster.find({ area_id: { $in: userAreaIds } }).select("_id").lean();
-        const areaClusterIds = areaClusters.map((c) => c._id);
+      const areaClusters = await Cluster.find({ area_id: { $in: scope } }).select("_id").lean();
+      const areaClusterIds = areaClusters.map((c) => c._id);
 
-        query.$or = [
-          { bike_id: { $in: areaBikeIds } },
-          { cluster_id: { $in: areaClusterIds } }
-        ];
-      }
+      query.$or = [
+        { bike_id: { $in: areaBikeIds } },
+        { cluster_id: { $in: areaClusterIds } }
+      ];
     }
 
     // Find active bookings ending soon with populated area details
@@ -424,10 +430,19 @@ exports.getRecentlyExpired = async (req, res) => {
   try {
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    const expired = await Booking.find({
+    const query = {
       end_datetime: { $gte: yesterday, $lt: new Date() },
       status: { $in: ['completed', 'active'] } // Showing recently ended or overdue
-    })
+    };
+
+    const scope = getAreaScope(req);
+    if (scope && scope.length > 0) {
+      const areaBikes = await Bike.find({ area_id: { $in: scope } }).select("_id").lean();
+      const areaBikeIds = areaBikes.map((b) => b._id);
+      query.bike_id = { $in: areaBikeIds };
+    }
+
+    const expired = await Booking.find(query)
     .populate('bike_id', 'model number_plate')
     .populate('customer_id', 'name phone')
     .sort({ end_datetime: -1 });

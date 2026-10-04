@@ -1,7 +1,7 @@
 const Cluster = require("../models/Cluster");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const { getUserAreaIds } = require("../middleware/auth");
+const { getUserAreaIds, getAreaScope } = require("../middleware/auth");
 
 // CREATE cluster
 exports.createCluster = async (req, res) => {
@@ -35,14 +35,17 @@ exports.getClusters = async (req, res) => {
         const token = req.headers.authorization.split(" ")[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         currentUser = await User.findById(decoded.id).populate("assigned_areas").populate("areaId");
+        req.user = currentUser;
       } catch (err) {
         // ignore jwt errors
       }
     }
 
-    if (currentUser && (currentUser.role === "staff" || currentUser.role === "manager")) {
-      const userAreaIds = getUserAreaIds(currentUser);
-      filter.area_id = { $in: userAreaIds };
+    if (currentUser) {
+      const scope = getAreaScope(req);
+      if (scope && scope.length > 0) {
+        filter.area_id = { $in: scope };
+      }
     }
 
     const clusters = await Cluster.find(filter)

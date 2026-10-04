@@ -12,6 +12,10 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const selectedArea = localStorage.getItem("pipip_selected_area");
+  if (selectedArea && selectedArea !== "all") {
+    config.headers["x-area-id"] = selectedArea;
+  }
   return config;
 });
 
