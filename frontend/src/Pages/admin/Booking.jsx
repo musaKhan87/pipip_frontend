@@ -1136,6 +1136,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import html2canvas from "html2canvas";
 
+
 const statusColors = {
   pending:
     "bg-yellow-500/15 text-yellow-700 border-yellow-300 dark:text-yellow-400",
@@ -1372,7 +1373,7 @@ export default function Bookings() {
   const [startRideData, setStartRideData] = useState({ fuel_out_liters: "" });
 
   // State to hold the actively targeted booking data for the background downloader
- 
+
 
   const { data: bookings, isLoading } = useBookings(
     activeTab !== "all" ? { status: activeTab } : undefined,
@@ -1430,20 +1431,20 @@ export default function Bookings() {
   //   saveAs(fileData, `Bookings_${Date.now()}.xlsx`);
   // };
 
-const handleExport = () => {
+  const handleExport = () => {
     if (!bookings || bookings.length === 0) {
       toast.error("No data to export");
       return;
     }
 
-    
+
 
     const exportData = bookings.map((b) => {
-       const targetBikeId = b.bike_id?._id || b.bike_id;
-     const matchingBike = bikes?.find((bike) => bike._id === targetBikeId);
+      const targetBikeId = b.bike_id?._id || b.bike_id;
+      const matchingBike = bikes?.find((bike) => bike._id === targetBikeId);
 
-     // 2️⃣ EXTRACT THE OWNER AND BACKUPS Safely
-     const bikeOwner = matchingBike?.bike_owner || b.bikes?.bike_owner || "";
+      // 2️⃣ EXTRACT THE OWNER AND BACKUPS Safely
+      const bikeOwner = matchingBike?.bike_owner || b.bikes?.bike_owner || "";
 
       return {
         Booking_ID: b._id,
@@ -1482,7 +1483,7 @@ const handleExport = () => {
         Notes: b.notes,
         Remarks: b.remarks,
       };
-    } );
+    });
 
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -1504,7 +1505,7 @@ const handleExport = () => {
 
   const { data: bikes } = useBikes();
 
-const [assignDialog, setAssignDialog] = useState(null);
+  const [assignDialog, setAssignDialog] = useState(null);
   const [assignBikeId, setAssignBikeId] = useState("");
   const assignBikeMutation = useAssignBike();
   const handleAssignBike = async () => {
@@ -1554,10 +1555,10 @@ const [assignDialog, setAssignDialog] = useState(null);
   const updateCustomerMutation = useUpdateCustomer();
 
 
- const [downloadingBooking, setDownloadingBooking] = useState(null);
- const [isGeneratingBill, setIsGeneratingBill] = useState(false); // 👈 NEW LOADING STATE
+  const [downloadingBooking, setDownloadingBooking] = useState(null);
+  const [isGeneratingBill, setIsGeneratingBill] = useState(false); // 👈 NEW LOADING STATE
 
- const [fetchingBillId, setFetchingBillId] = useState(null);
+  const [fetchingBillId, setFetchingBillId] = useState(null);
 
   // ====== NEW INVOICE STATES & HANDLER ======
   const [showInvoice, setShowInvoice] = useState(false);
@@ -1844,7 +1845,7 @@ const [assignDialog, setAssignDialog] = useState(null);
           iframe.parentNode.removeChild(iframe);
         }
         setDownloadingBooking(null);
-        setIsGeneratingBill(false); 
+        setIsGeneratingBill(false);
       }
     };
 
@@ -2270,12 +2271,12 @@ const [assignDialog, setAssignDialog] = useState(null);
       // Call API
 
       const result = await checkAvailability(
-  activeData.bike_id,
-  start,
-  end,
-  false, // not a cluster booking
-  editingBooking // bookingId
-);
+        activeData.bike_id,
+        start,
+        end,
+        false, // not a cluster booking
+        editingBooking // bookingId
+      );
 
       // const result = await checkAvailability(
       //   activeData.bike_id,
@@ -2475,7 +2476,7 @@ const [assignDialog, setAssignDialog] = useState(null);
     runCheck();
   }, [extendData.new_end_datetime]);
 
-useEffect(() => {
+  useEffect(() => {
     const searchVal = searchParams.get("search");
     if (searchVal) {
       setSearchQuery(searchVal);
@@ -2514,7 +2515,7 @@ useEffect(() => {
   const [currentPage, setCurrentPage] = useState(1);
   const BOOKINGS_PER_PAGE = 20;
 
-  
+
 
   useEffect(() => {
     setCurrentPage(1);
@@ -3385,7 +3386,7 @@ useEffect(() => {
         id: editingBooking,
         data: {
 
-            bike_id: editFormData.bike_id,
+          bike_id: editFormData.bike_id,
 
 
           start_datetime: start.toISOString(),
@@ -3469,15 +3470,15 @@ useEffect(() => {
     // },
     onError: (error) => {
 
-  console.log("Extend Error:", error.response?.data);
+      console.log("Extend Error:", error.response?.data);
 
-  toast.error(
-    error.response?.data?.message ||
-    JSON.stringify(error.response?.data) ||
-    "Failed to extend rental"
-  );
+      toast.error(
+        error.response?.data?.message ||
+        JSON.stringify(error.response?.data) ||
+        "Failed to extend rental"
+      );
 
-},
+    },
   });
 
   // const handleExtendRental = async () => {
@@ -3612,12 +3613,12 @@ useEffect(() => {
 
 
       const result = await checkAvailability(
-  bikeId,
-  oldEnd,
-  newEnd,
-  false, // not a cluster booking
-  extendDialog._id // bookingId
-);
+        bikeId,
+        oldEnd,
+        newEnd,
+        false, // not a cluster booking
+        extendDialog._id // bookingId
+      );
 
       // ❌ Conflict
 
@@ -3667,17 +3668,17 @@ useEffect(() => {
   // };
 
   const handleOpenExtend = (booking) => {
-  console.log("Booking:", booking);
-  console.log("booking.bike_id:", booking.bike_id);
-  console.log("booking.bikes:", booking.bikes);
+    console.log("Booking:", booking);
+    console.log("booking.bike_id:", booking.bike_id);
+    console.log("booking.bikes:", booking.bikes);
 
-  setExtendDialog(booking);
+    setExtendDialog(booking);
 
-  setExtendData({
-    new_end_datetime: toLocalISO(booking.end_datetime),
-    extra_amount: "",
-  });
-};
+    setExtendData({
+      new_end_datetime: toLocalISO(booking.end_datetime),
+      extra_amount: "",
+    });
+  };
 
   const handleExtraDocsChange = (e) => {
     const files = Array.from(e.target.files);
@@ -3733,7 +3734,7 @@ useEffect(() => {
           Vehicle & Rental
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label>Select Bike *</Label>
             <Select
               value={data.bike_id}
@@ -3801,6 +3802,67 @@ useEffect(() => {
                 </ScrollArea>
               </SelectContent>
             </Select>
+          </div> */}
+          <div className="space-y-2">
+            <Label>Select Bike *</Label>
+
+            {/* Search outside Select */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+
+              <Input
+                type="text"
+                placeholder="Search bike by model or number..."
+                value={bikeSearch}
+                onChange={(e) => setBikeSearch(e.target.value)}
+                className="pl-9 h-11"
+                autoComplete="off"
+              />
+            </div>
+
+            <Select
+              value={data.bike_id}
+              onValueChange={(value) => {
+                setData({
+                  ...data,
+                  bike_id: value,
+                });
+
+                setHasEditedFields(true);
+              }}
+            >
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder="Choose a bike" />
+              </SelectTrigger>
+
+              <SelectContent className="max-h-[300px]">
+                {filteredBikes.length > 0 ? (
+                  filteredBikes.map((bike) => (
+                    <SelectItem
+                      key={bike._id}
+                      value={bike._id}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {bike.model}
+                        </span>
+
+                        <span className="text-xs text-muted-foreground">
+                          {bike.number_plate}
+                          {bike.bike_name
+                            ? ` (${bike.bike_name})`
+                            : ""}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="py-6 text-center text-sm text-muted-foreground">
+                    No bikes found
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Rental Type *</Label>
@@ -3858,11 +3920,10 @@ useEffect(() => {
 
         {availabilityMessage && (
           <div
-            className={`p-4 rounded-xl flex items-center gap-3 text-sm mt-2 border ${
-              isAvailable
-                ? "bg-green-500/10 text-green-500 border-green-500/20"
-                : "bg-red-500/10 text-red-500 border-red-500/20"
-            }`}
+            className={`p-4 rounded-xl flex items-center gap-3 text-sm mt-2 border ${isAvailable
+              ? "bg-green-500/10 text-green-500 border-green-500/20"
+              : "bg-red-500/10 text-red-500 border-red-500/20"
+              }`}
           >
             {isAvailable ? (
               <CheckCircle2 className="w-5 h-5" />
@@ -4655,7 +4716,7 @@ useEffect(() => {
       </Dialog>
 
 
-          <Dialog
+      <Dialog
         open={!!assignDialog}
         onOpenChange={(open) => !open && setAssignDialog(null)}
       >
@@ -4731,14 +4792,14 @@ useEffect(() => {
         </div> */}
 
         <div className="relative w-full max-w-md touch-action-manipulation">
-  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-  <Input
-    placeholder="Search by customer, bike, plate..."
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-    className="pl-10 pointer-events-auto"
-  />
-</div>
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Search by customer, bike, plate..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pointer-events-auto"
+          />
+        </div>
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v)}
@@ -4796,13 +4857,12 @@ useEffect(() => {
                 transition={{ delay: Math.min(index, 6) * 0.02, duration: 0.2 }}
               >
                 <Card
-                  className={`group overflow-hidden border transition-all duration-200 hover:shadow-lg ${
-                    isOnline
-                      ? "border-l-4 border-l-blue-500 border-border"
-                      : isPartner
-                        ? "border-l-4 border-l-purple-500 border-border"
-                        : "border-l-4 border-l-orange-500 border-border"
-                  }`}
+                  className={`group overflow-hidden border transition-all duration-200 hover:shadow-lg ${isOnline
+                    ? "border-l-4 border-l-blue-500 border-border"
+                    : isPartner
+                      ? "border-l-4 border-l-purple-500 border-border"
+                      : "border-l-4 border-l-orange-500 border-border"
+                    }`}
                 >
                   <CardContent className="p-0">
                     <div className="flex items-center justify-between px-4 py-2 bg-muted/30 border-b border-border/50">
@@ -5021,10 +5081,10 @@ useEffect(() => {
                           </Button>
 
                           {/* ================= ✅ DIRECT EXPORT LINK INITIATION BUTTON ================= */}
-  
-  {/* ========================================================================= */}
 
-  {/* <Button
+                          {/* ========================================================================= */}
+
+                          {/* <Button
     size="sm"
     variant="outline"
     disabled={isGeneratingBill} // Disables clicking while downloading
@@ -5044,7 +5104,7 @@ useEffect(() => {
     )}
   </Button> */}
 
-  <Button
+                          <Button
                             size="sm"
                             variant="outline"
                             disabled={isGeneratingBill} // Disables clicking while downloading
@@ -5052,7 +5112,7 @@ useEffect(() => {
                             className="text-emerald-600 hover:bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:hover:bg-emerald-950/30 dark:border-emerald-800"
                           >
                             {isGeneratingBill &&
-                            fetchingBillId === booking._id ? ( // 👈 Updated comparison check
+                              fetchingBillId === booking._id ? ( // 👈 Updated comparison check
                               <>
                                 <span className="animate-spin mr-1 inline-block w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full dark:border-emerald-400"></span>
                                 Saving...
@@ -5068,15 +5128,15 @@ useEffect(() => {
                           {(booking.status === "active" ||
                             booking.status === "confirmed" ||
                             booking.status === "pending") && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditBooking(booking)}
-                              className="text-blue-600 hover:bg-blue-50 border-blue-200 dark:hover:bg-blue-500/10"
-                            >
-                              <Edit className="w-4 h-4 mr-1" /> Edit
-                            </Button>
-                          )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditBooking(booking)}
+                                className="text-blue-600 hover:bg-blue-50 border-blue-200 dark:hover:bg-blue-500/10"
+                              >
+                                <Edit className="w-4 h-4 mr-1" /> Edit
+                              </Button>
+                            )}
 
                           {(booking.status === "active" ||
                             booking.status === "confirmed" ||
@@ -5091,7 +5151,7 @@ useEffect(() => {
                               </Button>
                             )}
 
-                            
+
 
                           {booking.payment_status !== "paid" &&
                             booking.status !== "cancelled" && (
@@ -5109,7 +5169,7 @@ useEffect(() => {
                               </Button>
                             )}
 
-                            {!booking.bike_id && booking.cluster_id && (
+                          {!booking.bike_id && booking.cluster_id && (
                             <Button
                               size="sm"
                               variant="default"
@@ -5452,11 +5512,10 @@ useEffect(() => {
               {extendMessage && (
                 <div
                   className={`text-sm px-3 py-2 rounded-md border
-      ${
-        isExtendAvailable
-          ? "bg-green-500/10 border-green-500 text-green-400"
-          : "bg-red-500/10 border-red-500 text-red-400"
-      }
+      ${isExtendAvailable
+                      ? "bg-green-500/10 border-green-500 text-green-400"
+                      : "bg-red-500/10 border-red-500 text-red-400"
+                    }
     `}
                 >
                   {extendMessage}
@@ -5478,12 +5537,12 @@ useEffect(() => {
                 Extend Rental
               </Button> */}
               <Button
-  className="bg-blue-600 hover:bg-blue-700"
-  onClick={handleExtendRental}
-  disabled={extendBooking.isPending}
->
-  {extendBooking.isPending ? "Extending..." : "Extend Rental"}
-</Button>
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={handleExtendRental}
+                disabled={extendBooking.isPending}
+              >
+                {extendBooking.isPending ? "Extending..." : "Extend Rental"}
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -5504,25 +5563,25 @@ useEffect(() => {
             const targetBikeId =
               downloadingBooking.bike_id?._id || downloadingBooking.bike_id;
             const matchingBike = bikes?.find((b) => b._id === targetBikeId);
-          //  const rentalBikeModel =
-             
-          //    matchingBike?.model ||
-          //    downloadingBooking.bike_id?.model ||
-          //    "Scooter";
-             const rentalBikeModel =
+            //  const rentalBikeModel =
+
+            //    matchingBike?.model ||
+            //    downloadingBooking.bike_id?.model ||
+            //    "Scooter";
+            const rentalBikeModel =
               matchingBike?.model ||
               downloadingBooking.bike_id?.model ||
               downloadingBooking.cluster_id?.name ||
-              "Scooter";   
+              "Scooter";
             // const issuedTimestamp = downloadingBooking.createdAt
             //   ? new Date(downloadingBooking.createdAt)
             //   : new Date();
-//  Updated Correct Line (Checks alternative date paths, falls back to today)
-const issuedTimestamp = downloadingBooking.createdAt 
-  ? new Date(downloadingBooking.createdAt) 
-  : downloadingBooking.start_datetime 
-    ? new Date(downloadingBooking.start_datetime) 
-    : new Date();
+            //  Updated Correct Line (Checks alternative date paths, falls back to today)
+            const issuedTimestamp = downloadingBooking.createdAt
+              ? new Date(downloadingBooking.createdAt)
+              : downloadingBooking.start_datetime
+                ? new Date(downloadingBooking.start_datetime)
+                : new Date();
             return (
               <div
                 id="direct-bill-hidden-node"
@@ -5623,26 +5682,26 @@ const issuedTimestamp = downloadingBooking.createdAt
                         <p className="font-bold">
                           {downloadingBooking.start_datetime
                             ? new Date(
-                                downloadingBooking.start_datetime,
-                              ).toLocaleString("en-IN", {
-                                month: "short",
-                                day: "2-digit",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
+                              downloadingBooking.start_datetime,
+                            ).toLocaleString("en-IN", {
+                              month: "short",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
                             : "-"}
                         </p>
                         <p className="text-[10px]">
                           to{" "}
                           {downloadingBooking.end_datetime
                             ? new Date(
-                                downloadingBooking.end_datetime,
-                              ).toLocaleString("en-IN", {
-                                month: "short",
-                                day: "2-digit",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
+                              downloadingBooking.end_datetime,
+                            ).toLocaleString("en-IN", {
+                              month: "short",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
                             : "-"}
                         </p>
                       </div>
