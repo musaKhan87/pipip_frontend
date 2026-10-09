@@ -31,7 +31,7 @@ const allMenuItems = [
     icon: LayoutDashboard,
     label: "Dashboard",
     end: true,
-    roles: ["super_admin", "admin", "manager"],
+    roles: ["super_admin", "admin", "manager", "staff"],
   },
   {
     path: "/admin/panel/bikes",

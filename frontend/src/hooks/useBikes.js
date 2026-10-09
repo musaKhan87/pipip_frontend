@@ -110,17 +110,14 @@ import axios from "axios";
 const API_URL = "https://pipip-backend-eid3.onrender.com/api/bikes";
 
 /* ================= GET ALL BIKES ================= */
-export function useBikes() {
+export function useBikes(filters = {}, options = {}) {
   return useQuery({
-    queryKey: ["bikes"],
+    queryKey: ["bikes", filters],
     queryFn: async () => {
-      // const res = await fetch(API_URL);
-      // if (!res.ok) throw new Error("Failed to fetch bikes");
-      // return res.json();
-
-      const { data } = await axios.get(API_URL);
+      const { data } = await axios.get(API_URL, { params: filters });
       return data;
     },
+    ...options,
   });
 }
 

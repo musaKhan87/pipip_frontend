@@ -155,7 +155,7 @@ const API_URL = "https://pipip-backend-eid3.onrender.com/api/bookings";
 /* =========================
    GET ALL BOOKINGS
 ========================= */
-export function useBookings(status = "all") {
+export function useBookings(status = "all", options = {}) {
   return useQuery({
     queryKey: ["bookings", status],
     queryFn: async () => {
@@ -164,6 +164,7 @@ export function useBookings(status = "all") {
       });
       return data;
     },
+    ...options,
   });
 }
 

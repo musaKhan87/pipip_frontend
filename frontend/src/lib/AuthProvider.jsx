@@ -125,7 +125,7 @@ export function AuthProvider({ children }) {
     isInvestor,
     isAdminOrStaff: isSuperAdmin || isManager || isStaff,
     hasPanelAccess: isSuperAdmin || isManager || isStaff || isInvestor,
-    hasDashboardAccess: isSuperAdmin || isManager,
+    hasDashboardAccess: isSuperAdmin || isManager || isStaff,
     hasReportsAccess: isSuperAdmin || isManager,
     hasSettingsAccess: isSuperAdmin,
     hasManagerAccess: isSuperAdmin,

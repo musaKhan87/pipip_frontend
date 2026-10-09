@@ -270,9 +270,6 @@ export default function AdminLayout() {
 
   // Staff route restrictions
   if (userRole === "staff") {
-    if (currentPath === "/admin/panel") {
-      return <Navigate to="/admin/panel/bikes" replace />;
-    }
     const staffRestrictedPaths = [
       "/admin/panel/reports",
       "/admin/panel/settings",

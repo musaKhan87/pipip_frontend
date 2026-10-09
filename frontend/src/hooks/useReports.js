@@ -50,7 +50,7 @@ api.interceptors.request.use((config) => {
 //   });
 // }
 
-export function useBookingStats(period = "all", startDate = null, endDate = null) {
+export function useBookingStats(period = "all", startDate = null, endDate = null, options = {}) {
   return useQuery({
     queryKey: ["booking-stats", period, startDate, endDate],
     queryFn: async () => {
@@ -65,6 +65,7 @@ export function useBookingStats(period = "all", startDate = null, endDate = null
       const { data } = await api.get(`/reports/stats`, { params });
       return data;
     },
+    ...options,
   });
 }
 
@@ -86,7 +87,7 @@ export function useBookingStats(period = "all", startDate = null, endDate = null
 //     }
 //   });
 // }
-export function useBikeRevenueReport(fromDate, toDate) {
+export function useBikeRevenueReport(fromDate, toDate, options = {}) {
   return useQuery({
     queryKey: ["bike-revenue", fromDate, toDate],
     queryFn: async () => {
@@ -99,32 +100,35 @@ export function useBikeRevenueReport(fromDate, toDate) {
       });
       return data;
     },
+    ...options,
   });
 }
 
 /**
  * Hook: Find bikes with no bookings in the last 30 days
  */
-export function useIdleBikesReport() {
+export function useIdleBikesReport(options = {}) {
   return useQuery({
     queryKey: ['idle-bikes'],
     queryFn: async () => {
       const { data } = await api.get(`/reports/idle-bikes`);
       return data;
-    }
+    },
+    ...options,
   });
 }
 
 /**
  * Hook: Get daily revenue for charts
  */
-export function useDailyRevenueReport(days = 30) {
+export function useDailyRevenueReport(days = 30, options = {}) {
   return useQuery({
     queryKey: ['daily-revenue', days],
     queryFn: async () => {
       const { data } = await api.get(`/reports/daily-revenue`, { params: { days } });
       return data;
-    }
+    },
+    ...options,
   });
 }
 

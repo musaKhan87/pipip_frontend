@@ -57,14 +57,162 @@ export default function Dashboard() {
   const [selectedFleet, setSelectedFleet] = useState(null);
   const [fleetSearch, setFleetSearch] = useState("");
 
-  // Data fetching
-  const { data: stats } = useBookingStats("month");
-  const { data: todayStats } = useBookingStats("today");
-  const { data: recentBookings } = useBookings();
-  const { data: bikes } = useBikes();
-  const { data: idleBikes } = useIdleBikesReport();
-  const { data: dailyRevenue } = useDailyRevenueReport(14);
+  const isStaff = role === "staff";
+
+  // Data fetching (disabled for staff to prevent 403 errors & unwanted requests)
+  const { data: stats } = useBookingStats("month", null, null, { enabled: !isStaff });
+  const { data: todayStats } = useBookingStats("today", null, null, { enabled: !isStaff });
+  const { data: recentBookings } = useBookings("all", { enabled: !isStaff });
+  const { data: bikes } = useBikes({}, { enabled: !isStaff });
+  const { data: idleBikes } = useIdleBikesReport({ enabled: !isStaff });
+  const { data: dailyRevenue } = useDailyRevenueReport(14, { enabled: !isStaff });
   const { data: expiringBookings } = useActiveBookingsEndingSoon();
+
+  // Special Staff Dashboard View: Only show "Bookings Ending Soon" for staff's assigned area
+  if (isStaff) {
+    const staffAreaName = user?.areaId?.name || user?.assigned_areas?.[0]?.name;
+
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-display text-gradient-sunset">
+                Dashboard
+              </h1>
+              {staffAreaName && (
+                <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs py-1 px-2.5 rounded-full font-medium">
+                  📍 {staffAreaName} Area
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground mt-1">
+              Showing active bookings ending soon for {staffAreaName || "assigned area"}.
+            </p>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {format(new Date(), "EEEE, MMMM d, yyyy")}
+          </p>
+        </div>
+
+        {/* Bookings Ending Soon Card for Staff */}
+        <Card className="bg-orange-950/20 border-orange-500/30 shadow-lg">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
+              <motion.div
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{
+                  duration: 0.5,
+                  repeat: Infinity,
+                  repeatDelay: 2,
+                }}
+              >
+                <Bell className="w-5 h-5" />
+              </motion.div>
+              Bookings Ending Soon {staffAreaName ? `(${staffAreaName})` : ""}
+              <Badge className="bg-orange-500 text-white ml-2">
+                {expiringBookings?.length || 0}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {expiringBookings && expiringBookings.length > 0 ? (
+              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                {expiringBookings.map((booking, index) => {
+                  const hours = Math.floor(booking.minutesRemaining / 60);
+                  const mins = booking.minutesRemaining % 60;
+                  const timeDisplay =
+                    hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+
+                  return (
+                    <motion.div
+                      key={booking._id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className={`flex items-center justify-between p-3.5 rounded-lg border shadow-sm ${
+                        booking.minutesRemaining <= 30
+                          ? "bg-red-900/20 border-red-200"
+                          : "bg-gray-800 border-orange-100"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`p-2.5 rounded-lg ${
+                            booking.minutesRemaining <= 30
+                              ? "bg-red-200"
+                              : "bg-orange-200"
+                          }`}
+                        >
+                          <Timer
+                            className={`w-5 h-5 ${
+                              booking.minutesRemaining <= 30
+                                ? "text-red-600"
+                                : "text-orange-600"
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">
+                            {booking.bike_id?.model} — {booking.bike_id?.number_plate}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Customer: {booking.customer_id?.name || "N/A"}
+                          </p>
+                          {(booking.areaName || booking.bike_id?.area_id?.name || booking.cluster_id?.area_id?.name) && (
+                            <p className="text-xs text-primary font-medium flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3 text-primary inline" />
+                              Area: {booking.areaName || booking.bike_id?.area_id?.name || booking.cluster_id?.area_id?.name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p
+                            className={`font-bold ${
+                              booking.minutesRemaining <= 30
+                                ? "text-red-600"
+                                : "text-orange-600"
+                            }`}
+                          >
+                            {timeDisplay} left
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Ends: {format(new Date(booking.end_datetime), "h:mm a")}
+                          </p>
+                        </div>
+                        {booking.customer_id?.phone && (
+                          <a
+                            href={`tel:${booking.customer_id.phone}`}
+                            className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors shadow-md"
+                            title={`Call ${booking.customer_id?.name}`}
+                          >
+                            <Phone className="w-4 h-4" />
+                          </a>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Timer className="w-12 h-12 text-muted-foreground mb-3 opacity-40" />
+                <p className="text-lg font-medium text-foreground">
+                  No Bookings Ending Soon
+                </p>
+                <p className="text-sm text-muted-foreground max-w-sm mt-1">
+                  All active rentals in {staffAreaName || "your area"} are running on schedule.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Fleet logic
   // const availableBikes = bikes?.filter(b => b.status === 'available').length || 0;
