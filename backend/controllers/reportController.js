@@ -359,10 +359,15 @@ exports.getEndingSoon = async (req, res) => {
     // Unified Area Scope Isolation (Super Admin Area Switcher + Manager/Staff Access)
     const scope = getAreaScope(req);
     if (scope && scope.length > 0) {
-      const areaBikes = await Bike.find({ area_id: { $in: scope } }).select("_id").lean();
+      const scopeObjectIds = scope
+        .filter((id) => mongoose.Types.ObjectId.isValid(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
+      const scopeFilter = { $in: [...scope, ...scopeObjectIds] };
+
+      const areaBikes = await Bike.find({ area_id: scopeFilter }).select("_id").lean();
       const areaBikeIds = areaBikes.map((b) => b._id);
 
-      const areaClusters = await Cluster.find({ area_id: { $in: scope } }).select("_id").lean();
+      const areaClusters = await Cluster.find({ area_id: scopeFilter }).select("_id").lean();
       const areaClusterIds = areaClusters.map((c) => c._id);
 
       query.$or = [
