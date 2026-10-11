@@ -181,6 +181,7 @@ exports.updateExpense = async (req, res) => {
       approver_name,
       remarks,
       remaining_invoices, // existing invoice URLs that user kept
+      area_id,
     } = req.body;
 
     const updateData = {
@@ -193,6 +194,20 @@ exports.updateExpense = async (req, res) => {
       approver_name,
       remarks,
     };
+
+    // Update area_id based on role permissions
+    if (req.user.role === "super_admin" || req.user.role === "admin") {
+      if (area_id !== undefined) {
+        updateData.area_id = (area_id && area_id !== "" && area_id !== "null" && area_id !== "undefined")
+          ? area_id
+          : null;
+      }
+    } else {
+      const scope = getAreaScope(req);
+      if (scope && scope.length > 0) {
+        updateData.area_id = scope[0];
+      }
+    }
 
     // 1. Process invoice proofs
     let finalInvoices = [];
@@ -222,7 +237,9 @@ exports.updateExpense = async (req, res) => {
       req.params.id,
       { $set: updateData },
       { new: true }
-    ).populate("created_by", "fullName email");
+    )
+      .populate("created_by", "fullName email")
+      .populate("area_id", "name code city");
 
     res.json(updatedExpense);
   } catch (error) {

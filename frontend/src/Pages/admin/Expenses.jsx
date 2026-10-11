@@ -178,6 +178,12 @@ export default function Expenses() {
 
   const handleEdit = (exp) => {
     setEditingExpense(exp);
+    const existingAreaId = exp.area_id?._id
+      ? exp.area_id._id.toString()
+      : exp.area_id
+      ? exp.area_id.toString()
+      : "";
+
     setFormData({
       expense_date: format(new Date(exp.expense_date), "yyyy-MM-dd"),
       expense_name: exp.expense_name,
@@ -187,7 +193,7 @@ export default function Expenses() {
       expense_amount: String(exp.expense_amount),
       approver_name: exp.approver_name,
       remarks: exp.remarks || "",
-      area_id: exp.area_id?._id || exp.area_id || getDefaultAreaId(),
+      area_id: existingAreaId !== "" ? existingAreaId : getDefaultAreaId(),
     });
     setRemainingInvoices(exp.invoice_proofs || []);
     setIsOpen(true);
@@ -226,11 +232,9 @@ export default function Expenses() {
 
     // Enforce area_id explicitly based on role
     const assignedArea = isStaffOrManager
-      ? (userAssignedAreaId || formData.area_id)
-      : formData.area_id;
-    if (assignedArea) {
-      data.set("area_id", assignedArea);
-    }
+      ? (userAssignedAreaId || formData.area_id || "")
+      : (formData.area_id || "");
+    data.set("area_id", assignedArea);
 
     invoiceFiles.forEach((file) => {
       data.append("invoice_proof", file);
@@ -918,32 +922,42 @@ export default function Expenses() {
                     onClick={() => setSelectedExpense(exp)}
                   >
                     <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-start gap-2">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <Badge className="bg-primary/10 text-primary border-none">
-                              {exp.expense_category}
-                            </Badge>
-                            {exp.area_id && (
-                              <Badge variant="outline" className="text-[10px] border-primary/30 text-primary bg-primary/5 flex items-center gap-1">
-                                📍 {exp.area_id?.name || "Branch"}
-                              </Badge>
-                            )}
-                          </div>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1 whitespace-nowrap">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center gap-2">
+                          <Badge className="bg-primary/10 text-primary border-none text-xs font-semibold px-2.5 py-1">
+                            {exp.expense_category}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1.5 shrink-0">
                             <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                             {format(new Date(exp.expense_date), "PP")}
                           </span>
                         </div>
 
                         <div>
-                          <h3 className="font-semibold text-foreground text-lg line-clamp-1">
+                          <h3 className="font-bold text-foreground text-lg line-clamp-1">
                             {exp.expense_name}
                           </h3>
-                          <p className="text-xs text-muted-foreground">
-                            Receiver: <span className="text-foreground/80 font-medium">{exp.vendor_receiver_name}</span>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Receiver: <span className="text-foreground/90 font-medium">{exp.vendor_receiver_name}</span>
                           </p>
                         </div>
+
+                        {/* Branch / Area Address Box */}
+                        {exp.area_id && (
+                          <div className="flex items-start gap-2 bg-muted/40 border border-border/70 rounded-xl p-2.5 text-xs">
+                            <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-foreground text-xs leading-snug break-words">
+                                {exp.area_id?.name || "Assigned Branch"}
+                              </p>
+                              {exp.area_id?.city && exp.area_id.city !== exp.area_id.name && (
+                                <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
+                                  {exp.area_id.city}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="border-t border-border pt-3 flex justify-between items-center">
@@ -1044,13 +1058,21 @@ export default function Expenses() {
                       </div>
 
                       {selectedExpense.area_id && (
-                        <div>
-                          <span className="text-xs text-muted-foreground block">Assigned Branch / Area</span>
-                          <span className="font-semibold text-foreground flex items-center gap-1.5 mt-0.5">
-                            <MapPin className="w-4 h-4 text-primary" />
-                            {selectedExpense.area_id?.name || "Assigned Area"}{" "}
-                            {selectedExpense.area_id?.city ? `(${selectedExpense.area_id.city})` : ""}
-                          </span>
+                        <div className="bg-muted/40 border border-border/70 rounded-xl p-3 flex items-start gap-2.5">
+                          <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-widest block font-medium">
+                              Assigned Branch / Area
+                            </span>
+                            <span className="font-semibold text-foreground text-sm mt-0.5 block leading-snug break-words">
+                              {selectedExpense.area_id?.name || "Assigned Area"}
+                            </span>
+                            {selectedExpense.area_id?.city && selectedExpense.area_id.city !== selectedExpense.area_id.name && (
+                              <span className="text-xs text-muted-foreground mt-0.5 block">
+                                {selectedExpense.area_id.city}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       )}
 
