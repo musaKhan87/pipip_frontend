@@ -1,5 +1,7 @@
 const webpush = require("web-push");
 const Subscription = require("../models/Subscription");
+const Bike = require("../models/Bike");
+const Cluster = require("../models/Cluster");
 
 // Configure VAPID standard identification keys
 webpush.setVapidDetails(
@@ -11,7 +13,7 @@ webpush.setVapidDetails(
 // Save admin mobile browser subscription token configuration keys
 exports.subscribeDevice = async (req, res) => {
   try {
-    const { endpoint, keys } = req.body;
+    const { endpoint, keys, areaId, userId } = req.body;
 
     if (!endpoint || !keys) {
       return res
@@ -19,10 +21,14 @@ exports.subscribeDevice = async (req, res) => {
         .json({ success: false, message: "Invalid subscription payload." });
     }
 
+    const updateData = { endpoint, keys };
+    if (areaId) updateData.areaId = areaId;
+    if (userId) updateData.userId = userId;
+
     // Check if subscription already exists, if not create a new record
     await Subscription.findOneAndUpdate(
       { endpoint },
-      { endpoint, keys },
+      updateData,
       { upsert: true, new: true },
     );
 
@@ -43,7 +49,28 @@ exports.subscribeDevice = async (req, res) => {
  * Example: sendOrderAlerts(savedBookingDoc, req.app.get("io"));
  */
 exports.sendOrderAlerts = async (orderData, io) => {
-  const alertText = `📦 ${orderData.customer_name || "Customer"} placed an online order!\n💰 Total: ₹${orderData.total_amount || 0}\n🛵 Model: ${orderData.vehicle_make_model || "Scooter"}`;
+  let areaId = null;
+  let areaName = "";
+
+  try {
+    if (orderData.bike_id) {
+      const bike = await Bike.findById(orderData.bike_id).populate("area_id").lean();
+      if (bike && bike.area_id) {
+        areaId = bike.area_id._id ? bike.area_id._id.toString() : bike.area_id.toString();
+        areaName = bike.area_id.name || "";
+      }
+    } else if (orderData.cluster_id) {
+      const cluster = await Cluster.findById(orderData.cluster_id).populate("area_id").lean();
+      if (cluster && cluster.area_id) {
+        areaId = cluster.area_id._id ? cluster.area_id._id.toString() : cluster.area_id.toString();
+        areaName = cluster.area_id.name || "";
+      }
+    }
+  } catch (err) {
+    console.error("Error resolving area for order alerts:", err);
+  }
+
+  const alertText = `📦 ${orderData.customer_name || "Customer"} placed an online order!\n💰 Total: ₹${orderData.total_amount || 0}\n🛵 Model: ${orderData.vehicle_make_model || "Scooter"}${areaName ? `\n📍 Area: ${areaName}` : ""}`;
 
   // 1. Instant WebSocket push for dashboard screens currently active on monitor
   if (io) {
@@ -53,6 +80,8 @@ exports.sendOrderAlerts = async (orderData, io) => {
       message: alertText.replace(/\n/g, " | "),
       type: "order",
       time: "Just Now",
+      areaId: areaId,
+      areaName: areaName,
       bookingData: orderData,
     });
   }
@@ -67,7 +96,17 @@ exports.sendOrderAlerts = async (orderData, io) => {
   });
 
   try {
-    const subscriptions = await Subscription.find({});
+    let subQuery = {};
+    if (areaId) {
+      subQuery = {
+        $or: [
+          { areaId: null },
+          { areaId: areaId },
+        ],
+      };
+    }
+
+    const subscriptions = await Subscription.find(subQuery);
 
     subscriptions.forEach((sub) => {
       webpush.sendNotification(sub, pushPayload).catch(async (err) => {

@@ -1,30 +1,10 @@
+const jwt = require("jsonwebtoken");
 const Booking = require("../models/Booking");
 const Customer = require("../models/Customer");
-
-// exports.createCustomer = async (req, res) => {
-//   try {
-//     const aadhaarImage = req.files?.aadhaar_image?.[0]?.path || null;
-
-//     const licenseImage = req.files?.license_image?.[0]?.path || null;
-
-//     // ❌ At least one document required
-//     if (!aadhaarImage && !licenseImage) {
-//       return res.status(400).json({
-//         message: "Upload Aadhaar and License (Both Required)",
-//       });
-//     }
-
-//     const customer = await Customer.create({
-//       ...req.body,
-//       aadhaar_image_url: aadhaarImage,
-//       license_image_url: licenseImage,
-//     });
-
-//     res.status(201).json(customer);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
+const Bike = require("../models/Bike");
+const Cluster = require("../models/Cluster");
+const User = require("../models/User");
+const { getAreaScope, getUserAreaIds } = require("../middleware/auth");
 
 exports.createCustomer = async (req, res) => {
   try {
@@ -37,8 +17,22 @@ exports.createCustomer = async (req, res) => {
       extraDocs = req.files.extra_documents.map(file => file.path);
     }
 
+    let area_id = req.body.area_id || null;
+    // If user is manager or staff, default area_id to their assigned area if not provided
+    if (!area_id && req.headers.authorization?.startsWith("Bearer")) {
+      try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const currentUser = await User.findById(decoded.id).populate("assigned_areas").populate("areaId");
+        if (currentUser && (currentUser.role === "manager" || currentUser.role === "staff")) {
+          area_id = currentUser.areaId?._id || currentUser.areaId || currentUser.assigned_areas?.[0]?._id || currentUser.assigned_areas?.[0] || null;
+        }
+      } catch (e) {}
+    }
+
     const customer = await Customer.create({
       ...req.body,
+      area_id: area_id || undefined,
       aadhaar_image_url: aadhaarImage,
       license_image_url: licenseImage,
       extra_documents: extraDocs // Store the array of paths
@@ -50,42 +44,62 @@ exports.createCustomer = async (req, res) => {
   }
 };
 
-
-
-// exports.getCustomer= async (req, res) => {
-//   const search = req.query.search || "";
-
-// exports.getCustomer = async (req, res) => {
-//   try {
-//     const search = req.query.search ? req.query.search.trim() : "";
-//     const query = {};
-
-//   const customers = await Customer.find({
-//     $or: [
-//       { name: { $regex: search, $options: "i" } },
-//       { phone: { $regex: search, $options: "i" } },
-//     ],
-
-//   }).sort({ createdAt: -1 });
-
-//   res.json(customers);
-// }
-// };
-
-
 exports.getCustomer = async (req, res) => {
   try {
     const search = req.query.search ? req.query.search.trim() : "";
-    const query = {};
 
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ];
+    let currentUser = req.user;
+    if (!currentUser && req.headers.authorization?.startsWith("Bearer")) {
+      try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        currentUser = await User.findById(decoded.id).populate("assigned_areas").populate("areaId");
+        req.user = currentUser;
+      } catch (err) {}
     }
 
+    const andConditions = [];
+
+    if (search) {
+      andConditions.push({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { phone: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      });
+    }
+
+    const scope = currentUser ? getAreaScope(req) : null;
+    if (scope && scope.length > 0) {
+      // Find bikes and clusters in scope
+      const areaBikes = await Bike.find({ area_id: { $in: scope } }).select("_id").lean();
+      const bikeIds = areaBikes.map((b) => b._id);
+      const areaClusters = await Cluster.find({ area_id: { $in: scope } }).select("_id").lean();
+      const clusterIds = areaClusters.map((c) => c._id);
+
+      // Find all bookings with those bikes or clusters
+      const bookings = await Booking.find({
+        $or: [
+          { bike_id: { $in: bikeIds } },
+          { cluster_id: { $in: clusterIds } },
+        ],
+      }).select("customer_id").lean();
+
+      const bookingCustomerIds = [
+        ...new Set(bookings.map((b) => b.customer_id?.toString()).filter(Boolean)),
+      ];
+
+      const areaOrConditions = [];
+      if (bookingCustomerIds.length > 0) {
+        areaOrConditions.push({ _id: { $in: bookingCustomerIds } });
+      }
+      areaOrConditions.push({ area_id: { $in: scope } });
+
+      andConditions.push({ $or: areaOrConditions });
+    }
+
+    const query = andConditions.length > 0 ? { $and: andConditions } : {};
     const customers = await Customer.find(query)
       .sort({ createdAt: -1 })
       .lean();
@@ -227,10 +241,32 @@ exports.deleteCustomer = async (req, res) => {
 /* ================= CUSTOMER BOOKING HISTORY ================= */
 exports.getCustomerBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({
-      customer_id: req.params.id,
-    })
+    let currentUser = req.user;
+    if (!currentUser && req.headers.authorization?.startsWith("Bearer")) {
+      try {
+        const token = req.headers.authorization.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        currentUser = await User.findById(decoded.id).populate("assigned_areas").populate("areaId");
+        req.user = currentUser;
+      } catch (err) {}
+    }
+
+    const filter = { customer_id: req.params.id };
+    const scope = currentUser ? getAreaScope(req) : null;
+    if (scope && scope.length > 0) {
+      const areaBikes = await Bike.find({ area_id: { $in: scope } }).select("_id").lean();
+      const bikeIds = areaBikes.map((b) => b._id);
+      const areaClusters = await Cluster.find({ area_id: { $in: scope } }).select("_id").lean();
+      const clusterIds = areaClusters.map((c) => c._id);
+      filter.$or = [
+        { bike_id: { $in: bikeIds } },
+        { cluster_id: { $in: clusterIds } },
+      ];
+    }
+
+    const bookings = await Booking.find(filter)
       .populate("bike_id")
+      .populate("cluster_id")
       .sort({ start_datetime: -1 });
 
     res.json(bookings);

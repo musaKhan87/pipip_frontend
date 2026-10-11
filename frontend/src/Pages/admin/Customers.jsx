@@ -481,6 +481,7 @@ import {
   TabsTrigger,
 } from "../../components/ui/tabs";
 import { ScrollArea } from "../../components/ui/scroll-area";
+import { useAuth } from "../../lib/AuthProvider";
 
 const initialFormData = {
   name: "",
@@ -504,7 +505,9 @@ function CustomerBookingsPanel({ customerId }) {
           className="p-3 bg-black-50 rounded-lg flex items-center justify-between"
         >
           <div>
-            <p className="font-medium">{booking.bikes?.model}</p>
+            <p className="font-medium">
+              {booking.bike_id?.model || booking.bikes?.model || booking.cluster_id?.name || "Rental Vehicle"}
+            </p>
             <p className="text-sm text-gray-500">
               {format(new Date(booking.start_datetime), "MMM d, yyyy HH:mm")} -{" "}
               {format(new Date(booking.end_datetime), "MMM d, yyyy HH:mm")}
@@ -563,6 +566,7 @@ function DocumentImageViewer({ url, label }) {
 }
 
 export default function Customers() {
+  const { user } = useAuth();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [viewingCustomer, setViewingCustomer] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
@@ -593,7 +597,19 @@ export default function Customers() {
       return;
     }
 
-    await createCustomer.mutateAsync(formData);
+    const assignedAreaId =
+      user?.areaId?._id ||
+      user?.areaId ||
+      user?.assigned_areas?.[0]?._id ||
+      user?.assigned_areas?.[0] ||
+      null;
+
+    const dataToSend = {
+      ...formData,
+      ...(assignedAreaId ? { area_id: assignedAreaId } : {}),
+    };
+
+    await createCustomer.mutateAsync(dataToSend);
     setIsAddOpen(false);
     setFormData(initialFormData);
   };

@@ -8,6 +8,16 @@ const subscriptionSchema = new mongoose.Schema(
       p256dh: { type: String, required: true },
       auth: { type: String, required: true },
     },
+    areaId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Area",
+      default: null,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   { timestamps: true },
 );

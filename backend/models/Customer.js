@@ -49,7 +49,12 @@ const customerSchema = new mongoose.Schema(
     aadhaar_image_url: { type: String }, 
     license_image_url: { type: String },
     // New field for multiple docs
-    extra_documents: { type: [String], default: [] } 
+    extra_documents: { type: [String], default: [] },
+    area_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Area",
+      default: null,
+    },
   },
   { timestamps: true },
 );
@@ -57,6 +62,7 @@ const customerSchema = new mongoose.Schema(
 customerSchema.index({ phone: 1 });
 customerSchema.index({ name: 1 });
 customerSchema.index({ email: 1 });
+customerSchema.index({ area_id: 1 });
 customerSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Customer", customerSchema);

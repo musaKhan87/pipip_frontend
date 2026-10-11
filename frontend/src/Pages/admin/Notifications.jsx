@@ -17,6 +17,7 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import { cn } from "../../lib/util";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
+import { useAuth } from "../../lib/AuthProvider";
 
 // Determine the backend URL dynamically to support both local development and production
 const getBackendUrl = () => {
@@ -33,6 +34,7 @@ const BACKEND_URL = getBackendUrl();
 
 export default function NotificationsCenter() {
   const { logs, setLogs } = useOutletContext();
+  const { user } = useAuth();
   const [deviceLinked, setDeviceLinked] = useState(false);
   const [linkingProcess, setLinkingProcess] = useState(false);
   const navigate = useNavigate();
@@ -99,10 +101,15 @@ export default function NotificationsCenter() {
         });
       }
 
+      const userAreaId = user?.areaId?._id || user?.areaId || user?.assigned_areas?.[0]?._id || user?.assigned_areas?.[0] || null;
       // Ship device endpoint token credentials safely up to our node endpoint routes
       await axios.post(
         `${BACKEND_URL}/api/notifications/subscribe`,
-        activeTokenSubscription,
+        {
+          ...activeTokenSubscription.toJSON(),
+          areaId: userAreaId ? userAreaId.toString() : null,
+          userId: user?._id || null,
+        },
         { credentials: true },
       );
 
@@ -297,14 +304,21 @@ export default function NotificationsCenter() {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1 sm:gap-4">
-                        <h4
-                          className={cn(
-                            "text-sm font-bold tracking-tight truncate",
-                            log.read ? "text-muted-foreground" : "text-foreground",
+                        <div className="flex items-center gap-2 flex-wrap min-w-0">
+                          <h4
+                            className={cn(
+                              "text-sm font-bold tracking-tight truncate",
+                              log.read ? "text-muted-foreground" : "text-foreground",
+                            )}
+                          >
+                            {log.title}
+                          </h4>
+                          {log.areaName && (
+                            <span className="text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20 shrink-0">
+                              📍 {log.areaName}
+                            </span>
                           )}
-                        >
-                          {log.title}
-                        </h4>
+                        </div>
                         <span className="text-[10px] text-muted-foreground font-semibold uppercase shrink-0">
                           {log.time}
                         </span>

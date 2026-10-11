@@ -3,65 +3,9 @@ import AdminSidebar from "./AdminSidebar";
 import { Loader2, MapPin } from "lucide-react";
 import { useAuth } from "../../lib/AuthProvider";
 import { useAdminArea } from "../../lib/AreaContext";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import io from "socket.io-client";
 import { useBikes } from "../../hooks/useBikes";
-
-
-// export default function AdminLayout() {
-//   const { user, isAdminOrStaff, loading } = useAuth();
-
-//   if (loading) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center bg-background">
-//         <div className="text-center">
-//           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-//           <p className="text-muted-foreground">Loading...</p>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   if (!user) {
-//     return <Navigate to="/admin" state={{ from: "/admin/panel" }} replace />;
-//   }
-
-//   if (!isAdminOrStaff) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center bg-background">
-//         <div className="text-center p-8 bg-card border border-border rounded-2xl shadow-golden max-w-md">
-//           <h2 className="text-2xl font-bold text-destructive mb-2">
-//             Access Denied
-//           </h2>
-//           <p className="text-muted-foreground mb-4">
-//             You don't have permission to access the admin panel. Please contact
-//             an administrator to get access.
-//           </p>
-//           <a href="/" className="text-primary hover:underline">
-//             Return to Website
-//           </a>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//  // AdminLayout.jsx
-
-// return (
-//   <div className="h-screen bg-background flex overflow-hidden">
-//     <AdminSidebar /> 
-    
-//     {/* Added scrollbar-hide here */}
-//     <main className="flex-1 p-4 lg:p-8 overflow-y-auto h-full bg-background scrollbar-hide"> 
-//       <div className="max-w-7xl mx-auto">
-//         <Outlet />
-//       </div>
-//     </main>
-//   </div>
-// );
-
-  
-// }
 
 
 // Determine the backend URL dynamically to support both local development and production
@@ -78,10 +22,27 @@ const BACKEND_URL = getBackendUrl();
 
 export default function AdminLayout() {
 
-  // const { user, isAdminOrStaff, loading } = useAuth();
-  const { user,  isAdminOrStaff,hasPanelAccess, loading } = useAuth();
+  const { user, isAdminOrStaff, hasPanelAccess, isSuperAdmin, loading } = useAuth();
+  const { areas, selectedAreaId, setSelectedAreaId } = useAdminArea();
   const location = useLocation();
   const scrollRef = useRef(null); // Create a reference to the scrollable area
+
+  // Compute user's assigned area IDs array
+  const userAssignedAreaIds = useMemo(() => {
+    if (!user) return [];
+    const ids = [];
+    if (user.areaId) {
+      const id = user.areaId._id ? user.areaId._id.toString() : user.areaId.toString();
+      ids.push(id);
+    }
+    if (user.assigned_areas && user.assigned_areas.length > 0) {
+      user.assigned_areas.forEach((a) => {
+        const id = a._id ? a._id.toString() : a.toString();
+        if (!ids.includes(id)) ids.push(id);
+      });
+    }
+    return ids;
+  }, [user]);
 
   // Notification logs state persisted in localStorage
   const [logs, setLogs] = useState(() => {
@@ -132,6 +93,18 @@ export default function AdminLayout() {
     const expiryAlerts = [];
 
     bikes.forEach((bike) => {
+      const bikeAreaId = bike.area_id?._id
+        ? bike.area_id._id.toString()
+        : bike.area_id
+        ? bike.area_id.toString()
+        : null;
+      const bikeAreaName = bike.area_id?.name || null;
+
+      // If manager or staff, only scan bikes from their assigned areas
+      if (!isSuperAdmin && bikeAreaId && !userAssignedAreaIds.includes(bikeAreaId)) {
+        return;
+      }
+
       // Helper function to check date and push alert
       const checkExpiry = (expiryDateStr, dateType, label) => {
         if (!expiryDateStr) return;
@@ -152,12 +125,14 @@ export default function AdminLayout() {
           expiryAlerts.push({
             id: uniqueId,
             title: `⚠️ Bike ${label} Expiry`,
-            message: `Bike: ${bike.bike_name || bike.model} (${bike.number_plate}) ${label} ${statusText} on ${new Date(expiryDateStr).toLocaleDateString("en-IN")}.`,
+            message: `Bike: ${bike.bike_name || bike.model} (${bike.number_plate}) ${label} ${statusText} on ${new Date(expiryDateStr).toLocaleDateString("en-IN")}.${bikeAreaName ? ` [Area: ${bikeAreaName}]` : ""}`,
             type: "expiry",
             read: false,
             time: "Expiry Reminder",
             bikeId: bike._id,
             bikeNumberPlate: bike.number_plate,
+            areaId: bikeAreaId,
+            areaName: bikeAreaName,
           });
         }
       };
@@ -188,7 +163,7 @@ export default function AdminLayout() {
         return prev;
       });
     }
-  }, [bikes]);
+  }, [bikes, isSuperAdmin, userAssignedAreaIds]);
 
   // Global socket listener for new order alerts
   useEffect(() => {
@@ -201,6 +176,11 @@ export default function AdminLayout() {
     });
 
     socket.on("newOnlineOrderStream", (incomingAlert) => {
+      // If manager or staff, only chime and capture alerts for their assigned area
+      if (!isSuperAdmin && incomingAlert.areaId && !userAssignedAreaIds.includes(incomingAlert.areaId.toString())) {
+        return;
+      }
+
       const dynamicChimeSound = new Audio(
         "https://assets.mixkit.co/active_storage/sfx/2869/2869-600.wav",
       );
@@ -221,7 +201,7 @@ export default function AdminLayout() {
     return () => {
       socket.disconnect();
     };
-  }, [user, isAdminOrStaff]);
+  }, [user, isAdminOrStaff, isSuperAdmin, userAssignedAreaIds]);
 
   // Scroll to top whenever the path changes
   useEffect(() => {
@@ -319,9 +299,38 @@ export default function AdminLayout() {
     }
   }
 
-  const { isSuperAdmin } = useAuth();
-  const { areas, selectedAreaId, setSelectedAreaId } = useAdminArea();
-  const unreadCount = logs.filter((log) => !log.read).length;
+  // Filter logs for the active view/role
+  const filteredLogs = useMemo(() => {
+    if (!user) return logs;
+    if (!isSuperAdmin) {
+      // Manager or Staff: Only show logs that match user's assigned area or have no area (system)
+      return logs.filter((log) => {
+        if (!log.areaId) return true;
+        return userAssignedAreaIds.includes(log.areaId.toString());
+      });
+    }
+    // Super Admin:
+    if (!selectedAreaId || selectedAreaId === "all") {
+      return logs;
+    }
+    return logs.filter((log) => {
+      if (!log.areaId) return true;
+      return log.areaId.toString() === selectedAreaId.toString();
+    });
+  }, [logs, user, isSuperAdmin, userAssignedAreaIds, selectedAreaId]);
+
+  const unreadCount = filteredLogs.filter((log) => !log.read).length;
+
+  // Custom setLogs that updates or clears only the scoped logs
+  const setScopedLogs = (updater) => {
+    setLogs((allLogs) => {
+      const currentScoped = filteredLogs;
+      const updatedScoped = typeof updater === "function" ? updater(currentScoped) : updater;
+      
+      const otherLogs = allLogs.filter((log) => !currentScoped.some((s) => s.id === log.id));
+      return [...updatedScoped, ...otherLogs];
+    });
+  };
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
@@ -372,7 +381,7 @@ export default function AdminLayout() {
           ref={scrollRef}
         >
           <div className="max-w-7xl mx-auto">
-            <Outlet context={{ logs, setLogs }} />
+            <Outlet context={{ logs: filteredLogs, setLogs: setScopedLogs }} />
           </div>
         </main>
       </div>
