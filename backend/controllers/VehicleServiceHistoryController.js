@@ -1,5 +1,6 @@
 const VehicleServiceHistory = require("../models/VehicleServiceHistory");
 const Bike = require("../models/Bike");
+const { getAreaScope } = require("../middleware/auth");
 
 // CREATE new vehicle service history entry
 exports.createServiceRecord = async (req, res) => {
@@ -27,6 +28,15 @@ exports.createServiceRecord = async (req, res) => {
 
     const serviceAmountNum = Number(service_amount);
 
+    // Automatically assign area_id from bike or fallback to user area
+    const assignedAreaId =
+      bike.area_id ||
+      req.user?.areaId?._id ||
+      req.user?.areaId ||
+      req.user?.assigned_areas?.[0]?._id ||
+      req.user?.assigned_areas?.[0] ||
+      null;
+
     // 1. Create service record
     const serviceRecord = await VehicleServiceHistory.create({
       bike_id,
@@ -35,6 +45,7 @@ exports.createServiceRecord = async (req, res) => {
       bill_link: finalBillLink,
       remarks: remarks || "",
       recorded_by: req.user._id,
+      area_id: assignedAreaId,
     });
 
     // 2. Automatically update Bike total service expenses and last service date
@@ -55,8 +66,9 @@ exports.createServiceRecord = async (req, res) => {
     )
       .populate(
         "bike_id",
-        "bike_name model number_plate bike_expenses last_service_date image_url"
+        "bike_name model number_plate bike_expenses last_service_date image_url area_id"
       )
+      .populate("area_id", "name code")
       .populate("recorded_by", "fullName email");
 
     res.status(201).json({
@@ -69,11 +81,16 @@ exports.createServiceRecord = async (req, res) => {
   }
 };
 
-// GET all vehicle service records (with optional search/bike filter)
+// GET all vehicle service records (with optional search/bike filter & area scoping)
 exports.getServiceRecords = async (req, res) => {
   try {
     const { search, bike_id } = req.query;
     let filter = {};
+
+    const scope = getAreaScope(req);
+    if (scope && scope.length > 0) {
+      filter.area_id = { $in: scope };
+    }
 
     if (bike_id) {
       filter.bike_id = bike_id;
@@ -82,8 +99,9 @@ exports.getServiceRecords = async (req, res) => {
     let records = await VehicleServiceHistory.find(filter)
       .populate(
         "bike_id",
-        "bike_name model number_plate bike_expenses last_service_date image_url"
+        "bike_name model number_plate bike_expenses last_service_date image_url area_id"
       )
+      .populate("area_id", "name code")
       .populate("recorded_by", "fullName email")
       .sort({ service_date: -1, createdAt: -1 });
 
@@ -94,11 +112,13 @@ exports.getServiceRecords = async (req, res) => {
         const bikeModel = r.bike_id?.model?.toLowerCase() || "";
         const numberPlate = r.bike_id?.number_plate?.toLowerCase() || "";
         const remarks = r.remarks?.toLowerCase() || "";
+        const areaName = r.area_id?.name?.toLowerCase() || "";
         return (
           bikeName.includes(q) ||
           bikeModel.includes(q) ||
           numberPlate.includes(q) ||
-          remarks.includes(q)
+          remarks.includes(q) ||
+          areaName.includes(q)
         );
       });
     }
@@ -178,8 +198,9 @@ exports.updateServiceRecord = async (req, res) => {
     const updated = await VehicleServiceHistory.findById(record._id)
       .populate(
         "bike_id",
-        "bike_name model number_plate bike_expenses last_service_date image_url"
+        "bike_name model number_plate bike_expenses last_service_date image_url area_id"
       )
+      .populate("area_id", "name code")
       .populate("recorded_by", "fullName email");
 
     res.json(updated);

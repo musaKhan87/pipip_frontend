@@ -96,3 +96,6 @@ export function useAdminArea() {
   }
   return context;
 }
+
+export const useArea = useAdminArea;
+

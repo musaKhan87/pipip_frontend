@@ -25,8 +25,10 @@ exports.createExpense = async (req, res) => {
 
     const paymentProof = req.files?.payment_proof?.[0]?.path || null;
 
-    const userAreaIds = getUserAreaIds(req.user);
-    const assignedAreaId = area_id || (userAreaIds && userAreaIds[0]) || null;
+    const scope = getAreaScope(req);
+    const assignedAreaId = (req.user.role === "manager" || req.user.role === "staff")
+      ? (scope && scope[0])
+      : (req.body.area_id || (scope && scope[0]) || null);
 
     const expense = await Expense.create({
       expense_date,
@@ -49,7 +51,7 @@ exports.createExpense = async (req, res) => {
   }
 };
 
-// GET all expenses (with search/filters & role-based visibility)
+// GET all expenses (with search/filters & strict area-based visibility)
 exports.getExpenses = async (req, res) => {
   try {
     const { search } = req.query;
@@ -57,19 +59,7 @@ exports.getExpenses = async (req, res) => {
 
     const scope = getAreaScope(req);
     if (scope && scope.length > 0) {
-      const areaUsers = await User.find({
-        $or: [
-          { areaId: { $in: scope } },
-          { assigned_areas: { $in: scope } }
-        ]
-      }).select("_id").lean();
-
-      const userIdsInArea = areaUsers.map((u) => u._id);
-
-      query.$or = [
-        { area_id: { $in: scope } },
-        { created_by: { $in: [...userIdsInArea, req.user._id] } }
-      ];
+      query.area_id = { $in: scope };
     }
 
     if (search) {
@@ -115,10 +105,10 @@ exports.getExpenses = async (req, res) => {
         });
       }
 
-      if (query.$or) {
+      if (query.area_id) {
         query = {
           $and: [
-            { $or: query.$or },
+            { area_id: query.area_id },
             { $or: searchConditions }
           ]
         };
@@ -129,7 +119,7 @@ exports.getExpenses = async (req, res) => {
 
     const expenses = await Expense.find(query)
       .populate("created_by", "fullName email")
-      .populate("area_id", "name city")
+      .populate("area_id", "name code city")
       .sort({ expense_date: -1 }).lean();
 
     res.json(expenses);
@@ -143,7 +133,7 @@ exports.getExpenseById = async (req, res) => {
   try {
     const expense = await Expense.findById(req.params.id)
       .populate("created_by", "fullName email")
-      .populate("area_id", "name city");
+      .populate("area_id", "name code city");
 
     if (!expense) {
       return res.status(404).json({ message: "Expense not found" });

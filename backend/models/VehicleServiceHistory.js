@@ -28,6 +28,12 @@ const vehicleServiceHistorySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    area_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Area",
+      required: true,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -35,6 +41,7 @@ const vehicleServiceHistorySchema = new mongoose.Schema(
 );
 
 vehicleServiceHistorySchema.index({ bike_id: 1, service_date: -1 });
+vehicleServiceHistorySchema.index({ area_id: 1, service_date: -1 });
 vehicleServiceHistorySchema.index({ service_date: -1 });
 
 module.exports = mongoose.model(

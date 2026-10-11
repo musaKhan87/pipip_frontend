@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Search,
@@ -23,6 +23,7 @@ import {
   Settings,
   Phone,
   Wrench,
+  MapPin,
 } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,6 +41,7 @@ import {
 } from "../../components/ui/dialog";
 import { Label } from "../../components/ui/label";
 import { useAuth } from "../../lib/AuthProvider";
+import { useArea } from "../../lib/AreaContext";
 import { useExpenses, useCreateExpense, useUpdateExpense } from "../../hooks/useExpenses";
 import {
   useDailyAccounts,
@@ -87,7 +89,31 @@ const EXPENSE_CATEGORIES = [
 
 export default function Expenses() {
   const { user, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState("claims"); // "claims" | "daily_account"
+  const { areas, selectedAreaId, selectedAreaObj } = useArea();
+  const isStaffOrManager = user?.role === "manager" || user?.role === "staff";
+
+  const userAssignedAreaId =
+    user?.areaId?._id ||
+    user?.areaId ||
+    (user?.assigned_areas && user.assigned_areas[0]?._id) ||
+    (user?.assigned_areas && user.assigned_areas[0]) ||
+    "";
+
+  const getDefaultAreaId = () => {
+    if (isStaffOrManager) {
+      return userAssignedAreaId ? userAssignedAreaId.toString() : "";
+    }
+    return selectedAreaId !== "all" ? selectedAreaId : "";
+  };
+
+  const [activeTab, setActiveTab] = useState("claims"); // "claims" | "daily_account" | "daily_report" | "service_history"
+
+  // Strict RBAC: Force Staff and Managers to only have access to claims and service_history
+  useEffect(() => {
+    if (isStaffOrManager && (activeTab === "daily_account" || activeTab === "daily_report")) {
+      setActiveTab("claims");
+    }
+  }, [isStaffOrManager, activeTab]);
 
   /* ==========================================================================
      TAB 1: OPERATIONAL EXPENSE CLAIMS STATES & MUTATIONS
@@ -105,6 +131,7 @@ export default function Expenses() {
     expense_amount: "",
     approver_name: "",
     remarks: "",
+    area_id: getDefaultAreaId(),
   });
 
   const [invoiceFiles, setInvoiceFiles] = useState([]);
@@ -160,6 +187,7 @@ export default function Expenses() {
       expense_amount: String(exp.expense_amount),
       approver_name: exp.approver_name,
       remarks: exp.remarks || "",
+      area_id: exp.area_id?._id || exp.area_id || getDefaultAreaId(),
     });
     setRemainingInvoices(exp.invoice_proofs || []);
     setIsOpen(true);
@@ -177,6 +205,7 @@ export default function Expenses() {
         expense_amount: "",
         approver_name: "",
         remarks: "",
+        area_id: getDefaultAreaId(),
       });
       setInvoiceFiles([]);
       setPaymentFile(null);
@@ -190,8 +219,18 @@ export default function Expenses() {
 
     const data = new FormData();
     Object.entries(formData).forEach(([key, val]) => {
-      data.append(key, val);
+      if (val !== undefined && val !== null) {
+        data.append(key, val);
+      }
     });
+
+    // Enforce area_id explicitly based on role
+    const assignedArea = isStaffOrManager
+      ? (userAssignedAreaId || formData.area_id)
+      : formData.area_id;
+    if (assignedArea) {
+      data.set("area_id", assignedArea);
+    }
 
     invoiceFiles.forEach((file) => {
       data.append("invoice_proof", file);
@@ -432,8 +471,20 @@ export default function Expenses() {
     (b) => (b._id || b.id) === selectedBikeId
   );
 
-  // Filtered bikes for dropdown search
+  // Filtered bikes for dropdown search with area scoping
   const filteredBikesForSelect = bikesList?.filter((b) => {
+    // Area scoping: For Staff/Manager or Super Admin with selected area
+    const bArea = b.area_id?._id || b.area_id;
+    if (isStaffOrManager && userAssignedAreaId) {
+      if (bArea && bArea.toString() !== userAssignedAreaId.toString()) {
+        return false;
+      }
+    } else if (selectedAreaId && selectedAreaId !== "all") {
+      if (bArea && bArea.toString() !== selectedAreaId.toString()) {
+        return false;
+      }
+    }
+
     const q = bikeSearchText.toLowerCase();
     const name = (b.bike_name || "").toLowerCase();
     const model = (b.model || "").toLowerCase();
@@ -460,6 +511,14 @@ export default function Expenses() {
     payload.append("service_date", serviceFormData.service_date);
     payload.append("service_amount", serviceFormData.service_amount);
     payload.append("remarks", serviceFormData.remarks || "");
+
+    const bikeArea =
+      selectedBike?.area_id?._id ||
+      selectedBike?.area_id ||
+      (isStaffOrManager ? userAssignedAreaId : "");
+    if (bikeArea) {
+      payload.append("area_id", bikeArea);
+    }
 
     if (serviceBillFile) {
       payload.append("bill_file", serviceBillFile);
@@ -537,7 +596,7 @@ export default function Expenses() {
           )}
         </button>
 
-        {isAdmin && (
+        {!isStaffOrManager && isAdmin && (
           <>
             <button
               onClick={() => setActiveTab("daily_account")}
@@ -594,7 +653,7 @@ export default function Expenses() {
 
       {/* Tab Contents */}
       <AnimatePresence mode="wait">
-        {(activeTab === "claims" || (!isAdmin && activeTab !== "service_history" && activeTab !== "daily_account")) && (
+        {(activeTab === "claims" || (isStaffOrManager && activeTab !== "service_history")) && (
           <motion.div
             key="claims-tab"
             initial={{ opacity: 0, y: 15 }}
@@ -673,6 +732,36 @@ export default function Expenses() {
                         required
                         className="bg-input border-border"
                       />
+                    </div>
+
+                    {/* Area / Branch Selector */}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-primary" /> Branch / Area
+                      </Label>
+                      {isStaffOrManager ? (
+                        <div className="h-10 px-3 rounded-lg border border-border bg-muted/40 flex items-center justify-between text-sm">
+                          <span className="font-semibold text-foreground flex items-center gap-1.5">
+                            📍 {user?.areaId?.name || selectedAreaObj?.name || "Assigned Branch"}
+                          </span>
+                          <span className="text-xs text-muted-foreground font-mono">
+                            (Locked to your branch)
+                          </span>
+                        </div>
+                      ) : (
+                        <select
+                          value={formData.area_id || ""}
+                          onChange={(e) => setFormData({ ...formData, area_id: e.target.value })}
+                          className="w-full h-10 px-3 rounded-lg border border-border bg-input text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        >
+                          <option value="">All Areas / Global</option>
+                          {areas?.map((a) => (
+                            <option key={a._id} value={a._id}>
+                              {a.name} ({a.city || a.code})
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -830,11 +919,18 @@ export default function Expenses() {
                   >
                     <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
                       <div className="space-y-2">
-                        <div className="flex justify-between items-start">
-                          <Badge className="bg-primary/10 text-primary border-none">
-                            {exp.expense_category}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <Badge className="bg-primary/10 text-primary border-none">
+                              {exp.expense_category}
+                            </Badge>
+                            {exp.area_id && (
+                              <Badge variant="outline" className="text-[10px] border-primary/30 text-primary bg-primary/5 flex items-center gap-1">
+                                📍 {exp.area_id?.name || "Branch"}
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1 whitespace-nowrap">
                             <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                             {format(new Date(exp.expense_date), "PP")}
                           </span>
@@ -947,6 +1043,17 @@ export default function Expenses() {
                         <span className="font-bold text-foreground text-base">{selectedExpense.expense_name}</span>
                       </div>
 
+                      {selectedExpense.area_id && (
+                        <div>
+                          <span className="text-xs text-muted-foreground block">Assigned Branch / Area</span>
+                          <span className="font-semibold text-foreground flex items-center gap-1.5 mt-0.5">
+                            <MapPin className="w-4 h-4 text-primary" />
+                            {selectedExpense.area_id?.name || "Assigned Area"}{" "}
+                            {selectedExpense.area_id?.city ? `(${selectedExpense.area_id.city})` : ""}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <span className="text-xs text-muted-foreground block">Done By</span>
@@ -1052,7 +1159,7 @@ export default function Expenses() {
           </motion.div>
         )}
 
-        {activeTab === "daily_account" && (
+        {!isStaffOrManager && isAdmin && activeTab === "daily_account" && (
           /* ==========================================================================
              TAB 2: DAILY ACCOUNT INFORMATION UI
              ========================================================================== */
@@ -1479,7 +1586,7 @@ export default function Expenses() {
         )}
 
         {/* TAB 3: DAILY BUSINESS AUTOMATED REPORT */}
-        {isAdmin && activeTab === "daily_report" && (
+        {!isStaffOrManager && isAdmin && activeTab === "daily_report" && (
           <motion.div
             key="reports-tab"
             initial={{ opacity: 0, y: 15 }}
@@ -2059,9 +2166,16 @@ export default function Expenses() {
                                 <p className="font-bold text-foreground text-sm">
                                   {bike?.bike_name || bike?.model || "Unknown Bike"}
                                 </p>
-                                <span className="text-xs font-mono text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20 inline-block mt-0.5">
-                                  {bike?.number_plate || "—"}
-                                </span>
+                                <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                  <span className="text-xs font-mono text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20 inline-block">
+                                    {bike?.number_plate || "—"}
+                                  </span>
+                                  {(rec.area_id?.name || bike?.area_id?.name) && (
+                                    <span className="text-[10px] font-medium text-muted-foreground flex items-center gap-0.5 bg-muted/40 px-1.5 py-0.5 rounded-md">
+                                      📍 {rec.area_id?.name || bike?.area_id?.name}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
 
@@ -2155,6 +2269,7 @@ export default function Expenses() {
                       <thead className="bg-muted/40 border-b border-border text-xs uppercase font-semibold text-muted-foreground">
                         <tr>
                           <th className="py-3.5 px-4">Vehicle</th>
+                          <th className="py-3.5 px-4">Area / Branch</th>
                           <th className="py-3.5 px-4">Service Date</th>
                           <th className="py-3.5 px-4">Service Amount</th>
                           <th className="py-3.5 px-4">Total Amount Till Now</th>
@@ -2183,6 +2298,15 @@ export default function Expenses() {
                                     <p className="text-xs font-mono text-primary font-semibold">{bike?.number_plate || "—"}</p>
                                   </div>
                                 </div>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                {(rec.area_id?.name || bike?.area_id?.name) ? (
+                                  <Badge variant="outline" className="text-xs border-primary/30 text-primary bg-primary/5 whitespace-nowrap">
+                                    📍 {rec.area_id?.name || bike?.area_id?.name}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">—</span>
+                                )}
                               </td>
                               <td className="py-3.5 px-4 font-medium text-foreground">
                                 {format(new Date(rec.service_date), "dd MMM yyyy")}
