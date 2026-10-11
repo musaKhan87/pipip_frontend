@@ -6,6 +6,7 @@ const {
   deleteStaff,
   getMe,
   updateStaffAreas,
+  updateStaff,
   createManager,
   getManagers,
   updateManager,
@@ -27,6 +28,9 @@ router.delete("/managers/:id", protect, adminOnly, deleteManager);
 
 // Staff Routes (Super Admin, Admin, Area Manager)
 router.get("/staff", protect, authorizeRoles("super_admin", "admin", "manager"), getStaff);
+router.post("/staff", protect, authorizeRoles("super_admin", "admin", "manager"), register);
+router.put("/staff/:id", protect, authorizeRoles("super_admin", "admin", "manager"), updateStaff);
+router.delete("/staff/:id", protect, authorizeRoles("super_admin", "admin", "manager"), deleteStaff);
 router.delete("/:id", protect, authorizeRoles("super_admin", "admin", "manager"), deleteStaff);
 router.put("/:id/areas", protect, adminOnly, updateStaffAreas);
 

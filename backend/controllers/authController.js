@@ -58,7 +58,7 @@ exports.login = async (req, res) => {
 // @desc    Register a new user (Signup)
 exports.register = async (req, res) => {
   try {
-    const { fullName, email, password, role, areaId, assigned_areas } = req.body;
+    const { fullName, email, password, role, areaId, assigned_areas, status } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists)
@@ -76,6 +76,7 @@ exports.register = async (req, res) => {
       role: role || "staff",
       areaId: areaId || (areas[0] || null),
       assigned_areas: areas,
+      status: status || "active",
     });
 
     res.status(201).json({ message: "User created successfully", user });
@@ -147,8 +148,15 @@ exports.updateManager = async (req, res) => {
       return res.status(404).json({ message: "Area Manager not found" });
     }
 
+    if (email && email !== manager.email) {
+      const existing = await User.findOne({ email, _id: { $ne: manager._id } });
+      if (existing) {
+        return res.status(400).json({ message: "A user with this email already exists." });
+      }
+      manager.email = email;
+    }
+
     if (fullName) manager.fullName = fullName;
-    if (email) manager.email = email;
     if (status) manager.status = status;
     if (areaId) {
       manager.areaId = areaId;
@@ -258,6 +266,63 @@ exports.updateStaffAreas = async (req, res) => {
       .select("-password");
 
     res.json({ message: "Staff areas updated successfully", user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update Staff Member (Super Admin / Admin / Manager)
+exports.updateStaff = async (req, res) => {
+  try {
+    const { fullName, email, password, areaId, assigned_areas, status, role } = req.body;
+    const staff = await User.findById(req.params.id);
+
+    if (!staff) {
+      return res.status(404).json({ message: "Staff member not found" });
+    }
+
+    // Area Manager authorization check
+    if (req.user && req.user.role === "manager") {
+      const managerAreaId = (req.user.areaId?._id || req.user.areaId || req.user.assigned_areas?.[0])?.toString();
+      const staffAreaId = (staff.areaId?._id || staff.areaId || staff.assigned_areas?.[0])?.toString();
+      if (managerAreaId !== staffAreaId) {
+        return res.status(403).json({ message: "Access denied: Cannot edit staff from another area" });
+      }
+    }
+
+    if (email && email !== staff.email) {
+      const existing = await User.findOne({ email, _id: { $ne: staff._id } });
+      if (existing) {
+        return res.status(400).json({ message: "A user with this email already exists." });
+      }
+      staff.email = email;
+    }
+
+    if (fullName) staff.fullName = fullName;
+    if (status) staff.status = status;
+    if (role && (req.user.role === "super_admin" || req.user.role === "admin")) {
+      staff.role = role;
+    }
+
+    if (areaId || assigned_areas) {
+      const areas = assigned_areas || (areaId ? [areaId] : []);
+      staff.assigned_areas = areas;
+      staff.areaId = areaId || areas[0] || null;
+    }
+
+    if (password && password.trim() !== "") {
+      const salt = await bcrypt.genSalt(10);
+      staff.password = await bcrypt.hash(password, salt);
+    }
+
+    await staff.save();
+
+    const updatedStaff = await User.findById(staff._id)
+      .populate("areaId", "name city")
+      .populate("assigned_areas", "name city")
+      .select("-password");
+
+    res.json({ message: "Staff updated successfully", staff: updatedStaff });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

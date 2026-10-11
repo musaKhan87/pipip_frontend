@@ -94,12 +94,6 @@ const allMenuItems = [
     roles: ["super_admin", "admin", "manager"],
   },
   {
-    path: "/admin/panel/managers",
-    icon: UserCheck,
-    label: "Managers",
-    roles: ["super_admin", "admin"],
-  },
-  {
     path: "/admin/panel/settings",
     icon: Settings,
     label: "Settings",

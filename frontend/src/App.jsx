@@ -109,7 +109,7 @@
 
 
 import { useEffect, lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider } from "./lib/AuthProvider";
@@ -212,7 +212,7 @@ const App = () => {
                 <Route path="reports" element={<Reports />} />
                 <Route path="expenses" element={<Expenses />} />
                 <Route path="settings" element={<Settings />} />
-                <Route path="managers" element={<Managers />} />
+                <Route path="managers" element={<Navigate to="/admin/panel/settings" replace />} />
                 <Route path="investor-orders" element={<InvestorOrders />} />
               </Route>
 
