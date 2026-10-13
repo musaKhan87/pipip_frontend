@@ -575,7 +575,7 @@ export default function Settings() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                     {filteredStaff.map((staff) => {
                       const areaName = staff.areaId?.name || staff.assigned_areas?.[0]?.name || "Unassigned";
                       const areaCity = staff.areaId?.city || staff.assigned_areas?.[0]?.city || "";
@@ -583,11 +583,11 @@ export default function Settings() {
                       return (
                         <Card
                           key={staff._id}
-                          className="bg-card border-border hover:border-primary/50 transition-all duration-200 shadow-sm"
+                          className="bg-card border-border hover:border-primary/50 transition-all duration-200 shadow-sm min-w-0"
                         >
-                          <CardContent className="p-5">
+                          <CardContent className="p-3 sm:p-5">
                             <div className="flex items-start justify-between mb-3">
-                              <div className="min-w-0 pr-2">
+                              <div className="min-w-0 pr-2 flex-1">
                                 <h3 className="font-semibold text-foreground text-base leading-tight truncate">
                                   {staff.fullName}
                                 </h3>
@@ -606,22 +606,20 @@ export default function Settings() {
                               </Badge>
                             </div>
 
-                            <div className="my-3 p-2.5 rounded-lg bg-muted/40 border border-border/60 flex items-center justify-between">
-                              <div className="flex items-center gap-2 truncate pr-1">
-                                <MapPin className="w-4 h-4 text-primary shrink-0" />
-                                <span className="text-sm font-medium text-foreground truncate">{areaName}</span>
-                              </div>
-                              {areaCity && <span className="text-xs text-muted-foreground shrink-0">{areaCity}</span>}
+                            <div className="my-2 sm:my-3 p-2 sm:p-2.5 rounded-lg bg-muted/40 border border-border/60 flex items-center min-w-0">
+                              <MapPin className="w-4 h-4 text-primary shrink-0 mr-2" />
+                              <span className="text-sm font-medium text-foreground truncate min-w-0">{areaName}</span>
+                              {areaCity && <span className="text-xs text-muted-foreground shrink-0 ml-2 hidden sm:inline">{areaCity}</span>}
                             </div>
 
-                            <div className="flex gap-2 pt-2 border-t border-border/40">
+                            <div className="flex gap-2 pt-2 border-t border-border/40 min-w-0">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleEditStaff(staff)}
-                                className="flex-1 border-border hover:bg-muted"
+                                className="flex-1 min-w-0 border-border hover:bg-muted"
                               >
-                                <Pencil className="w-3.5 h-3.5 mr-1" />
+                                <Pencil className="w-3.5 h-3.5 mr-1 shrink-0" />
                                 Edit
                               </Button>
 
@@ -630,9 +628,9 @@ export default function Settings() {
                                   size="sm"
                                   variant="destructive"
                                   onClick={() => handleDeleteStaff(staff._id)}
-                                  className="flex-1"
+                                  className="flex-1 min-w-0"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                  <Trash2 className="w-3.5 h-3.5 mr-1 shrink-0" />
                                   Delete
                                 </Button>
                               )}
@@ -690,7 +688,7 @@ export default function Settings() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                     {filteredManagers.map((manager) => {
                       const areaName = manager.areaId?.name || manager.assigned_areas?.[0]?.name || "Unassigned";
                       const areaCity = manager.areaId?.city || manager.assigned_areas?.[0]?.city || "";
@@ -698,11 +696,11 @@ export default function Settings() {
                       return (
                         <Card
                           key={manager._id}
-                          className="bg-card border-border hover:border-primary/50 transition-all duration-200 shadow-sm"
+                          className="bg-card border-border hover:border-primary/50 transition-all duration-200 shadow-sm min-w-0"
                         >
-                          <CardContent className="p-5">
+                          <CardContent className="p-3 sm:p-5">
                             <div className="flex items-start justify-between mb-3">
-                              <div className="min-w-0 pr-2">
+                              <div className="min-w-0 pr-2 flex-1">
                                 <h3 className="font-semibold text-foreground text-base leading-tight truncate">
                                   {manager.fullName}
                                 </h3>
@@ -721,22 +719,20 @@ export default function Settings() {
                               </Badge>
                             </div>
 
-                            <div className="my-3 p-2.5 rounded-lg bg-muted/40 border border-border/60 flex items-center justify-between">
-                              <div className="flex items-center gap-2 truncate pr-1">
-                                <MapPin className="w-4 h-4 text-primary shrink-0" />
-                                <span className="text-sm font-medium text-foreground truncate">{areaName}</span>
-                              </div>
-                              {areaCity && <span className="text-xs text-muted-foreground shrink-0">{areaCity}</span>}
+                            <div className="my-2 sm:my-3 p-2 sm:p-2.5 rounded-lg bg-muted/40 border border-border/60 flex items-center min-w-0">
+                              <MapPin className="w-4 h-4 text-primary shrink-0 mr-2" />
+                              <span className="text-sm font-medium text-foreground truncate min-w-0">{areaName}</span>
+                              {areaCity && <span className="text-xs text-muted-foreground shrink-0 ml-2 hidden sm:inline">{areaCity}</span>}
                             </div>
 
-                            <div className="flex gap-2 pt-2 border-t border-border/40">
+                            <div className="flex gap-2 pt-2 border-t border-border/40 min-w-0">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleEditManager(manager)}
-                                className="flex-1 border-border hover:bg-muted"
+                                className="flex-1 min-w-0 border-border hover:bg-muted"
                               >
-                                <Pencil className="w-3.5 h-3.5 mr-1" />
+                                <Pencil className="w-3.5 h-3.5 mr-1 shrink-0" />
                                 Edit
                               </Button>
 
@@ -744,9 +740,9 @@ export default function Settings() {
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => handleDeleteManager(manager._id)}
-                                className="flex-1"
+                                className="flex-1 min-w-0"
                               >
-                                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                <Trash2 className="w-3.5 h-3.5 mr-1 shrink-0" />
                                 Delete
                               </Button>
                             </div>
@@ -803,15 +799,15 @@ export default function Settings() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                     {filteredInvestors.map((investor) => (
                       <Card
                         key={investor._id}
-                        className="bg-card border-border hover:border-primary/50 transition-all duration-200 shadow-sm"
+                        className="bg-card border-border hover:border-primary/50 transition-all duration-200 shadow-sm min-w-0"
                       >
-                        <CardContent className="p-5">
+                        <CardContent className="p-3 sm:p-5">
                           <div className="flex items-start justify-between mb-3">
-                            <div className="min-w-0 pr-2">
+                            <div className="min-w-0 pr-2 flex-1">
                               <h3 className="font-semibold text-foreground text-base leading-tight truncate">
                                 {investor.fullName}
                               </h3>
@@ -830,19 +826,19 @@ export default function Settings() {
                             </Badge>
                           </div>
 
-                          <div className="my-3 p-2.5 rounded-lg bg-muted/40 border border-border/60 flex items-center gap-2">
+                          <div className="my-2 sm:my-3 p-2 sm:p-2.5 rounded-lg bg-muted/40 border border-border/60 flex items-center gap-2 min-w-0">
                             <TrendingUp className="w-4 h-4 text-primary shrink-0" />
                             <span className="text-sm font-medium text-foreground truncate">Bike Investor</span>
                           </div>
 
-                          <div className="flex gap-2 pt-2 border-t border-border/40">
+                          <div className="flex gap-2 pt-2 border-t border-border/40 min-w-0">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleEditInvestor(investor)}
-                              className="flex-1 border-border hover:bg-muted"
+                              className="flex-1 min-w-0 border-border hover:bg-muted"
                             >
-                              <Pencil className="w-3.5 h-3.5 mr-1" />
+                              <Pencil className="w-3.5 h-3.5 mr-1 shrink-0" />
                               Edit
                             </Button>
 
@@ -850,9 +846,9 @@ export default function Settings() {
                               size="sm"
                               variant="destructive"
                               onClick={() => handleDeleteInvestor(investor._id)}
-                              className="flex-1"
+                              className="flex-1 min-w-0"
                             >
-                              <Trash2 className="w-3.5 h-3.5 mr-1" />
+                              <Trash2 className="w-3.5 h-3.5 mr-1 shrink-0" />
                               Delete
                             </Button>
                           </div>
