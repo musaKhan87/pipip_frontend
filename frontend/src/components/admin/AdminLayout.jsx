@@ -377,7 +377,7 @@ export default function AdminLayout() {
         </header>
 
         <main
-          className="flex-1 p-4 lg:p-8 overflow-y-auto h-full bg-background scrollbar-hide"
+          className="flex-1 p-4 lg:p-8 overflow-y-auto overflow-x-hidden h-full bg-background scrollbar-hide"
           ref={scrollRef}
         >
           <div className="max-w-7xl mx-auto">

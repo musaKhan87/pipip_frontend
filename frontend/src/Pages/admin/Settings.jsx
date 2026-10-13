@@ -503,27 +503,28 @@ export default function Settings() {
 
           <CardContent className="space-y-4">
             <Tabs defaultValue="staff" className="space-y-5">
-              <TabsList className="bg-muted/60 p-1 border border-border/80">
-                <TabsTrigger value="staff" className="flex items-center gap-2 text-sm font-medium px-4 py-2">
+              <TabsList className="bg-muted/60 p-1 border border-border/80 w-full overflow-x-auto flex flex-nowrap gap-1">
+                <TabsTrigger value="staff" className="flex items-center gap-1.5 text-sm font-medium px-3 py-2 whitespace-nowrap flex-shrink-0">
                   <Users className="w-4 h-4 text-primary" />
-                  Staff Members
-                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs font-bold">
+                  <span>Staff</span>
+                  <span className="hidden md:inline">Members</span>
+                  <Badge variant="secondary" className="ml-0.5 px-1.5 py-0 text-xs font-bold">
                     {staffList.length}
                   </Badge>
                 </TabsTrigger>
 
-                <TabsTrigger value="managers" className="flex items-center gap-2 text-sm font-medium px-4 py-2">
+                <TabsTrigger value="managers" className="flex items-center gap-1.5 text-sm font-medium px-3 py-2 whitespace-nowrap flex-shrink-0">
                   <UserCheck className="w-4 h-4 text-primary" />
-                  Area Managers
-                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs font-bold">
+                  <span>Managers</span>
+                  <Badge variant="secondary" className="ml-0.5 px-1.5 py-0 text-xs font-bold">
                     {managersList.length}
                   </Badge>
                 </TabsTrigger>
 
-                <TabsTrigger value="investors" className="flex items-center gap-2 text-sm font-medium px-4 py-2">
+                <TabsTrigger value="investors" className="flex items-center gap-1.5 text-sm font-medium px-3 py-2 whitespace-nowrap flex-shrink-0">
                   <TrendingUp className="w-4 h-4 text-primary" />
-                  Investors
-                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs font-bold">
+                  <span>Investors</span>
+                  <Badge variant="secondary" className="ml-0.5 px-1.5 py-0 text-xs font-bold">
                     {investorsList.length}
                   </Badge>
                 </TabsTrigger>

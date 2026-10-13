@@ -118,7 +118,8 @@ export default function AdminSidebar({ unreadCount }) {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/admin");
+    // Use hard redirect to fully clear in-memory state and avoid stuck SPA render
+    window.location.href = "/admin";
   };
 
   const handleNavigation = () => {
