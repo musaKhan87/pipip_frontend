@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   RefreshCw,
   Shield,
+  TrendingUp,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -95,6 +96,20 @@ export default function Settings() {
     status: "active",
   });
 
+  // Investors State
+  const [investorsList, setInvestorsList] = useState([]);
+  const [isInvestorsLoading, setIsInvestorsLoading] = useState(true);
+  const [isInvestorModalOpen, setIsInvestorModalOpen] = useState(false);
+  const [isInvestorSubmitting, setIsInvestorSubmitting] = useState(false);
+  const [editingInvestor, setEditingInvestor] = useState(null);
+  const [investorSearch, setInvestorSearch] = useState("");
+  const [investorForm, setInvestorForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    status: "active",
+  });
+
   // Token helper
   const getAuthHeader = () => {
     const token = localStorage.getItem("token");
@@ -129,10 +144,25 @@ export default function Settings() {
     }
   };
 
+  // Fetch Investors
+  const fetchInvestors = async () => {
+    try {
+      setIsInvestorsLoading(true);
+      const { data } = await axios.get(`${API_AUTH}/investors`, getAuthHeader());
+      setInvestorsList(data);
+    } catch (err) {
+      console.error("Error fetching investors:", err);
+      toast.error(err.response?.data?.message || "Failed to load investors list");
+    } finally {
+      setIsInvestorsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchStaff();
     if (hasAdminRights) {
       fetchManagers();
+      fetchInvestors();
     }
   }, [hasAdminRights]);
 
@@ -325,6 +355,80 @@ export default function Settings() {
     }
   };
 
+  // ==========================
+  // INVESTOR ACTIONS
+  // ==========================
+  const handleOpenAddInvestor = () => {
+    setEditingInvestor(null);
+    setInvestorForm({ fullName: "", email: "", password: "", status: "active" });
+    setIsInvestorModalOpen(true);
+  };
+
+  const handleEditInvestor = (inv) => {
+    setEditingInvestor(inv);
+    setInvestorForm({
+      fullName: inv.fullName || "",
+      email: inv.email || "",
+      password: "",
+      status: inv.status || "active",
+    });
+    setIsInvestorModalOpen(true);
+  };
+
+  const handleInvestorSubmit = async (e) => {
+    e.preventDefault();
+    if (!investorForm.fullName || !investorForm.email) {
+      toast.error("Full name and email are required");
+      return;
+    }
+    if (!editingInvestor && !investorForm.password) {
+      toast.error("Password is required for new investor");
+      return;
+    }
+
+    try {
+      setIsInvestorSubmitting(true);
+      if (editingInvestor) {
+        const payload = {
+          fullName: investorForm.fullName,
+          email: investorForm.email,
+          status: investorForm.status,
+        };
+        if (investorForm.password && investorForm.password.trim() !== "") {
+          payload.password = investorForm.password;
+        }
+        await axios.put(`${API_AUTH}/investors/${editingInvestor._id}`, payload, getAuthHeader());
+        toast.success("Investor updated successfully");
+      } else {
+        await axios.post(`${API_AUTH}/investors`, {
+          fullName: investorForm.fullName,
+          email: investorForm.email,
+          password: investorForm.password,
+          role: "investor",
+          status: investorForm.status,
+        }, getAuthHeader());
+        toast.success("Investor created successfully");
+      }
+      setIsInvestorModalOpen(false);
+      fetchInvestors();
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || "Failed to save investor");
+    } finally {
+      setIsInvestorSubmitting(false);
+    }
+  };
+
+  const handleDeleteInvestor = async (invId) => {
+    if (!window.confirm("Are you sure you want to remove this investor?")) return;
+    try {
+      await axios.delete(`${API_AUTH}/investors/${invId}`, getAuthHeader());
+      toast.success("Investor removed successfully");
+      fetchInvestors();
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || "Failed to remove investor");
+    }
+  };
+
   // Filtered lists
   const filteredStaff = staffList.filter((s) => {
     const areaName = s.areaId?.name || s.assigned_areas?.[0]?.name || "";
@@ -340,6 +444,12 @@ export default function Settings() {
     const emailMatch = m.email?.toLowerCase().includes(managerSearch.toLowerCase());
     const areaMatch = areaName.toLowerCase().includes(managerSearch.toLowerCase());
     return nameMatch || emailMatch || areaMatch;
+  });
+
+  const filteredInvestors = investorsList.filter((inv) => {
+    const nameMatch = inv.fullName?.toLowerCase().includes(investorSearch.toLowerCase());
+    const emailMatch = inv.email?.toLowerCase().includes(investorSearch.toLowerCase());
+    return nameMatch || emailMatch;
   });
 
   return (
@@ -407,6 +517,14 @@ export default function Settings() {
                   Area Managers
                   <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs font-bold">
                     {managersList.length}
+                  </Badge>
+                </TabsTrigger>
+
+                <TabsTrigger value="investors" className="flex items-center gap-2 text-sm font-medium px-4 py-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  Investors
+                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs font-bold">
+                    {investorsList.length}
                   </Badge>
                 </TabsTrigger>
               </TabsList>
@@ -638,6 +756,111 @@ export default function Settings() {
                   </div>
                 )}
               </TabsContent>
+
+              {/* ========================================= */}
+              {/* TAB 3: INVESTORS                         */}
+              {/* ========================================= */}
+              <TabsContent value="investors" className="space-y-4 outline-none">
+                {/* Search & Add Action Bar */}
+                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                  <div className="relative max-w-md flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search investors by name or email..."
+                      value={investorSearch}
+                      onChange={(e) => setInvestorSearch(e.target.value)}
+                      className="pl-10 bg-input border-border"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 self-end sm:self-auto">
+                    <Badge variant="outline" className="px-3 py-1.5 border-primary/30 text-primary hidden sm:inline-flex">
+                      Total Investors: {investorsList.length}
+                    </Badge>
+
+                    <Button
+                      className="gradient-sunset text-primary-foreground shadow-golden"
+                      onClick={handleOpenAddInvestor}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Investor
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Investors Cards Grid */}
+                {isInvestorsLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : filteredInvestors.length === 0 ? (
+                  <div className="text-center py-12 border border-dashed border-border rounded-xl">
+                    <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-40" />
+                    <h3 className="text-lg font-semibold text-foreground mb-1">No Investors Found</h3>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      {investorSearch ? "No investors match your search query." : "Click 'Add Investor' to register your first bike investor."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {filteredInvestors.map((investor) => (
+                      <Card
+                        key={investor._id}
+                        className="bg-card border-border hover:border-primary/50 transition-all duration-200 shadow-sm"
+                      >
+                        <CardContent className="p-5">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="min-w-0 pr-2">
+                              <h3 className="font-semibold text-foreground text-base leading-tight truncate">
+                                {investor.fullName}
+                              </h3>
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">{investor.email}</p>
+                            </div>
+
+                            <Badge
+                              variant={investor.status === "active" ? "default" : "secondary"}
+                              className={
+                                investor.status === "active"
+                                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs shrink-0"
+                                  : "bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs shrink-0"
+                              }
+                            >
+                              {investor.status === "active" ? "Active" : "Inactive"}
+                            </Badge>
+                          </div>
+
+                          <div className="my-3 p-2.5 rounded-lg bg-muted/40 border border-border/60 flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-primary shrink-0" />
+                            <span className="text-sm font-medium text-foreground truncate">Bike Investor</span>
+                          </div>
+
+                          <div className="flex gap-2 pt-2 border-t border-border/40">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditInvestor(investor)}
+                              className="flex-1 border-border hover:bg-muted"
+                            >
+                              <Pencil className="w-3.5 h-3.5 mr-1" />
+                              Edit
+                            </Button>
+
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteInvestor(investor._id)}
+                              className="flex-1"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
@@ -866,6 +1089,101 @@ export default function Settings() {
             >
               {isManagerSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingManager ? "Update Manager" : "Create Manager"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ======================================================= */}
+      {/* DIALOG: INVESTOR CREATE & EDIT                         */}
+      {/* ======================================================= */}
+      <Dialog open={isInvestorModalOpen} onOpenChange={setIsInvestorModalOpen}>
+        <DialogContent className="bg-card border-border sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-foreground text-xl flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              {editingInvestor ? "Edit Investor" : "Create New Investor"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleInvestorSubmit} className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input
+                placeholder="e.g. Suresh Mehta"
+                value={investorForm.fullName}
+                onChange={(e) => setInvestorForm({ ...investorForm, fullName: e.target.value })}
+                required
+                className="bg-input border-border"
+              />
+              <p className="text-xs text-muted-foreground">
+                ⚠️ This name must exactly match the <strong>Bike Owner</strong> field in bikes assigned to this investor.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Email / Username</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder="investor@pipip.in"
+                  value={investorForm.email}
+                  onChange={(e) => setInvestorForm({ ...investorForm, email: e.target.value })}
+                  required
+                  className="pl-10 bg-input border-border"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label>{editingInvestor ? "Password (Leave blank to keep unchanged)" : "Password"}</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => generatePassword(setInvestorForm)}
+                  className="text-xs text-primary h-6 px-2 hover:bg-primary/10"
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" /> Generate
+                </Button>
+              </div>
+              <div className="relative">
+                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder={editingInvestor ? "••••••••" : "Enter password"}
+                  value={investorForm.password}
+                  onChange={(e) => setInvestorForm({ ...investorForm, password: e.target.value })}
+                  required={!editingInvestor}
+                  className="pl-10 bg-input border-border font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+              <div>
+                <Label className="text-sm font-medium">Account Status</Label>
+                <p className="text-xs text-muted-foreground">
+                  {investorForm.status === "active" ? "Investor can log in and view their bikes & bookings" : "Investor login disabled"}
+                </p>
+              </div>
+              <Switch
+                checked={investorForm.status === "active"}
+                onCheckedChange={(checked) =>
+                  setInvestorForm({ ...investorForm, status: checked ? "active" : "inactive" })
+                }
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full gradient-sunset text-primary-foreground font-semibold shadow-golden mt-2"
+              disabled={isInvestorSubmitting}
+            >
+              {isInvestorSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {editingInvestor ? "Update Investor" : "Create Investor"}
             </Button>
           </form>
         </DialogContent>

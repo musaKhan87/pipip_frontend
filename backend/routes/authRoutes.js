@@ -11,6 +11,9 @@ const {
   getManagers,
   updateManager,
   deleteManager,
+  getInvestors,
+  updateInvestor,
+  deleteInvestor,
 } = require("../controllers/authController");
 const { protect, adminOnly, authorizeRoles } = require("../middleware/auth");
 const router = express.Router();
@@ -25,6 +28,12 @@ router.post("/managers", protect, adminOnly, createManager);
 router.get("/managers", protect, adminOnly, getManagers);
 router.put("/managers/:id", protect, adminOnly, updateManager);
 router.delete("/managers/:id", protect, adminOnly, deleteManager);
+
+// Investor Management Routes (Super Admin / Admin Only)
+router.post("/investors", protect, adminOnly, register);
+router.get("/investors", protect, adminOnly, getInvestors);
+router.put("/investors/:id", protect, adminOnly, updateInvestor);
+router.delete("/investors/:id", protect, adminOnly, deleteInvestor);
 
 // Staff Routes (Super Admin, Admin, Area Manager)
 router.get("/staff", protect, authorizeRoles("super_admin", "admin", "manager"), getStaff);

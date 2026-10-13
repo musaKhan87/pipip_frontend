@@ -196,6 +196,66 @@ exports.deleteManager = async (req, res) => {
   }
 };
 
+// @desc    Get all Investors (Super Admin)
+exports.getInvestors = async (req, res) => {
+  try {
+    const investors = await User.find({ role: "investor" })
+      .select("-password")
+      .sort({ createdAt: -1 });
+    res.json(investors);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update Investor (Super Admin)
+exports.updateInvestor = async (req, res) => {
+  try {
+    const { fullName, email, password, status } = req.body;
+    const investor = await User.findById(req.params.id);
+
+    if (!investor || investor.role !== "investor") {
+      return res.status(404).json({ message: "Investor not found" });
+    }
+
+    if (email && email !== investor.email) {
+      const existing = await User.findOne({ email, _id: { $ne: investor._id } });
+      if (existing) {
+        return res.status(400).json({ message: "A user with this email already exists." });
+      }
+      investor.email = email;
+    }
+
+    if (fullName) investor.fullName = fullName;
+    if (status) investor.status = status;
+
+    if (password && password.trim() !== "") {
+      const salt = await bcrypt.genSalt(10);
+      investor.password = await bcrypt.hash(password, salt);
+    }
+
+    await investor.save();
+    const updated = await User.findById(investor._id).select("-password");
+    res.json({ message: "Investor updated successfully", investor: updated });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete Investor (Super Admin)
+exports.deleteInvestor = async (req, res) => {
+  try {
+    const investor = await User.findById(req.params.id);
+    if (!investor || investor.role !== "investor") {
+      return res.status(404).json({ message: "Investor not found" });
+    }
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: "Investor deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get all staff (Settings Page / Area Manager Team View)
 exports.getStaff = async (req, res) => {
   try {
