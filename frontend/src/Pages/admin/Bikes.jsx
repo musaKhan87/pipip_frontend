@@ -292,12 +292,17 @@ const availableCount =
   - bookedCount
   - maintenanceCount;
 
-  // Change this:
-  const getAreaName = (areaId) => {
-    if (!areaId || !areas) return "Not Assigned";
-    return (
-      areas.find((a) => a._id === areaId || a.id === areaId)?.name || "Unknown"
-    );
+  const getAreaName = (area) => {
+    if (!area) return "Not Assigned";
+    // 1. If bike.area_id is already a populated object with a name
+    if (typeof area === "object" && area.name) {
+      return area.name;
+    }
+    // 2. If it is an ID (or object with _id), match with areas array
+    const targetId = typeof area === "object" ? (area._id || area.id) : area;
+    if (!targetId || !areas) return "Not Assigned";
+    const matched = areas.find((a) => String(a._id || a.id) === String(targetId));
+    return matched?.name || "Unknown";
   };
 
 

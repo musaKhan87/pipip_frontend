@@ -870,10 +870,13 @@ const Catalog = () => {
     }
   }, [urlAreaId, areas, initialized]);
 
-  const getAreaName = (areaId) => {
-    if (!areaId || !areas) return null;
-    const area = areas.find((a) => a._id === areaId);
-    return area ? area.name : null;
+  const getAreaName = (area) => {
+    if (!area) return null;
+    if (typeof area === "object" && area.name) return area.name;
+    const targetId = typeof area === "object" ? (area._id || area.id) : area;
+    if (!targetId || !areas) return null;
+    const matched = areas.find((a) => String(a._id || a.id) === String(targetId));
+    return matched ? matched.name : null;
   };
 
   const clusteredBikeIds = useMemo(() => {

@@ -275,9 +275,12 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
   /* =========================
      HELPERS
   ========================= */
-  const getAreaName = (areaId) => {
-    if (!areaId || !areas) return "Mumbai";
-    return areas.find((a) => a._id === areaId)?.name || "Mumbai";
+  const getAreaName = (area) => {
+    if (!area) return "Mumbai";
+    if (typeof area === "object" && area.name) return area.name;
+    const targetId = typeof area === "object" ? (area._id || area.id) : area;
+    if (!targetId || !areas) return "Mumbai";
+    return areas.find((a) => String(a._id || a.id) === String(targetId))?.name || "Mumbai";
   };
 
   // const calculatePrice = () => {
