@@ -2,16 +2,36 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-// Helper to create JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+// Helper to create JWT with role and areaId
+const generateToken = (userOrId) => {
+  if (userOrId && typeof userOrId === "object") {
+    const primaryArea = userOrId.areaId || (userOrId.assigned_areas && userOrId.assigned_areas[0]);
+    const areaIdStr = primaryArea?._id ? primaryArea._id.toString() : primaryArea ? primaryArea.toString() : null;
+    return jwt.sign(
+      {
+        id: userOrId._id || userOrId.id,
+        role: userOrId.role,
+        areaId: areaIdStr,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+  }
+  return jwt.sign({ id: userOrId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
 // @desc    Get current user profile
 exports.getMe = async (req, res) => {
   try {
-    // req.user is populated by the 'protect' middleware
-    res.json({ user: req.user });
+    const user = await User.findById(req.user._id || req.user.id)
+      .populate("assigned_areas")
+      .populate("areaId")
+      .select("-password")
+      .lean();
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -36,7 +56,7 @@ exports.login = async (req, res) => {
     if (await bcrypt.compare(password, user.password)) {
       const primaryArea = user.areaId || (user.assigned_areas && user.assigned_areas[0]);
       res.json({
-        token: generateToken(user._id),
+        token: generateToken(user),
         user: {
           id: user._id,
           fullName: user.fullName,
@@ -55,10 +75,35 @@ exports.login = async (req, res) => {
   }
 };
 
-// @desc    Register a new user (Signup)
+// @desc    Register a new user (Staff / Investor Creation)
 exports.register = async (req, res) => {
   try {
     const { fullName, email, password, role, areaId, assigned_areas, status } = req.body;
+
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ message: "Full name, email, and password are required." });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long." });
+    }
+
+    // Role Escalation Defense:
+    // Only authenticated Super Admin / Admin can assign privileged roles (admin, super_admin, manager)
+    let assignedRole = role || "staff";
+    const creatorRole = req.user?.role;
+    const isSuperOrAdmin = creatorRole === "super_admin" || creatorRole === "admin";
+
+    if (assignedRole === "super_admin" || assignedRole === "admin") {
+      if (!isSuperOrAdmin) {
+        return res.status(403).json({ message: "Access denied: Cannot assign admin roles." });
+      }
+    }
+
+    // If manager is creating, they can strictly only create "staff"
+    if (creatorRole === "manager" && assignedRole !== "staff") {
+      assignedRole = "staff";
+    }
 
     const userExists = await User.findOne({ email });
     if (userExists)
@@ -73,7 +118,7 @@ exports.register = async (req, res) => {
       fullName,
       email,
       password: hashedPassword,
-      role: role || "staff",
+      role: assignedRole,
       areaId: areaId || (areas[0] || null),
       assigned_areas: areas,
       status: status || "active",

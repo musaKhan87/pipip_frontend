@@ -83,10 +83,17 @@ const bikeSchema = new mongoose.Schema(
       ref: "Area",
     },
 
+    // Soft Delete Flag (Data Preservation)
+    is_deleted: {
+      type: Boolean,
+      default: false,
+    },
+
   },
   { timestamps: true }
 );
 
+bikeSchema.index({ is_deleted: 1 });
 bikeSchema.index({ status: 1 });
 bikeSchema.index({ area_id: 1 });
 bikeSchema.index({ bike_owner: 1 });

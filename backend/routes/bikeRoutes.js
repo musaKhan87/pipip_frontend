@@ -8,7 +8,7 @@ const {
   deleteBike,
   getSingleBike,
 } = require("../controllers/bikeController");
-const { protect } = require("../middleware/auth");
+const { protect, adminOnly, superAdminOnly } = require("../middleware/auth");
 
 // Public
 router.get("/", getBikes);
@@ -32,8 +32,8 @@ router.put(
   ]),
   updateBike,
 );
-router.delete("/:id",protect , deleteBike);
-router.get("/:id",getSingleBike);
+router.delete("/:id", protect, superAdminOnly, deleteBike);
+router.get("/:id", getSingleBike);
 
 module.exports = router;
 

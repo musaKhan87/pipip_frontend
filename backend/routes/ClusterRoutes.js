@@ -7,7 +7,7 @@ const {
   deleteCluster,
   getClusterById,
 } = require("../controllers/Clustercontroller");
-const { protect } = require("../middleware/auth");
+const { protect, adminOnly, superAdminOnly } = require("../middleware/auth");
 
 // Public
 ClusterRouter.get("/", getClusters);
@@ -16,6 +16,6 @@ ClusterRouter.get("/:id", getClusterById);
 // Protected Admin/Staff
 ClusterRouter.post("/", protect, createCluster);
 ClusterRouter.put("/:id", protect, updateCluster);
-ClusterRouter.delete("/:id", protect, deleteCluster);
+ClusterRouter.delete("/:id", protect, superAdminOnly, deleteCluster);
 
 module.exports = ClusterRouter;

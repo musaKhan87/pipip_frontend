@@ -3,7 +3,7 @@ const Area = require("../models/Area");
 // PUBLIC
 const getActiveAreas = async (req, res) => {
   try {
-    const areas = await Area.find({ is_active: true });
+    const areas = await Area.find({ is_active: true, is_deleted: { $ne: true } });
     res.json(areas);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch areas" });
@@ -35,8 +35,9 @@ const updateArea = async (req, res) => {
 
 const deleteArea = async (req, res) => {
   try {
-    await Area.findByIdAndDelete(req.params.id);
-    res.json({ message: "Area deleted" });
+    // Soft delete: mark as deleted and inactive to prevent data loss
+    await Area.findByIdAndUpdate(req.params.id, { is_deleted: true, is_active: false });
+    res.json({ message: "Area deleted successfully" });
   } catch (error) {
     res.status(400).json({ message: "Area delete failed" });
   }
@@ -44,7 +45,7 @@ const deleteArea = async (req, res) => {
 
 const getAreas = async (req, res) => {
   try {
-    const areas = await Area.find();
+    const areas = await Area.find({ is_deleted: { $ne: true } });
     res.json(areas);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch areas" });

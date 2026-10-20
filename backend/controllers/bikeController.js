@@ -85,7 +85,7 @@ const createBike = async (req, res) => {
  */
 const getBikes = async (req, res) => {
   try {
-    const filter = {};
+    const filter = { is_deleted: { $ne: true } };
     let currentUser = req.user;
 
     if (!currentUser && req.headers.authorization?.startsWith("Bearer")) {
@@ -209,8 +209,8 @@ const deleteBike = async (req, res) => {
       }
     }
 
-    await Bike.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "Bike deleted" });
+    await Bike.findByIdAndUpdate(req.params.id, { is_deleted: true });
+    res.status(200).json({ message: "Bike deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -218,7 +218,7 @@ const deleteBike = async (req, res) => {
 
 const getSingleBike = async (req, res) => {
   try {
-    const bike = await Bike.findById(req.params.id);
+    const bike = await Bike.findOne({ _id: req.params.id, is_deleted: { $ne: true } });
     
     if (!bike) {
       return res.status(404).json({ message: "Bike not found" });

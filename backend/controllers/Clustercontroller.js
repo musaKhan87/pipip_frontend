@@ -27,7 +27,7 @@ exports.createCluster = async (req, res) => {
 // GET ALL clusters
 exports.getClusters = async (req, res) => {
   try {
-    const filter = {};
+    const filter = { is_deleted: { $ne: true } };
     let currentUser = req.user;
 
     if (!currentUser && req.headers.authorization?.startsWith("Bearer")) {
@@ -155,7 +155,8 @@ exports.deleteCluster = async (req, res) => {
       }
     }
 
-    await cluster.deleteOne();
+    // Soft delete: mark as deleted to preserve historical data
+    await Cluster.findByIdAndUpdate(req.params.id, { is_deleted: true });
     res.json({ message: "Cluster deleted successfully" });
   } catch (error) {
     console.error("Delete Cluster Error:", error);

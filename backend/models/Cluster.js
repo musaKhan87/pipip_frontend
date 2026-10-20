@@ -15,8 +15,15 @@ const clusterSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Area",
     },
+    is_deleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
+
+clusterSchema.index({ is_deleted: 1 });
+clusterSchema.index({ area_id: 1 });
 
 module.exports = mongoose.model("Cluster", clusterSchema);

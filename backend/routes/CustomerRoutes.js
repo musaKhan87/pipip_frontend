@@ -1,6 +1,7 @@
 const express = require("express");
 const { createCustomer, getCustomer, updateCustomer, deleteCustomer , getCustomerBookings } = require("../controllers/Customercontroller");
 const upload = require("../middleware/upload");
+const { protect, adminOnly } = require("../middleware/auth");
 const router = express.Router();
 
 
@@ -38,7 +39,7 @@ router.put(
 
 router.get("/", getCustomer);
 // router.put("/:id", updateCustomer);
-router.delete("/:id", deleteCustomer);
+router.delete("/:id", protect, adminOnly, deleteCustomer);
 
 // booking history
 router.get("/:id/bookings", getCustomerBookings);

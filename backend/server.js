@@ -84,11 +84,69 @@ app.set("io", io);
 
 // Middlewares
 app.use(compression());
-app.use(cors());
 
-app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
+// Strict CORS Whitelist
+const allowedOrigins = [
+  "https://www.pipip.in",
+  "https://pipip.in",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:3000",
+];
 
-app.use(express.json());
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    const cleanOrigin = origin.replace(/\/$/, "");
+    if (
+      allowedOrigins.includes(cleanOrigin) ||
+      cleanOrigin.endsWith(".pipip.in") ||
+      cleanOrigin.startsWith("http://localhost:")
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "x-area-id",
+    "x-client-signature",
+  ],
+};
+app.use(cors(corsOptions));
+
+// Global Rate Limiter: 200 requests per minute per IP
+const rateLimit = require("express-rate-limit");
+const globalApiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests from this IP, please try again in a minute." },
+});
+app.use("/api", globalApiLimiter);
+
+// Secret Client Handshake Middleware (Blocks Postman & Unofficial Clients)
+const verifyClient = require("./middleware/verifyClient");
+app.use("/api", verifyClient);
+
+app.use('/api/payment/webhook', express.raw({ type: 'application/json', limit: '1mb' }));
+
+app.use(express.json({ limit: "25kb" }));
+app.use(express.urlencoded({ extended: true, limit: "25kb" }));
+
+// Catch invalid/malformed JSON syntax errors early before reaching route handlers
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    return res.status(400).json({ message: "Malformed JSON payload in request body" });
+  }
+  next(err);
+});
 
 app.use(
   "/api/payment",
