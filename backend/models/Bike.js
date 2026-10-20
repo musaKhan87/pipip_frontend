@@ -83,11 +83,10 @@ const bikeSchema = new mongoose.Schema(
 );
 
 // Pre-save normalization: auto-clean and uppercase registration number
-bikeSchema.pre("save", function (next) {
+bikeSchema.pre("save", function () {
   if (this.number_plate) {
     this.number_plate = this.number_plate.trim().toUpperCase().replace(/\s+/g, "");
   }
-  next();
 });
 
 // 1. Compound Index for Catalog & Admin filtering + sorting
