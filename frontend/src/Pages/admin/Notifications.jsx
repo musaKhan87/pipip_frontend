@@ -18,19 +18,7 @@ import { cn } from "../../lib/util";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import { useAuth } from "../../lib/AuthProvider";
-
-// Determine the backend URL dynamically to support both local development and production
-const getBackendUrl = () => {
-  if (import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
-  }
-  return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? "http://localhost:5000"
-    : "https://pipip-backend-eid3.onrender.com";
-};
-
-const BACKEND_URL = getBackendUrl();
-
+import { API_BASE_URL } from "../../config/api";
 
 export default function NotificationsCenter() {
   const { logs, setLogs } = useOutletContext();
@@ -104,7 +92,7 @@ export default function NotificationsCenter() {
       const userAreaId = user?.areaId?._id || user?.areaId || user?.assigned_areas?.[0]?._id || user?.assigned_areas?.[0] || null;
       // Ship device endpoint token credentials safely up to our node endpoint routes
       await axios.post(
-        `${BACKEND_URL}/api/notifications/subscribe`,
+        `${API_BASE_URL}/notifications/subscribe`,
         {
           ...activeTokenSubscription.toJSON(),
           areaId: userAreaId ? userAreaId.toString() : null,

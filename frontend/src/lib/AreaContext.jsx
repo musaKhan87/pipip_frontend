@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "./AuthProvider";
 
@@ -17,7 +18,7 @@ export function AreaProvider({ children }) {
   useEffect(() => {
     const fetchAreas = async () => {
       try {
-        const { data } = await axios.get("https://pipip-backend-eid3.onrender.com/api/areas");
+        const { data } = await axios.get(`${API_BASE_URL}/areas`);
         setAreas(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch areas for selector:", err);

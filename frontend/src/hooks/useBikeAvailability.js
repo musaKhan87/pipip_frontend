@@ -15,7 +15,7 @@
 //     setChecking(true);
 
 //     try {
-//       const res = await axios.post("https://pipip-backend-eid3.onrender.com/api/availability", {
+//       const res = await axios.post(`${API_BASE_URL}/availability`, {
 //         bikeId,
 //         start_datetime: startDate.toISOString(),
 //         end_datetime: endDate.toISOString(),
@@ -76,7 +76,7 @@
 //       try {
 
 //         // const res = await axios.post(
-//         //   "https://pipip-backend-eid3.onrender.com/api/availability",
+//         //   `${API_BASE_URL}/availability`,
 //         //   {
 
 //         //     bikeId,
@@ -134,7 +134,7 @@
 // console.log("bookingId:", bookingId);
 // console.log("payload:", payload);
 
-//       const res = await axios.post("https://pipip-backend-eid3.onrender.com/api/availability", payload);
+//       const res = await axios.post(`${API_BASE_URL}/availability`, payload);
 //         return res.data;
 
 //       }
@@ -180,6 +180,7 @@
 
 import { useState, useCallback } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
 export function useBikeAvailability() {
   const [checking, setChecking] = useState(false);
@@ -250,7 +251,7 @@ export function useBikeAvailability() {
         console.log("===== Availability Check =====");
         console.log("payload being sent:", payload);
 
-        const res = await axios.post("https://pipip-backend-eid3.onrender.com/api/availability", payload);
+        const res = await axios.post(`${API_BASE_URL}/availability`, payload);
         return res.data;
 
       } catch (error) {

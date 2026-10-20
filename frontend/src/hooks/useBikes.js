@@ -106,8 +106,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
-const API_URL = "https://pipip-backend-eid3.onrender.com/api/bikes";
+const API_URL = `${API_BASE_URL}/bikes`;
 
 /* ================= GET ALL BIKES ================= */
 export function useBikes(filters = {}, options = {}) {
@@ -195,7 +196,7 @@ export function useBike(bikeId) {
   return useQuery({
     queryKey: ["bike", bikeId],
     queryFn: async () => {
-      const res = await axios.get(`https://pipip-backend-eid3.onrender.com/api/bikes/${bikeId}`);
+      const res = await axios.get(`${API_URL}/${bikeId}`);
       return res.data;
     },
     enabled: !!bikeId,

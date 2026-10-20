@@ -13,6 +13,7 @@ import {
   Clock3,
 } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
 import { Link } from "react-router-dom";
 // import { Badge } from "../components/ui/Badge";
@@ -29,7 +30,7 @@ const Admin = () => {
   const fetchSubmissions = async () => {
     try {
       const res = await axios.get(
-        "https://pipip-backend-eid3.onrender.com/api/rentals/admin"
+        `${API_BASE_URL}/rentals/admin`
       );
       setSubmissions(res.data);
     } catch (error) {
@@ -52,7 +53,7 @@ const Admin = () => {
   const updateStatus = async (id, status) => {
     try {
       await axios.put(
-        `https://pipip-backend-eid3.onrender.com/api/rentals/${id}/status`,
+        `${API_BASE_URL}/rentals/${id}/status`,
         { status }
       );
       fetchSubmissions(); // refresh list

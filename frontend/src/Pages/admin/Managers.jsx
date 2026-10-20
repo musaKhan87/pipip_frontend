@@ -30,17 +30,9 @@ import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { useAllAreas } from "../../hooks/useAreas";
 import { useAuth } from "../../lib/AuthProvider";
+import { API_BASE_URL } from "../../config/api";
 
-const getBackendUrl = () => {
-  if (import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
-  }
-  return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? "http://localhost:5000"
-    : "https://pipip-backend-eid3.onrender.com";
-};
-
-const API_BASE = `${getBackendUrl()}/api/auth/managers`;
+const API_BASE = `${API_BASE_URL}/auth/managers`;
 
 export default function Managers() {
   const [managers, setManagers] = useState([]);

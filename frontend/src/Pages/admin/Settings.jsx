@@ -45,17 +45,9 @@ import {
 } from "../../components/ui/tabs";
 import { useAuth } from "../../lib/AuthProvider";
 import { useAllAreas, useActiveAreas } from "../../hooks/useAreas";
+import { API_BASE_URL } from "../../config/api";
 
-const getBackendUrl = () => {
-  if (import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
-  }
-  return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? "http://localhost:5000"
-    : "https://pipip-backend-eid3.onrender.com";
-};
-
-const API_AUTH = `${getBackendUrl()}/api/auth`;
+const API_AUTH = `${API_BASE_URL}/auth`;
 
 export default function Settings() {
   const { user, isSuperAdmin, isAdmin } = useAuth();

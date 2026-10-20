@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
+import { API_BASE_URL } from "../config/api";
 
 import {
   Card,
@@ -388,7 +389,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
   //   async (bookingId) => {
   //     try {
   //       const res = await fetch(
-  //         "https://pipip-backend-eid3.onrender.com/api/payment/create-order",
+  //         `${API_BASE_URL}/payment/create-order`,
   //         {
   //           method: "POST",
 
@@ -451,7 +452,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
   //       console.log("Creating payment order...");
 
   //       const res = await fetch(
-  //         "https://pipip-backend-eid3.onrender.com/api/payment/create-order",
+  //         `${API_BASE_URL}/payment/create-order`,
   //         {
   //           method: "POST",
   //           headers: {
@@ -511,7 +512,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const handleOnlinePayment = async () => {
     try {
       const res = await fetch(
-        "https://pipip-backend-eid3.onrender.com/api/payment/create-order",
+        `${API_BASE_URL}/payment/create-order`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -570,7 +571,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
       }).toString();
 
       const verifyRes = await fetch(
-        `https://pipip-backend-eid3.onrender.com/api/payment/verify/${orderId}?${queryParams}`,
+        `${API_BASE_URL}/payment/verify/${orderId}?${queryParams}`,
       );
       const verifyData = await verifyRes.json();
 
@@ -624,7 +625,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
     try {
       // 1. START PAYMENT FIRST (Create the Cashfree Order)
       const res = await fetch(
-        "https://pipip-backend-eid3.onrender.com/api/payment/create-order",
+        `${API_BASE_URL}/payment/create-order`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -655,7 +656,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
       // 3. CHECK IF PAYMENT WAS SUCCESSFUL
       // We call your backend to verify the actual status from Cashfree
       const verifyRes = await fetch(
-        `https://pipip-backend-eid3.onrender.com/api/payment/verify/${paymentOrder.orderId}`,
+        `${API_BASE_URL}/payment/verify/${paymentOrder.orderId}`,
       );
       const verifyData = await verifyRes.json();
 

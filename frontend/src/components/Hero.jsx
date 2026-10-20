@@ -167,6 +167,7 @@ import heroImage from "../assets/hero-scooter.jpg";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useActiveAreas } from "../hooks/useAreas";
 
@@ -236,7 +237,7 @@ const features = [
 useEffect(() => {
   const getServer = async () => {
     try {
-      await axios.get("https://pipip-backend-eid3.onrender.com/api/rentals");
+      await axios.get(`${API_BASE_URL}/rentals`);
     } catch (err) {
       console.error("Server ping failed", err);
     }

@@ -6,19 +6,7 @@ import { useAdminArea } from "../../lib/AreaContext";
 import { useEffect, useRef, useState, useMemo } from "react";
 import io from "socket.io-client";
 import { useBikes } from "../../hooks/useBikes";
-
-
-// Determine the backend URL dynamically to support both local development and production
-const getBackendUrl = () => {
-  if (import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
-  }
-  return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? "http://localhost:5000"
-    : "https://pipip-backend-eid3.onrender.com";
-};
-
-const BACKEND_URL = getBackendUrl();
+import { BACKEND_URL } from "../../config/api";
 
 export default function AdminLayout() {
 

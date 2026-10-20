@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
+import { API_BASE_URL } from "../config/api";
 
-const API_URL = "https://pipip-backend-eid3.onrender.com/api/customers";
+const API_URL = `${API_BASE_URL}/customers`;
 
 /* =========================
    GET ALL CUSTOMERS

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 const AuthContext = createContext(undefined);
 
 export function AuthProvider({ children }) {
@@ -7,8 +8,8 @@ export function AuthProvider({ children }) {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Define your Backend URL
-  const API_BASE_URL = "https://pipip-backend-eid3.onrender.com/api/auth";
+  // Define clean Auth endpoint
+  const API_AUTH_URL = `${API_BASE_URL}/auth`;
 
   // Check for existing session on mount
   useEffect(() => {
@@ -24,7 +25,7 @@ export function AuthProvider({ children }) {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       try {
-        const res = await fetch(`${API_BASE_URL}/me`, {
+        const res = await fetch(`${API_AUTH_URL}/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -54,7 +55,7 @@ export function AuthProvider({ children }) {
   // Login Function
   const signIn = async (email, password) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/login`, {
+      const res = await fetch(`${API_AUTH_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -80,7 +81,7 @@ export function AuthProvider({ children }) {
   // Signup Function
   const signUp = async (email, password, fullName) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/register`, {
+      const res = await fetch(`${API_AUTH_URL}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, fullName }),

@@ -1134,6 +1134,7 @@ import { saveAs } from "file-saver";
 import { Download } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { API_BASE_URL } from "../../config/api";
 import html2canvas from "html2canvas";
 
 
@@ -3449,7 +3450,7 @@ export default function Bookings() {
   const extendBooking = useMutation({
     mutationFn: async ({ id, data }) => {
       const res = await axios.patch(
-        `https://pipip-backend-eid3.onrender.com/api/bookings/${id}/extend`,
+        `${API_BASE_URL}/bookings/${id}/extend`,
 
         data,
       );

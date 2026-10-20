@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { subDays } from 'date-fns';
+import { API_BASE_URL } from '../config/api';
 
 // Create an axios instance for cleaner calls
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://pipip-backend-eid3.onrender.com/api',
+  baseURL: API_BASE_URL,
 });
 
 api.interceptors.request.use((config) => {
