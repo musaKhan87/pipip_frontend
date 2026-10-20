@@ -52,24 +52,16 @@ exports.login = async (req, res) => {
 
     const cleanEmail = email.toLowerCase().trim();
 
-    // Check failed attempts from this email (account brute-force protection) and IP (credential stuffing protection)
+    // Check failed attempts from this specific (Email + IP) pair within the last 15 minutes
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-    const emailFailedCount = await AuditLog.countDocuments({
+    const failedPairCount = await AuditLog.countDocuments({
       user_email: cleanEmail,
+      ip_address: ip,
       action: "FAILED_LOGIN_ATTEMPT",
       createdAt: { $gte: fifteenMinutesAgo },
     });
 
-    const isIpValid = ip && ip !== "unknown";
-    const ipFailedCount = isIpValid
-      ? await AuditLog.countDocuments({
-          ip_address: ip,
-          action: "FAILED_LOGIN_ATTEMPT",
-          createdAt: { $gte: fifteenMinutesAgo },
-        })
-      : 0;
-
-    if (emailFailedCount >= 5 || ipFailedCount >= 10) {
+    if (failedPairCount >= 5) {
       await logAudit({
         action: "LOGIN_LOCKOUT_TRIGGERED",
         severity: "critical",
@@ -77,18 +69,14 @@ exports.login = async (req, res) => {
         ip_address: ip,
         user_agent: userAgent,
         details: {
-          emailFailedCount,
-          ipFailedCount,
-          reason: emailFailedCount >= 5
-            ? "Account locked: 5 consecutive failed login attempts on this email within 15 minutes."
-            : "IP locked: 10 failed login attempts from this network within 15 minutes.",
+          failedPairCount,
+          reason: "Device temporarily locked: 5 consecutive failed attempts for this email from this IP within 15 minutes.",
         },
       });
 
       return res.status(429).json({
-        message: emailFailedCount >= 5
-          ? "Account temporarily locked due to 5 consecutive failed attempts. Please try again after 15 minutes."
-          : "Too many failed login attempts from your network. Please try again after 15 minutes.",
+        message:
+          "Too many failed login attempts for this account from this device. Please try again after 15 minutes.",
       });
     }
 
@@ -103,10 +91,10 @@ exports.login = async (req, res) => {
         user_email: cleanEmail,
         ip_address: ip,
         user_agent: userAgent,
-        details: { reason: "User does not exist", attemptNumber: emailFailedCount + 1 },
+        details: { reason: "User does not exist", attemptNumber: failedPairCount + 1 },
       });
 
-      if (emailFailedCount + 1 >= 5 || ipFailedCount + 1 >= 10) {
+      if (failedPairCount + 1 >= 5) {
         await logAudit({
           action: "LOGIN_LOCKOUT_TRIGGERED",
           severity: "critical",
@@ -117,7 +105,7 @@ exports.login = async (req, res) => {
         });
         return res.status(429).json({
           message:
-            "Account temporarily locked due to 5 consecutive failed attempts. Please try again after 15 minutes.",
+            "Too many failed login attempts for this account from this device. Please try again after 15 minutes.",
         });
       }
 
@@ -137,10 +125,10 @@ exports.login = async (req, res) => {
         user_email: user.email,
         ip_address: ip,
         user_agent: userAgent,
-        details: { reason: "Incorrect password", attemptNumber: emailFailedCount + 1 },
+        details: { reason: "Incorrect password", attemptNumber: failedPairCount + 1 },
       });
 
-      if (emailFailedCount + 1 >= 5 || ipFailedCount + 1 >= 10) {
+      if (failedPairCount + 1 >= 5) {
         await logAudit({
           action: "LOGIN_LOCKOUT_TRIGGERED",
           severity: "critical",
@@ -152,12 +140,19 @@ exports.login = async (req, res) => {
         });
         return res.status(429).json({
           message:
-            "Account temporarily locked due to 5 consecutive failed attempts. Please try again after 15 minutes.",
+            "Too many failed login attempts for this account from this device. Please try again after 15 minutes.",
         });
       }
 
       return res.status(401).json({ message: "Invalid email or password" });
     }
+
+    // Success: Clear failed attempts for this (email + IP) pair so counters reset immediately
+    await AuditLog.deleteMany({
+      user_email: cleanEmail,
+      ip_address: ip,
+      action: "FAILED_LOGIN_ATTEMPT",
+    }).catch(() => {});
 
     // Success: Log LOGIN_SUCCESS
     await logAudit({
