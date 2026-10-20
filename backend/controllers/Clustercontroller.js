@@ -2,6 +2,7 @@ const Cluster = require("../models/Cluster");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { getUserAreaIds, getAreaScope } = require("../middleware/auth");
+const { logAudit, getClientIp } = require("../utils/auditLogger");
 
 // CREATE cluster
 exports.createCluster = async (req, res) => {
@@ -157,6 +158,19 @@ exports.deleteCluster = async (req, res) => {
 
     // Soft delete: mark as deleted to preserve historical data
     await Cluster.findByIdAndUpdate(req.params.id, { is_deleted: true });
+
+    await logAudit({
+      action: "DELETE_CLUSTER",
+      severity: "warning",
+      performed_by: req.user?._id || req.user?.id,
+      user_email: req.user?.email,
+      ip_address: getClientIp(req),
+      user_agent: req.headers["user-agent"] || "",
+      target_id: cluster._id?.toString(),
+      target_name: cluster.name,
+      details: { area_id: cluster.area_id, soft_deleted: true },
+    });
+
     res.json({ message: "Cluster deleted successfully" });
   } catch (error) {
     console.error("Delete Cluster Error:", error);

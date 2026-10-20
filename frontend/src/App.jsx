@@ -189,8 +189,9 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<AboutPage />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/admin" element={<AdminLogin />} />
+              {/* Stealth Mode: /admin shows 404, secret URL accesses portal login */}
+              <Route path="/admin" element={<NotFound />} />
+              <Route path="/pipip-ops-mumbai" element={<AdminLogin />} />
               <Route path="/catalog" element={<Catalog />} />
               <Route path="/book/:bikeId" element={<BookBike />} />
               <Route path="/contact" element={<Contact />} />

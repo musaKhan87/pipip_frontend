@@ -1,4 +1,6 @@
 const User = require("../models/User");
+const AuditLog = require("../models/AuditLog");
+const { logAudit, getClientIp } = require("../utils/auditLogger");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
@@ -37,15 +39,75 @@ exports.getMe = async (req, res) => {
   }
 };
 
-// @desc    Auth user & get token (Login)
+// @desc    Auth user & get token (Login with 5-attempt lockout defense)
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email })
+    const ip = getClientIp(req);
+    const userAgent = req.headers["user-agent"] || "";
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Check failed attempts from this IP or email in the last 15 minutes
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const failedCount = await AuditLog.countDocuments({
+      $or: [{ ip_address: ip }, { user_email: cleanEmail }],
+      action: "FAILED_LOGIN_ATTEMPT",
+      createdAt: { $gte: fifteenMinutesAgo },
+    });
+
+    if (failedCount >= 5) {
+      await logAudit({
+        action: "LOGIN_LOCKOUT_TRIGGERED",
+        severity: "critical",
+        user_email: cleanEmail,
+        ip_address: ip,
+        user_agent: userAgent,
+        details: {
+          failedAttempts: failedCount,
+          reason: "Account locked: 5 consecutive failed login attempts within 15 minutes.",
+        },
+      });
+
+      return res.status(429).json({
+        message:
+          "Account temporarily locked due to 5 consecutive failed attempts. Please try again after 15 minutes.",
+      });
+    }
+
+    const user = await User.findOne({ email: cleanEmail })
       .populate("assigned_areas")
       .populate("areaId");
 
     if (!user) {
+      await logAudit({
+        action: "FAILED_LOGIN_ATTEMPT",
+        severity: "warning",
+        user_email: cleanEmail,
+        ip_address: ip,
+        user_agent: userAgent,
+        details: { reason: "User does not exist", attemptNumber: failedCount + 1 },
+      });
+
+      if (failedCount + 1 >= 5) {
+        await logAudit({
+          action: "LOGIN_LOCKOUT_TRIGGERED",
+          severity: "critical",
+          user_email: cleanEmail,
+          ip_address: ip,
+          user_agent: userAgent,
+          details: { thresholdReached: true },
+        });
+        return res.status(429).json({
+          message:
+            "Account temporarily locked due to 5 consecutive failed attempts. Please try again after 15 minutes.",
+        });
+      }
+
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
@@ -53,23 +115,61 @@ exports.login = async (req, res) => {
       return res.status(403).json({ message: "Account is inactive. Please contact administrator." });
     }
 
-    if (await bcrypt.compare(password, user.password)) {
-      const primaryArea = user.areaId || (user.assigned_areas && user.assigned_areas[0]);
-      res.json({
-        token: generateToken(user),
-        user: {
-          id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          role: user.role,
-          areaId: primaryArea ? (primaryArea._id || primaryArea) : null,
-          assigned_areas: user.assigned_areas || [],
-          status: user.status || "active",
-        },
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      await logAudit({
+        action: "FAILED_LOGIN_ATTEMPT",
+        severity: "warning",
+        performed_by: user._id,
+        user_email: user.email,
+        ip_address: ip,
+        user_agent: userAgent,
+        details: { reason: "Incorrect password", attemptNumber: failedCount + 1 },
       });
-    } else {
-      res.status(401).json({ message: "Invalid email or password" });
+
+      if (failedCount + 1 >= 5) {
+        await logAudit({
+          action: "LOGIN_LOCKOUT_TRIGGERED",
+          severity: "critical",
+          performed_by: user._id,
+          user_email: user.email,
+          ip_address: ip,
+          user_agent: userAgent,
+          details: { thresholdReached: true },
+        });
+        return res.status(429).json({
+          message:
+            "Account temporarily locked due to 5 consecutive failed attempts. Please try again after 15 minutes.",
+        });
+      }
+
+      return res.status(401).json({ message: "Invalid email or password" });
     }
+
+    // Success: Log LOGIN_SUCCESS
+    await logAudit({
+      action: "LOGIN_SUCCESS",
+      severity: "info",
+      performed_by: user._id,
+      user_email: user.email,
+      ip_address: ip,
+      user_agent: userAgent,
+      details: { role: user.role },
+    });
+
+    const primaryArea = user.areaId || (user.assigned_areas && user.assigned_areas[0]);
+    res.json({
+      token: generateToken(user),
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        areaId: primaryArea ? (primaryArea._id || primaryArea) : null,
+        assigned_areas: user.assigned_areas || [],
+        status: user.status || "active",
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

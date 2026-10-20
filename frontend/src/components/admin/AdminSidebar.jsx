@@ -119,7 +119,7 @@ export default function AdminSidebar({ unreadCount }) {
   const handleSignOut = async () => {
     await signOut();
     // Use hard redirect to fully clear in-memory state and avoid stuck SPA render
-    window.location.href = "/admin";
+    window.location.href = "/pipip-ops-mumbai";
   };
 
   const handleNavigation = () => {

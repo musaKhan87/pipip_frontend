@@ -210,7 +210,7 @@ export default function AdminLayout() {
   }
 
   if (!user) {
-    return <Navigate to="/admin" state={{ from: "/admin/panel" }} replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (!hasPanelAccess) {

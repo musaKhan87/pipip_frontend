@@ -1,6 +1,7 @@
 const Bike = require("../models/Bike");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { logAudit, getClientIp } = require("../utils/auditLogger");
 
 /**
  * ADMIN: Create Bike
@@ -178,6 +179,34 @@ const updateBike = async (req, res) => {
     // Enforce the 5-image limit and update the data object
     updateData.extra_images = finalExtraImages.slice(0, 5);
 
+    // Check price modification for audit trail
+    const oldPriceDay = bike.price_per_day;
+    const oldPriceHour = bike.price_per_hour;
+    const newPriceDay = req.body.price_per_day !== undefined ? Number(req.body.price_per_day) : oldPriceDay;
+    const newPriceHour = req.body.price_per_hour !== undefined ? Number(req.body.price_per_hour) : oldPriceHour;
+
+    if (
+      (req.body.price_per_day !== undefined && oldPriceDay !== newPriceDay) ||
+      (req.body.price_per_hour !== undefined && oldPriceHour !== newPriceHour)
+    ) {
+      await logAudit({
+        action: "UPDATE_PRICE",
+        severity: "info",
+        performed_by: req.user?._id || req.user?.id,
+        user_email: req.user?.email,
+        ip_address: getClientIp(req),
+        user_agent: req.headers["user-agent"] || "",
+        target_id: bike._id?.toString(),
+        target_name: `${bike.bike_name} (${bike.number_plate})`,
+        details: {
+          old_price_day: oldPriceDay,
+          new_price_day: newPriceDay,
+          old_price_hour: oldPriceHour,
+          new_price_hour: newPriceHour,
+        },
+      });
+    }
+
     const updatedBike = await Bike.findByIdAndUpdate(
       req.params.id,
       { $set: updateData },
@@ -210,6 +239,23 @@ const deleteBike = async (req, res) => {
     }
 
     await Bike.findByIdAndUpdate(req.params.id, { is_deleted: true });
+
+    await logAudit({
+      action: "DELETE_BIKE",
+      severity: "warning",
+      performed_by: req.user?._id || req.user?.id,
+      user_email: req.user?.email,
+      ip_address: getClientIp(req),
+      user_agent: req.headers["user-agent"] || "",
+      target_id: bike._id?.toString(),
+      target_name: `${bike.bike_name} (${bike.number_plate})`,
+      details: {
+        model: bike.model,
+        area_id: bike.area_id,
+        soft_deleted: true,
+      },
+    });
+
     res.status(200).json({ message: "Bike deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
