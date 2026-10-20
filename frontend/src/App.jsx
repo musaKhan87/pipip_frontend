@@ -198,6 +198,7 @@ const App = () => {
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
               <Route path="/refund-policy" element={<RefundPolicy />} />
+              <Route path="/pricing" element={<PricingPage />} />
 
               {/* Admin Panel Nested Routes */}
               <Route path="/admin/panel" element={<AdminLayout />}>
