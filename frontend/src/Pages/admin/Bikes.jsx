@@ -47,6 +47,7 @@ import {
   CircleDot,
   Navigation,
   Download,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
 import { toast } from "sonner";
@@ -130,6 +131,7 @@ export default function Bikes() {
   const createBike = useCreateBike();
   const updateBike = useUpdateBike();
   const deleteBike = useDeleteBike();
+  const isSubmitting = createBike.isPending || updateBike.isPending;
   const [selectedFile, setSelectedFile] = useState(null);
 
   const [searchParams] = useSearchParams();
@@ -420,14 +422,22 @@ const filteredBikes = (bikes || []).filter((bike) => {
 
     const data = new FormData();
 
-    // 1. Text fields append (Excluding images)
+    // 1. Text fields append (Excluding images & empty strings for optional references/dates)
     Object.keys(formData).forEach((key) => {
       if (
         key !== "image_url" &&
         key !== "extra_images" &&
-        formData[key] !== undefined
+        formData[key] !== undefined &&
+        formData[key] !== null
       ) {
-        data.append(key, formData[key]);
+        const val = formData[key];
+        // Do not send empty string for area_id or date fields to prevent Mongoose CastErrors
+        if (typeof val === "string" && val.trim() === "") {
+          if (key === "area_id" || key.endsWith("_date") || key.startsWith("last_")) {
+            return;
+          }
+        }
+        data.append(key, val);
       }
     });
 
@@ -1098,10 +1108,17 @@ const filteredBikes = (bikes || []).filter((bike) => {
                   </Button>
                   <Button
                     type="submit"
-                    className="gradient-sunset text-primary-foreground"
-                    disabled={isLoading}
+                    className="gradient-sunset text-primary-foreground min-w-[120px]"
+                    disabled={isSubmitting}
                   >
-                    {editingBike ? "Update" : "Add"} Bike
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {editingBike ? "Updating..." : "Adding..."}
+                      </span>
+                    ) : (
+                      editingBike ? "Update Bike" : "Add Bike"
+                    )}
                   </Button>
                 </div>
               </form>

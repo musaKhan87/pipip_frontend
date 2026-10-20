@@ -30,15 +30,77 @@ const resolveCurrentUser = async (req) => {
 };
 
 /**
+ * Sanitizes incoming bike payload (converts empty string dates & ObjectIds to null, normalizes numbers)
+ */
+const sanitizeBikeData = (body) => {
+  const data = { ...body };
+
+  // 1. Sanitize ObjectId references (convert "" or "none" to null)
+  if (
+    !data.area_id ||
+    data.area_id === "" ||
+    data.area_id === "none" ||
+    data.area_id === "null" ||
+    data.area_id === "undefined"
+  ) {
+    data.area_id = null;
+  }
+
+  // 2. Sanitize Date fields (convert "" to null)
+  const dateFields = [
+    "insurance_end_date",
+    "puc_end_date",
+    "bike_end_date",
+    "last_service_date",
+    "last_battery_changed",
+    "last_tyre_change",
+    "gps_installed_date",
+  ];
+  dateFields.forEach((field) => {
+    if (
+      data[field] === "" ||
+      data[field] === "null" ||
+      data[field] === "undefined" ||
+      data[field] === undefined
+    ) {
+      data[field] = null;
+    } else {
+      const parsedDate = new Date(data[field]);
+      data[field] = isNaN(parsedDate.getTime()) ? null : parsedDate;
+    }
+  });
+
+  // 3. Sanitize Numbers
+  if (data.cc !== undefined) data.cc = Number(data.cc) || 0;
+  if (data.price_per_hour !== undefined) data.price_per_hour = Number(data.price_per_hour) || 0;
+  if (data.price_per_day !== undefined) data.price_per_day = Number(data.price_per_day) || 0;
+  if (data.bike_expenses !== undefined) data.bike_expenses = Number(data.bike_expenses) || 0;
+  if (data.total_km_run !== undefined) data.total_km_run = Number(data.total_km_run) || 0;
+
+  // 4. Sanitize Strings & Plate
+  if (data.number_plate) {
+    data.number_plate = data.number_plate.trim().toUpperCase().replace(/\s+/g, "");
+  }
+  if (data.bike_name) data.bike_name = data.bike_name.trim();
+  if (data.model) data.model = data.model.trim();
+
+  delete data.remaining_extra_images;
+
+  return data;
+};
+
+/**
  * ADMIN / MANAGER: Create Bike
  */
 const createBike = async (req, res) => {
   try {
+    const bikeData = sanitizeBikeData(req.body);
+
     if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
       const userAreaIds = getUserAreaIds(req.user);
-      const hasArea = userAreaIds?.some(
-        (areaId) => areaId.toString() === req.body.area_id?.toString()
-      );
+      const hasArea =
+        bikeData.area_id &&
+        userAreaIds?.some((areaId) => areaId.toString() === bikeData.area_id.toString());
       if (!hasArea) {
         return res
           .status(403)
@@ -47,12 +109,16 @@ const createBike = async (req, res) => {
     }
 
     // Input bounds validation
-    const hourly = Number(req.body.price_per_hour);
-    const daily = Number(req.body.price_per_day);
-    const expenses = req.body.bike_expenses !== undefined ? Number(req.body.bike_expenses) : 0;
-
-    if (hourly < 0 || daily < 0 || expenses < 0) {
+    if (
+      bikeData.price_per_hour < 0 ||
+      bikeData.price_per_day < 0 ||
+      bikeData.bike_expenses < 0
+    ) {
       return res.status(400).json({ message: "Pricing and expenses cannot be negative" });
+    }
+
+    if (!bikeData.bike_name || !bikeData.model || !bikeData.number_plate) {
+      return res.status(400).json({ message: "Bike name, model, and number plate are required" });
     }
 
     // Main image
@@ -64,18 +130,8 @@ const createBike = async (req, res) => {
       extraImagePaths = req.files.extra_images.map((file) => file.path);
     }
 
-    const bikeData = {
-      ...req.body,
-      price_per_hour: hourly,
-      price_per_day: daily,
-      bike_expenses: expenses,
-      image_url,
-      extra_images: extraImagePaths,
-    };
-
-    if (bikeData.number_plate) {
-      bikeData.number_plate = bikeData.number_plate.trim().toUpperCase().replace(/\s+/g, "");
-    }
+    bikeData.image_url = image_url;
+    bikeData.extra_images = extraImagePaths;
 
     const bike = await Bike.create(bikeData);
 
@@ -98,8 +154,13 @@ const createBike = async (req, res) => {
 
     res.status(201).json(bike);
   } catch (error) {
+    console.error("Create Bike Error:", error);
     if (error.code === 11000) {
       return res.status(400).json({ message: "A bike with this number plate already exists" });
+    }
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({ message: messages.join(", ") });
     }
     res.status(500).json({ message: error.message });
   }
@@ -284,11 +345,7 @@ const updateBike = async (req, res) => {
       return res.status(400).json({ message: "Pricing and expenses cannot be negative" });
     }
 
-    const updateData = { ...req.body };
-
-    if (updateData.number_plate) {
-      updateData.number_plate = updateData.number_plate.trim().toUpperCase().replace(/\s+/g, "");
-    }
+    const updateData = sanitizeBikeData(req.body);
 
     // 1. Handle Main Profile Image
     if (req.files?.image_url) {
@@ -344,6 +401,10 @@ const updateBike = async (req, res) => {
   } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({ message: "A bike with this number plate already exists" });
+    }
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({ message: messages.join(", ") });
     }
     console.error("Backend Update Error:", error);
     res.status(500).json({ message: error.message });
