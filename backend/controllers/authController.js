@@ -52,15 +52,24 @@ exports.login = async (req, res) => {
 
     const cleanEmail = email.toLowerCase().trim();
 
-    // Check failed attempts from this IP or email in the last 15 minutes
+    // Check failed attempts from this email (account brute-force protection) and IP (credential stuffing protection)
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-    const failedCount = await AuditLog.countDocuments({
-      $or: [{ ip_address: ip }, { user_email: cleanEmail }],
+    const emailFailedCount = await AuditLog.countDocuments({
+      user_email: cleanEmail,
       action: "FAILED_LOGIN_ATTEMPT",
       createdAt: { $gte: fifteenMinutesAgo },
     });
 
-    if (failedCount >= 5) {
+    const isIpValid = ip && ip !== "unknown";
+    const ipFailedCount = isIpValid
+      ? await AuditLog.countDocuments({
+          ip_address: ip,
+          action: "FAILED_LOGIN_ATTEMPT",
+          createdAt: { $gte: fifteenMinutesAgo },
+        })
+      : 0;
+
+    if (emailFailedCount >= 5 || ipFailedCount >= 10) {
       await logAudit({
         action: "LOGIN_LOCKOUT_TRIGGERED",
         severity: "critical",
@@ -68,14 +77,18 @@ exports.login = async (req, res) => {
         ip_address: ip,
         user_agent: userAgent,
         details: {
-          failedAttempts: failedCount,
-          reason: "Account locked: 5 consecutive failed login attempts within 15 minutes.",
+          emailFailedCount,
+          ipFailedCount,
+          reason: emailFailedCount >= 5
+            ? "Account locked: 5 consecutive failed login attempts on this email within 15 minutes."
+            : "IP locked: 10 failed login attempts from this network within 15 minutes.",
         },
       });
 
       return res.status(429).json({
-        message:
-          "Account temporarily locked due to 5 consecutive failed attempts. Please try again after 15 minutes.",
+        message: emailFailedCount >= 5
+          ? "Account temporarily locked due to 5 consecutive failed attempts. Please try again after 15 minutes."
+          : "Too many failed login attempts from your network. Please try again after 15 minutes.",
       });
     }
 
@@ -90,10 +103,10 @@ exports.login = async (req, res) => {
         user_email: cleanEmail,
         ip_address: ip,
         user_agent: userAgent,
-        details: { reason: "User does not exist", attemptNumber: failedCount + 1 },
+        details: { reason: "User does not exist", attemptNumber: emailFailedCount + 1 },
       });
 
-      if (failedCount + 1 >= 5) {
+      if (emailFailedCount + 1 >= 5 || ipFailedCount + 1 >= 10) {
         await logAudit({
           action: "LOGIN_LOCKOUT_TRIGGERED",
           severity: "critical",
@@ -124,10 +137,10 @@ exports.login = async (req, res) => {
         user_email: user.email,
         ip_address: ip,
         user_agent: userAgent,
-        details: { reason: "Incorrect password", attemptNumber: failedCount + 1 },
+        details: { reason: "Incorrect password", attemptNumber: emailFailedCount + 1 },
       });
 
-      if (failedCount + 1 >= 5) {
+      if (emailFailedCount + 1 >= 5 || ipFailedCount + 1 >= 10) {
         await logAudit({
           action: "LOGIN_LOCKOUT_TRIGGERED",
           severity: "critical",

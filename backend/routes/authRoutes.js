@@ -20,13 +20,21 @@ const rateLimit = require("express-rate-limit");
 
 const router = express.Router();
 
-// Strict Login Rate Limiter: max 5 attempts per 15 minutes per IP
+// Strict Login Rate Limiter: max 5 failed attempts per 15 minutes per device/IP
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  max: 5, // 5 failed attempts per actual device
+  skipSuccessfulRequests: true, // Legitimate logins do NOT consume quota
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: "Too many login attempts from this IP, please try again after 15 minutes." },
+  keyGenerator: (req) => {
+    return (
+      req.headers["cf-connecting-ip"] ||
+      req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+      req.ip
+    );
+  },
+  message: { message: "Too many failed login attempts from this device. Please try again after 15 minutes." },
 });
 
 // Public Routes

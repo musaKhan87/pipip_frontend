@@ -55,6 +55,9 @@ connectDB();
 
 const app = express();
 
+// Trust reverse proxy (Render / Cloudflare) to ensure accurate client IP detection
+app.set("trust proxy", 1);
+
 const server = http.createServer(app); // 👈 NEW: Wrap Express app in HTTP server
 
 // Initialize Socket.io with your exact CORS rules
@@ -127,6 +130,13 @@ const globalApiLimiter = rateLimit({
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    return (
+      req.headers["cf-connecting-ip"] ||
+      req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
+      req.ip
+    );
+  },
   message: { message: "Too many requests from this IP, please try again in a minute." },
 });
 app.use("/api", globalApiLimiter);
