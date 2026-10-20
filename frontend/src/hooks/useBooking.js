@@ -1,151 +1,3 @@
-// import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-// import axios from "axios";
-// import { toast } from "sonner";
-
-// const API_URL = "http://localhost:5000/api/bookings";
-
-// /* =========================
-//    GET ALL BOOKINGS
-// ========================= */
-// export function useBookings(filters = {}) {
-//   return useQuery({
-//     queryKey: ["bookings", filters],
-//     queryFn: async () => {
-//       const { data } = await axios.get(API_URL, { params: filters });
-//       return data;
-//     },
-//   });
-// }
-
-// /* =========================
-//    GET SINGLE BOOKING
-// ========================= */
-// export function useBooking(id) {
-//   return useQuery({
-//     queryKey: ["bookings", id],
-//     queryFn: async () => {
-//       const { data } = await axios.get(`${API_URL}/${id}`);
-//       return data;
-//     },
-//     enabled: !!id,
-//   });
-// }
-
-// /* =========================
-//    CREATE BOOKING
-// ========================= */
-// // export function useCreateBooking() {
-// //   const queryClient = useQueryClient();
-  
-// //   return useMutation({
-// //     mutationFn: async (bookingData) => {
-// //          console.log("SENDING:", bookingData);
-// //       const { data } = await axios.post(API_URL, bookingData);
-// //       return data;
-// //     },
-// //     onSuccess: () => {
-// //       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-// //       toast.success("Booking created successfully");
-// //     },
-// //     onError: (error) => {
-// //       toast.error(error.response?.data?.message || "Failed to create booking");
-// //     },
-    
-
-// //   });
- 
-
-// export function useCreateBooking() {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async (bookingData) => {
-//       console.log("SENDING:", bookingData);
-
-//       const { data } = await axios.post(API_URL, bookingData, {
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//       });
-
-//       return data;
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-//       toast.success("Booking created successfully");
-//     },
-//     onError: (error) => {
-//       toast.error(error.response?.data?.message || "Failed to create booking");
-//     },
-//   });
-// }
-
-
-
-
-// /* =========================
-//    UPDATE BOOKING STATUS (ADMIN)
-// ========================= */
-// export function useUpdateBookingStatus() {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async ({ id, status }) => {
-//       const { data } = await axios.patch(`${API_URL}/${id}/status`, { status });
-//       return data;
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-//       toast.success("Booking status updated");
-//     },
-//     onError: (error) => {
-//       toast.error(error.response?.data?.message || "Status update failed");
-//     },
-//   });
-// }
-
-// /* =========================
-//    UPDATE BOOKING (ADMIN)
-// ========================= */
-// export function useUpdateBooking() {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async ({ id, ...updates }) => {
-//       const { data } = await axios.put(`${API_URL}/${id}`, updates);
-//       return data;
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-//       toast.success("Booking updated successfully");
-//     },
-//     onError: (error) => {
-//       toast.error(error.response?.data?.message || "Update failed");
-//     },
-//   });
-// }
-
-// /* =========================
-//    DELETE BOOKING (ADMIN)
-// ========================= */
-// export function useDeleteBooking() {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async (id) => {
-//       await axios.delete(`${API_URL}/${id}`);
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-//       toast.success("Booking deleted successfully");
-//     },
-//     onError: (error) => {
-//       toast.error(error.response?.data?.message || "Delete failed");
-//     },
-//   });
-// }
-
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
@@ -156,20 +8,44 @@ const API_URL = `${API_BASE_URL}/bookings`;
 /* =========================
    GET ALL BOOKINGS
 ========================= */
-export function useBookings(status = "all", options = {}) {
+export function useBookings(filterOrStatus = "all", options = {}) {
+  let params = {};
+  if (typeof filterOrStatus === "object" && filterOrStatus !== null) {
+    params = { ...filterOrStatus };
+    if (params.status === "all") delete params.status;
+  } else if (typeof filterOrStatus === "string" && filterOrStatus !== "all") {
+    params = { status: filterOrStatus };
+  }
+
+  const queryOptions = typeof options === "object" ? options : {};
+
   return useQuery({
-    queryKey: ["bookings", status],
+    queryKey: ["bookings", filterOrStatus],
     queryFn: async () => {
-      const { data } = await axios.get(API_URL, {
-        params: status !== "all" ? { status } : {},
-      });
+      const { data } = await axios.get(API_URL, { params });
+      // If backend returns paginated object { bookings: [...] }, return the array for backward compatibility
+      if (data && Array.isArray(data.bookings)) {
+        return data.bookings;
+      }
+      return Array.isArray(data) ? data : [];
+    },
+    ...queryOptions,
+  });
+}
+
+/* =========================
+   GET PAGINATED BOOKINGS (SERVER-SIDE)
+========================= */
+export function usePaginatedBookings(filters = {}, options = {}) {
+  return useQuery({
+    queryKey: ["bookings-paginated", filters],
+    queryFn: async () => {
+      const { data } = await axios.get(API_URL, { params: filters });
       return data;
     },
     ...options,
   });
 }
-
-
 
 /* =========================
    GET SINGLE BOOKING
@@ -198,6 +74,7 @@ export function useCreateBooking() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings-paginated"] });
       toast.success("Booking created successfully");
     },
     onError: (error) => {
@@ -216,6 +93,7 @@ export function useAdminCreateBooking() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings-paginated"] });
       toast.success("Booking created successfully");
     },
     onError: (error) => {
@@ -237,6 +115,7 @@ export function useUpdateBookingStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings-paginated"] });
       toast.success("Booking status updated");
     },
     onError: (error) => {
@@ -248,26 +127,6 @@ export function useUpdateBookingStatus() {
 /* =========================
    UPDATE BOOKING (ADMIN)
 ========================= */
-// export function useUpdateBooking() {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async ({ id, ...updates }) => {
-//       const { data } = await axios.put(`${API_URL}/${id}`, updates);
-//       return data;
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["bookings"] });
-//       toast.success("Booking updated successfully");
-//     },
-//     onError: (error) => {
-//       toast.error(error.response?.data?.message || "Update failed");
-//     },
-//   });
-// }
-
-
-
 export function useUpdateBooking() {
   const queryClient = useQueryClient();
 
@@ -292,6 +151,7 @@ export function useUpdateBooking() {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings-paginated"] });
       toast.success("Booking updated successfully");
     },
 
@@ -313,6 +173,7 @@ export function useDeleteBooking() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings-paginated"] });
       toast.success("Booking deleted successfully");
     },
     onError: (error) => {
@@ -321,6 +182,9 @@ export function useDeleteBooking() {
   });
 }
 
+/* =========================
+   ASSIGN BIKE TO BOOKING
+========================= */
 export const useAssignBike = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -330,6 +194,7 @@ export const useAssignBike = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings-paginated"] });
       queryClient.invalidateQueries({ queryKey: ["bikes"] });
       toast.success("Bike assigned successfully 🎉");
     },

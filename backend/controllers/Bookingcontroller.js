@@ -221,6 +221,7 @@ const Booking = require("../models/Booking");
 const Cluster = require("../models/Cluster");
 const { sendOrderAlerts } = require("./notificationController");
 const { getUserAreaIds, getAreaScope } = require("../middleware/auth");
+const { logAudit, getClientIp } = require("../utils/auditLogger");
 
 // Helper to check if a booking belongs to a staff/manager's assigned areas
 const checkBookingAreaAccess = async (booking, user) => {
@@ -536,6 +537,16 @@ exports.adminCreateBooking = async (req, res) => {
 
     } = req.body;
 
+    if (
+      (manual_total_amount !== undefined && Number(manual_total_amount) < 0) ||
+      (deposit_amount !== undefined && Number(deposit_amount) < 0) ||
+      (penalty_amount !== undefined && Number(penalty_amount) < 0) ||
+      (challan_amount !== undefined && Number(challan_amount) < 0) ||
+      (damage_cost !== undefined && Number(damage_cost) < 0)
+    ) {
+      return res.status(400).json({ message: "Monetary amounts cannot be negative" });
+    }
+
     const bike = await Bike.findById(bike_id);
 
     if (!bike) {
@@ -707,6 +718,22 @@ exports.adminCreateBooking = async (req, res) => {
 
     });
 
+    await logAudit({
+      action: "CREATE_BOOKING",
+      severity: "info",
+      performed_by: req.user?._id || req.user?.id,
+      user_email: req.user?.email,
+      ip_address: getClientIp(req),
+      target_id: booking._id,
+      target_name: customer_name,
+      details: {
+        total_amount: booking.total_amount,
+        deposit_amount: booking.deposit_amount,
+        bike_id,
+        status: booking.status,
+      },
+    });
+
     res.status(201).json(booking);
 
   } catch (error) {
@@ -779,18 +806,44 @@ exports.getAllBookings = async (req, res) => {
       filter.bike_id = { $in: investorBikeIds };
     }
 
-      
-  
-    
-      const isInvestor = req.user && req.user.role === "investor";
+    // Server-side search filter
+    if (req.query.search && typeof req.query.search === "string") {
+      const searchRegex = new RegExp(req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i");
+      const searchConditions = [
+        { customer_name: { $regex: searchRegex } },
+        { contact_number: { $regex: searchRegex } },
+        { vehicle_make_model: { $regex: searchRegex } },
+      ];
+      if (filter.$or) {
+        filter.$and = [{ $or: filter.$or }, { $or: searchConditions }];
+        delete filter.$or;
+      } else {
+        filter.$or = searchConditions;
+      }
+    }
 
-    const bookings = await Booking.find(filter)
-      // .populate("customer_id", "name phone email")
-      // .populate("bike_id", "model number_plate")
-       .populate("customer_id", isInvestor ? "" : "name phone email")
+    const isInvestor = req.user && req.user.role === "investor";
+    const isPaginated = req.query.page !== undefined || req.query.limit !== undefined;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit) || 25);
+    const skip = (page - 1) * limit;
+
+    let totalCount = 0;
+    if (isPaginated) {
+      totalCount = await Booking.countDocuments(filter);
+    }
+
+    let query = Booking.find(filter)
+      .populate("customer_id", isInvestor ? "" : "name phone email")
       .populate("bike_id", "bike_name model number_plate bike_owner")
       .populate("cluster_id")
-      .sort({ createdAt: -1 }).lean();
+      .sort({ createdAt: -1 });
+
+    if (isPaginated) {
+      query = query.skip(skip).limit(limit);
+    }
+
+    const bookings = await query.lean();
 
     const formatted = bookings.map((b) => {
       // const bookingObj = b.toObject();
@@ -846,6 +899,15 @@ exports.getAllBookings = async (req, res) => {
         }) : "",
       };
     });
+
+    if (isPaginated) {
+      return res.json({
+        bookings: formatted,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit) || 1,
+        currentPage: page,
+      });
+    }
 
     res.json(formatted);
   } catch (err) {
@@ -950,6 +1012,16 @@ exports.updateBooking = async (req, res) => {
 
     const body = req.body || {}; // ✅ SAFE FIX
 
+    if (
+      (body.total_amount !== undefined && Number(body.total_amount) < 0) ||
+      (body.deposit_amount !== undefined && Number(body.deposit_amount) < 0) ||
+      (body.penalty_amount !== undefined && Number(body.penalty_amount) < 0) ||
+      (body.challan_amount !== undefined && Number(body.challan_amount) < 0) ||
+      (body.damage_cost !== undefined && Number(body.damage_cost) < 0)
+    ) {
+      return res.status(400).json({ message: "Monetary amounts cannot be negative" });
+    }
+
     const updateData = {
       ...body,
 
@@ -1021,8 +1093,24 @@ exports.updateBooking = async (req, res) => {
       }
     }
 
-    // res.status(200).json(booking);
-     res.status(200).json(updatedBooking);
+    await logAudit({
+      action: "UPDATE_BOOKING",
+      severity: "info",
+      performed_by: req.user?._id || req.user?.id,
+      user_email: req.user?.email,
+      ip_address: getClientIp(req),
+      target_id: booking._id,
+      target_name: booking.customer_name,
+      details: {
+        updated_keys: Object.keys(body),
+        previous_total: booking.total_amount,
+        new_total: updatedBooking.total_amount,
+        previous_status: oldStatus,
+        new_status: newStatus || oldStatus,
+      },
+    });
+
+    res.status(200).json(updatedBooking);
   } catch (error) {
     console.error("Update Booking Error:", error);
     res.status(500).json({ message: error.message });
@@ -1125,10 +1213,23 @@ exports.updateBookingStatus = async (req, res) => {
       }
     }
 
+    await logAudit({
+      action: status === "cancelled" ? "CANCEL_BOOKING" : "UPDATE_BOOKING_STATUS",
+      severity: status === "cancelled" ? "warning" : "info",
+      performed_by: req.user?._id || req.user?.id,
+      user_email: req.user?.email,
+      ip_address: getClientIp(req),
+      target_id: booking._id,
+      target_name: booking.customer_name,
+      details: {
+        previous_status: booking.status,
+        new_status: status,
+      },
+    });
+
     res.json({
       message: "Booking status updated",
-      // booking,
-      booking : updatedBooking,
+      booking: updatedBooking,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -1151,7 +1252,22 @@ exports.deleteBooking = async (req, res) => {
     if (booking.bike_id) {
       await Bike.findByIdAndUpdate(booking.bike_id, { status: "available" });
     }
-    
+
+    await logAudit({
+      action: "DELETE_BOOKING",
+      severity: "critical",
+      performed_by: req.user?._id || req.user?.id,
+      user_email: req.user?.email,
+      ip_address: getClientIp(req),
+      target_id: booking._id,
+      target_name: booking.customer_name,
+      details: {
+        booking_status: booking.status,
+        total_amount: booking.total_amount,
+        contact_number: booking.contact_number,
+      },
+    });
+
     res.json({ message: "Booking deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -1173,101 +1289,93 @@ exports.extendBooking = async (req, res) => {
       await Booking.findById(id);
 
     if (!booking) {
-
       return res.status(404).json({
         message: "Booking not found"
       });
+    }
 
+    if (req.user && req.user.role === "staff") {
+      const hasAccess = await checkBookingAreaAccess(booking, req.user);
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied: You do not have access to this area's bookings" });
+      }
     }
 
     // 🚨 Allow extend only if active
     if (booking.status !== "active") {
-
       return res.status(400).json({
         message: "Only active bookings can be extended"
       });
-
     }
 
-    const newEnd =
-      new Date(new_end_datetime);
+    const extraNum = Number(extra_amount || 0);
+    if (isNaN(extraNum) || extraNum < 0) {
+      return res.status(400).json({ message: "Extra amount cannot be negative" });
+    }
 
-    const oldEnd =
-      booking.end_datetime;
+    const newEnd = new Date(new_end_datetime);
+    const oldEnd = booking.end_datetime;
+
+    if (!new_end_datetime || isNaN(newEnd.getTime()) || newEnd <= new Date(oldEnd)) {
+      return res.status(400).json({
+        message: "New end date must be valid and after the current end date"
+      });
+    }
 
     // 🚨 Check availability
-    const conflict =
-      await Booking.findOne({
-
-        bike_id: booking.bike_id,
-
-        status: {
-          $nin: ["cancelled", "completed"]
-        },
-
-        _id: { $ne: booking._id },
-
-        start_datetime: {
-          $lt: newEnd
-        },
-
-        end_datetime: {
-          $gt: oldEnd
-        },
-
-      });
+    const conflict = await Booking.findOne({
+      bike_id: booking.bike_id,
+      status: {
+        $nin: ["cancelled", "completed"]
+      },
+      _id: { $ne: booking._id },
+      start_datetime: {
+        $lt: newEnd
+      },
+      end_datetime: {
+        $gt: oldEnd
+      },
+    });
 
     if (conflict) {
-
       return res.status(400).json({
-
-        message:
-          "Bike already booked in extended time",
-
-        bookedFrom:
-          conflict.start_datetime,
-
-        bookedTo:
-          conflict.end_datetime,
-
+        message: "Bike already booked in extended time",
+        bookedFrom: conflict.start_datetime,
+        bookedTo: conflict.end_datetime,
       });
-
     }
 
     // ✅ Update booking
-
-    booking.end_datetime =
-      newEnd;
-
-    booking.total_amount =
-      (booking.total_amount || 0) +
-      Number(extra_amount || 0);
-
-      booking.extended_amount =
-  (booking.extended_amount || 0) +
-  Number(extra_amount || 0);
-
-booking.is_extended = true;
-
+    booking.end_datetime = newEnd;
+    booking.total_amount = (booking.total_amount || 0) + extraNum;
+    booking.extended_amount = (booking.extended_amount || 0) + extraNum;
+    booking.is_extended = true;
     await booking.save();
 
-    res.json({
-
-      message:
-        "Booking extended successfully",
-
-      booking,
-
+    await logAudit({
+      action: "EXTEND_BOOKING",
+      severity: "info",
+      performed_by: req.user?._id || req.user?.id,
+      user_email: req.user?.email,
+      ip_address: getClientIp(req),
+      target_id: booking._id,
+      target_name: booking.customer_name,
+      details: {
+        previous_end_datetime: oldEnd,
+        new_end_datetime: newEnd,
+        extra_amount: extraNum,
+        total_amount: booking.total_amount,
+      },
     });
 
-  }
-
-  catch (error) {
-
+    res.json({
+      message: "Booking extended successfully",
+      booking,
+    });
+  } catch (error) {
     res.status(500).json({
       message: error.message
     });
-
   }
 
 };
