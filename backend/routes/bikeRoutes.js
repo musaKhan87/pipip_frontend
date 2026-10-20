@@ -8,32 +8,37 @@ const {
   deleteBike,
   getSingleBike,
 } = require("../controllers/bikeController");
-const { protect, adminOnly, superAdminOnly } = require("../middleware/auth");
+const { protect, superAdminOnly, authorizeRoles } = require("../middleware/auth");
 
-// Public
+// Public Catalog / Admin Fleet Fetch
 router.get("/", getBikes);
+router.get("/:id", getSingleBike);
 
-// Admin
-// router.post("/", upload.single("image_url"), createBike);
-
-router.post("/", protect , upload.fields([
-  { name: 'image_url', maxCount: 1 },
-  { name: 'extra_images', maxCount: 5 }
-]), createBike);
-
-// router.put("/:id", upload.single("image_url"), updateBike);
-
-router.put(
-  "/:id",
+// Admin & Manager Only: Create Bike
+router.post(
+  "/",
   protect,
+  authorizeRoles("super_admin", "admin", "manager"),
   upload.fields([
     { name: "image_url", maxCount: 1 },
     { name: "extra_images", maxCount: 5 },
   ]),
-  updateBike,
+  createBike
 );
+
+// Admin & Manager Only: Update Bike
+router.put(
+  "/:id",
+  protect,
+  authorizeRoles("super_admin", "admin", "manager"),
+  upload.fields([
+    { name: "image_url", maxCount: 1 },
+    { name: "extra_images", maxCount: 5 },
+  ]),
+  updateBike
+);
+
+// Super Admin Only: Soft Delete Bike
 router.delete("/:id", protect, superAdminOnly, deleteBike);
-router.get("/:id", getSingleBike);
 
 module.exports = router;
-

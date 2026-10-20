@@ -1,108 +1,3 @@
-// import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-// import { toast } from "sonner";
-
-// const API_URL = "http://localhost:5000/api/bikes";
-
-// /* ================= GET ALL BIKES ================= */
-// export function useBikes() {
-//   return useQuery({
-//     queryKey: ["bikes"],
-//     queryFn: async () => {
-//       const res = await fetch(API_URL);
-//       if (!res.ok) throw new Error("Failed to fetch bikes");
-//       return res.json();
-//     },
-//   });
-// }
-
-// /* ================= CREATE BIKE ================= */
-// export function useCreateBike() {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async (data) => {
-//       const formData = new FormData();
-
-//       Object.entries(data).forEach(([key, value]) => {
-//         if (value === null || value === undefined) return;
-
-//         // 🔥 IMPORTANT: send file as "image"
-//         if (key === "image_url" && value instanceof File) {
-//           formData.append("image", value);
-//         } else {
-//           formData.append(key, value);
-//         }
-//       });
-
-//       const res = await fetch(API_URL, {
-//         method: "POST",
-//         body: formData,
-//       });
-
-//       if (!res.ok) throw new Error("Failed to add bike");
-//       return res.json();
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["bikes"] });
-//       toast.success("Bike added successfully");
-//     },
-//   });
-// }
-
-// /* ================= UPDATE BIKE ================= */
-// export function useUpdateBike() {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async ({ id, ...data }) => {
-//       const formData = new FormData();
-
-//       Object.entries(data).forEach(([key, value]) => {
-//         if (value === null || value === undefined) return;
-
-//         // 🔥 IMPORTANT: send file as "image"
-//         if (key === "image_url" && value instanceof File) {
-//           formData.append("image", value);
-//         } else {
-//           formData.append(key, value);
-//         }
-//       });
-
-//       const res = await fetch(`${API_URL}/${id}`, {
-//         method: "PUT",
-//         body: formData,
-//       });
-
-//       if (!res.ok) throw new Error("Failed to update bike");
-//       return res.json();
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["bikes"] });
-//       toast.success("Bike updated successfully");
-//     },
-//   });
-// }
-
-// /* ================= DELETE BIKE ================= */
-// export function useDeleteBike() {
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: async (id) => {
-//       const res = await fetch(`${API_URL}/${id}`, {
-//         method: "DELETE",
-//       });
-
-//       if (!res.ok) throw new Error("Failed to delete bike");
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ["bikes"] });
-//       toast.success("Bike deleted successfully");
-//     },
-//   });
-// }
-
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
@@ -110,15 +5,43 @@ import { API_BASE_URL } from "../config/api";
 
 const API_URL = `${API_BASE_URL}/bikes`;
 
-/* ================= GET ALL BIKES ================= */
+/* ================= GET ALL BIKES (DUAL-MODE) ================= */
 export function useBikes(filters = {}, options = {}) {
   return useQuery({
     queryKey: ["bikes", filters],
     queryFn: async () => {
       const { data } = await axios.get(API_URL, { params: filters });
+      // If server returned paginated object { bikes: [...], totalCount }, extract array for backward compatibility
+      if (data && Array.isArray(data.bikes)) {
+        return data.bikes;
+      }
+      return Array.isArray(data) ? data : [];
+    },
+    ...options,
+  });
+}
+
+/* ================= GET PAGINATED BIKES (SERVER-SIDE) ================= */
+export function usePaginatedBikes(filters = {}, options = {}) {
+  return useQuery({
+    queryKey: ["bikes-paginated", filters],
+    queryFn: async () => {
+      const { data } = await axios.get(API_URL, { params: filters });
       return data;
     },
     ...options,
+  });
+}
+
+/* ================= GET SINGLE BIKE ================= */
+export function useBike(bikeId) {
+  return useQuery({
+    queryKey: ["bike", bikeId],
+    queryFn: async () => {
+      const { data } = await axios.get(`${API_URL}/${bikeId}`);
+      return data;
+    },
+    enabled: !!bikeId,
   });
 }
 
@@ -128,20 +51,16 @@ export function useCreateBike() {
 
   return useMutation({
     mutationFn: async (formData) => {
-      // const res = await fetch(API_URL, {
-      //   method: "POST",
-      //   body: formData, // form-data (image upload)
-      // });
-
-      // if (!res.ok) throw new Error("Failed to add bike");
-      // return res.json();
-
       const { data } = await axios.post(API_URL, formData);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bikes"] });
+      queryClient.invalidateQueries({ queryKey: ["bikes-paginated"] });
       toast.success("Bike added successfully");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to add bike");
     },
   });
 }
@@ -152,20 +71,16 @@ export function useUpdateBike() {
 
   return useMutation({
     mutationFn: async ({ id, formData }) => {
-      // const res = await fetch(`${API_URL}/${id}`, {
-      //   method: "PUT", // assuming your backend uses PUT for update
-      //   body: formData, // form-data (image upload)
-      // });
-
-      // if (!res.ok) throw new Error("Failed to update bike");
-      // return res.json();
-
       const { data } = await axios.put(`${API_URL}/${id}`, formData);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bikes"] });
+      queryClient.invalidateQueries({ queryKey: ["bikes-paginated"] });
       toast.success("Bike updated successfully");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to update bike");
     },
   });
 }
@@ -176,30 +91,15 @@ export function useDeleteBike() {
 
   return useMutation({
     mutationFn: async (id) => {
-      // const res = await fetch(`${API_URL}/${id}`, {
-      //   method: "DELETE",
-      // });
-
-      // if (!res.ok) throw new Error("Failed to delete bike");
-
       await axios.delete(`${API_URL}/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bikes"] });
+      queryClient.invalidateQueries({ queryKey: ["bikes-paginated"] });
       toast.success("Bike deleted successfully");
     },
-  });
-}
-
-export function useBike(bikeId) {
- 
-  return useQuery({
-    queryKey: ["bike", bikeId],
-    queryFn: async () => {
-      const res = await axios.get(`${API_URL}/${bikeId}`);
-      return res.data;
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to delete bike");
     },
-    enabled: !!bikeId,
-    
   });
 }

@@ -2,52 +2,36 @@ const Bike = require("../models/Bike");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { logAudit, getClientIp } = require("../utils/auditLogger");
-
-/**
- * ADMIN: Create Bike
- */
-// const createBike = async (req, res) => {
-// console.log("FILE =>", req.file);
-// console.log("BODY =>", req.body);
-//   try {
-//     const image_url = req.file ? req.file.path : null;
-
-//     const bike = await Bike.create({
-//       ...req.body,
-//       image_url,
-//     });
-
-//     res.status(201).json(bike);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-// const createBike = async (req, res) => {
-//   try {
-//     // 👇 ADD THIS LINE HERE
-//     console.log("REQ.FILE =>", req.file);
-//     console.log(req.body);
-
-//     const image_url = req.file ? req.file.path : null;
-//     console.log(image_url);
-
-    
-//     const bike = await Bike.create({
-//       ...req.body,
-//       image_url,
-//     });
-   
- 
-//     res.status(201).json(bike);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-
 const { getUserAreaIds, getAreaScope } = require("../middleware/auth");
 
+const SENSITIVE_PROJECTION =
+  "-bike_owner -fine_owner -bike_expenses -gps_installed_date -last_service_date -last_battery_changed -last_tyre_change";
+
+/**
+ * Helper to resolve user from auth token (optional auth endpoints)
+ */
+const resolveCurrentUser = async (req) => {
+  if (req.user) return req.user;
+  if (req.headers.authorization?.startsWith("Bearer")) {
+    try {
+      const token = req.headers.authorization.split(" ")[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id)
+        .populate("assigned_areas")
+        .populate("areaId")
+        .lean();
+      req.user = user;
+      return user;
+    } catch (err) {
+      // invalid token, treat as public
+    }
+  }
+  return null;
+};
+
+/**
+ * ADMIN / MANAGER: Create Bike
+ */
 const createBike = async (req, res) => {
   try {
     if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
@@ -56,70 +40,191 @@ const createBike = async (req, res) => {
         (areaId) => areaId.toString() === req.body.area_id?.toString()
       );
       if (!hasArea) {
-        return res.status(403).json({ message: "Access denied: You are not assigned to this area" });
+        return res
+          .status(403)
+          .json({ message: "Access denied: You are not assigned to this area" });
       }
     }
 
-    // Main image handle karein
+    // Input bounds validation
+    const hourly = Number(req.body.price_per_hour);
+    const daily = Number(req.body.price_per_day);
+    const expenses = req.body.bike_expenses !== undefined ? Number(req.body.bike_expenses) : 0;
+
+    if (hourly < 0 || daily < 0 || expenses < 0) {
+      return res.status(400).json({ message: "Pricing and expenses cannot be negative" });
+    }
+
+    // Main image
     const image_url = req.files?.image_url ? req.files.image_url[0].path : null;
 
-    // Extra images handle karein
+    // Extra images
     let extraImagePaths = [];
     if (req.files?.extra_images) {
       extraImagePaths = req.files.extra_images.map((file) => file.path);
     }
 
-    const bike = await Bike.create({
+    const bikeData = {
       ...req.body,
+      price_per_hour: hourly,
+      price_per_day: daily,
+      bike_expenses: expenses,
       image_url,
       extra_images: extraImagePaths,
+    };
+
+    if (bikeData.number_plate) {
+      bikeData.number_plate = bikeData.number_plate.trim().toUpperCase().replace(/\s+/g, "");
+    }
+
+    const bike = await Bike.create(bikeData);
+
+    await logAudit({
+      action: "CREATE_BIKE",
+      severity: "info",
+      performed_by: req.user?._id || req.user?.id,
+      user_email: req.user?.email,
+      ip_address: getClientIp(req),
+      user_agent: req.headers["user-agent"] || "",
+      target_id: bike._id?.toString(),
+      target_name: `${bike.bike_name} (${bike.number_plate})`,
+      details: {
+        model: bike.model,
+        price_per_day: bike.price_per_day,
+        price_per_hour: bike.price_per_hour,
+        area_id: bike.area_id,
+      },
     });
 
     res.status(201).json(bike);
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "A bike with this number plate already exists" });
+    }
     res.status(500).json({ message: error.message });
   }
 };
 
 /**
- * Get All Bikes (with area-based isolation for manager & staff & super admin area switcher)
+ * Get All Bikes (Dual-Mode: Smart Pagination + Public Catalog Caching)
  */
 const getBikes = async (req, res) => {
   try {
     const filter = { is_deleted: { $ne: true } };
-    let currentUser = req.user;
+    const currentUser = await resolveCurrentUser(req);
+    const isPublic = !currentUser;
 
-    if (!currentUser && req.headers.authorization?.startsWith("Bearer")) {
-      try {
-        const token = req.headers.authorization.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        currentUser = await User.findById(decoded.id).populate("assigned_areas").populate("areaId");
-        req.user = currentUser;
-      } catch (err) {
-        // ignore jwt errors
-      }
+    // 1. Status Filter
+    if (req.query.status && req.query.status !== "all") {
+      filter.status = req.query.status;
     }
 
+    // 2. Area Filter
+    if (req.query.area_id && req.query.area_id !== "all") {
+      filter.area_id = req.query.area_id;
+    }
+
+    // 3. User Role Scoping
     if (currentUser) {
       const scope = getAreaScope(req);
       if (scope && scope.length > 0) {
         filter.area_id = { $in: scope };
       }
       if (currentUser.role === "investor") {
-        const escapeRegex = (text) => text ? text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
-        const nameRegex = new RegExp(`^${escapeRegex(currentUser.fullName)}$`, 'i');
-        const emailRegex = new RegExp(`^${escapeRegex(currentUser.email)}$`, 'i');
+        const escapeRegex = (text) => (text ? text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") : "");
+        const nameRegex = new RegExp(`^${escapeRegex(currentUser.fullName)}$`, "i");
+        const emailRegex = new RegExp(`^${escapeRegex(currentUser.email)}$`, "i");
         filter.$or = [
           { bike_owner: { $regex: nameRegex } },
-          { bike_owner: { $regex: emailRegex } }
+          { bike_owner: { $regex: emailRegex } },
         ];
       }
     }
 
-    const bikes = await Bike.find(filter).sort({ createdAt: -1 }).lean();
+    // 4. Server-Side Search
+    if (req.query.search && typeof req.query.search === "string" && req.query.search.trim().length > 0) {
+      const searchRegex = new RegExp(
+        req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "i"
+      );
+      const searchConditions = [
+        { bike_name: { $regex: searchRegex } },
+        { model: { $regex: searchRegex } },
+        { number_plate: { $regex: searchRegex } },
+      ];
+      if (filter.$or) {
+        filter.$and = [{ $or: filter.$or }, { $or: searchConditions }];
+        delete filter.$or;
+      } else {
+        filter.$or = searchConditions;
+      }
+    }
+
+    // HTTP Conditional Caching for Public Viewers
+    if (isPublic) {
+      res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
+    }
+
+    const isPaginated = req.query.page !== undefined || req.query.limit !== undefined;
+
+    // Dual-Mode Branch A: Smart Pagination for Admin Panel
+    if (isPaginated) {
+      const page = Math.max(1, parseInt(req.query.page) || 1);
+      const limit = Math.max(1, parseInt(req.query.limit) || 25);
+      const skip = (page - 1) * limit;
+
+      // Fleet Status Breakdown Query (computed over scope without active status filter)
+      const filterForStats = { ...filter };
+      delete filterForStats.status;
+
+      const [bikes, totalCount, statusCounts] = await Promise.all([
+        Bike.find(filter)
+          .select(isPublic ? SENSITIVE_PROJECTION : "")
+          .populate("area_id", "name location")
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        Bike.countDocuments(filter),
+        Bike.aggregate([
+          { $match: filterForStats },
+          { $group: { _id: "$status", count: { $sum: 1 } } },
+        ]),
+      ]);
+
+      const stats = {
+        total: 0,
+        available: 0,
+        booked: 0,
+        maintenance: 0,
+      };
+      statusCounts.forEach((s) => {
+        if (s._id && stats[s._id] !== undefined) {
+          stats[s._id] = s.count;
+          stats.total += s.count;
+        }
+      });
+
+      return res.status(200).json({
+        bikes,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit) || 1,
+        currentPage: page,
+        stats,
+      });
+    }
+
+    // Dual-Mode Branch B: Standard Array for Public Catalog / Legacy Consumers
+    const bikes = await Bike.find(filter)
+      .select(isPublic ? SENSITIVE_PROJECTION : "")
+      .populate("area_id", "name location")
+      .sort({ createdAt: -1 })
+      .lean();
+
     res.status(200).json(bikes);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Get Bikes Error:", error);
+    res.status(500).json({ message: "Server error fetching bikes" });
   }
 };
 
@@ -129,37 +234,69 @@ const getBikes = async (req, res) => {
 const updateBike = async (req, res) => {
   try {
     const bike = await Bike.findById(req.params.id);
-    if (!bike) return res.status(404).json({ message: "Not found" });
+    if (!bike || bike.is_deleted) return res.status(404).json({ message: "Bike not found" });
 
+    // Area check for staff/manager
     if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
       const userAreaIds = getUserAreaIds(req.user);
       const hasOldArea = userAreaIds?.some(
         (areaId) => areaId.toString() === bike.area_id?.toString()
       );
       if (!hasOldArea) {
-        return res.status(403).json({ message: "Access denied: You are not assigned to the bike's current area" });
+        return res
+          .status(403)
+          .json({ message: "Access denied: You are not assigned to the bike's current area" });
       }
       if (req.body.area_id) {
         const hasNewArea = userAreaIds?.some(
           (areaId) => areaId.toString() === req.body.area_id.toString()
         );
         if (!hasNewArea) {
-          return res.status(403).json({ message: "Access denied: You cannot move the bike to an unassigned area" });
+          return res
+            .status(403)
+            .json({ message: "Access denied: You cannot move the bike to an unassigned area" });
         }
       }
     }
 
+    // Price modification authorization (Admin / Super Admin Only)
+    const oldPriceDay = bike.price_per_day;
+    const oldPriceHour = bike.price_per_hour;
+    const isDayPriceChanged =
+      req.body.price_per_day !== undefined && Number(req.body.price_per_day) !== oldPriceDay;
+    const isHourPriceChanged =
+      req.body.price_per_hour !== undefined && Number(req.body.price_per_hour) !== oldPriceHour;
+
+    if (isDayPriceChanged || isHourPriceChanged) {
+      if (req.user && req.user.role !== "super_admin" && req.user.role !== "admin") {
+        return res.status(403).json({
+          message: "Access denied: Only Super Admins and Admins can modify rental pricing",
+        });
+      }
+    }
+
+    // Non-negative validation
+    if (
+      (req.body.price_per_day !== undefined && Number(req.body.price_per_day) < 0) ||
+      (req.body.price_per_hour !== undefined && Number(req.body.price_per_hour) < 0) ||
+      (req.body.bike_expenses !== undefined && Number(req.body.bike_expenses) < 0)
+    ) {
+      return res.status(400).json({ message: "Pricing and expenses cannot be negative" });
+    }
+
     const updateData = { ...req.body };
+
+    if (updateData.number_plate) {
+      updateData.number_plate = updateData.number_plate.trim().toUpperCase().replace(/\s+/g, "");
+    }
 
     // 1. Handle Main Profile Image
     if (req.files?.image_url) {
       updateData.image_url = req.files.image_url[0].path;
     }
 
-    // 2. Handle Extra Images (Syncing Deletions + New Uploads)
+    // 2. Handle Extra Images
     let finalExtraImages = [];
-
-    // Check if frontend sent the list of images to KEEP
     if (req.body.remaining_extra_images) {
       try {
         finalExtraImages = JSON.parse(req.body.remaining_extra_images);
@@ -170,25 +307,15 @@ const updateBike = async (req, res) => {
       finalExtraImages = bike.extra_images || [];
     }
 
-    // Append NEWLY uploaded files to the kept ones
     if (req.files?.extra_images) {
       const newPaths = req.files.extra_images.map((f) => f.path);
       finalExtraImages = [...finalExtraImages, ...newPaths];
     }
 
-    // Enforce the 5-image limit and update the data object
     updateData.extra_images = finalExtraImages.slice(0, 5);
 
-    // Check price modification for audit trail
-    const oldPriceDay = bike.price_per_day;
-    const oldPriceHour = bike.price_per_hour;
-    const newPriceDay = req.body.price_per_day !== undefined ? Number(req.body.price_per_day) : oldPriceDay;
-    const newPriceHour = req.body.price_per_hour !== undefined ? Number(req.body.price_per_hour) : oldPriceHour;
-
-    if (
-      (req.body.price_per_day !== undefined && oldPriceDay !== newPriceDay) ||
-      (req.body.price_per_hour !== undefined && oldPriceHour !== newPriceHour)
-    ) {
+    // Audit price changes
+    if (isDayPriceChanged || isHourPriceChanged) {
       await logAudit({
         action: "UPDATE_PRICE",
         severity: "info",
@@ -200,9 +327,9 @@ const updateBike = async (req, res) => {
         target_name: `${bike.bike_name} (${bike.number_plate})`,
         details: {
           old_price_day: oldPriceDay,
-          new_price_day: newPriceDay,
+          new_price_day: Number(req.body.price_per_day ?? oldPriceDay),
           old_price_hour: oldPriceHour,
-          new_price_hour: newPriceHour,
+          new_price_hour: Number(req.body.price_per_hour ?? oldPriceHour),
         },
       });
     }
@@ -210,23 +337,26 @@ const updateBike = async (req, res) => {
     const updatedBike = await Bike.findByIdAndUpdate(
       req.params.id,
       { $set: updateData },
-      { new: true },
+      { new: true, runValidators: true }
     );
 
     res.status(200).json(updatedBike);
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "A bike with this number plate already exists" });
+    }
     console.error("Backend Update Error:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
 /**
- * Delete Bike
+ * Delete Bike (Soft Delete)
  */
 const deleteBike = async (req, res) => {
   try {
     const bike = await Bike.findById(req.params.id);
-    if (!bike) return res.status(404).json({ message: "Bike not found" });
+    if (!bike || bike.is_deleted) return res.status(404).json({ message: "Bike not found" });
 
     if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
       const userAreaIds = getUserAreaIds(req.user);
@@ -234,7 +364,9 @@ const deleteBike = async (req, res) => {
         (areaId) => areaId.toString() === bike.area_id?.toString()
       );
       if (!hasArea) {
-        return res.status(403).json({ message: "Access denied: You are not assigned to the bike's area" });
+        return res
+          .status(403)
+          .json({ message: "Access denied: You are not assigned to the bike's area" });
       }
     }
 
@@ -262,33 +394,44 @@ const deleteBike = async (req, res) => {
   }
 };
 
+/**
+ * Get Single Bike
+ */
 const getSingleBike = async (req, res) => {
   try {
-    const bike = await Bike.findOne({ _id: req.params.id, is_deleted: { $ne: true } });
-    
+    const bike = await Bike.findOne({ _id: req.params.id, is_deleted: { $ne: true } }).populate(
+      "area_id",
+      "name location"
+    );
+
     if (!bike) {
       return res.status(404).json({ message: "Bike not found" });
     }
 
-    let currentUser = req.user;
-    if (!currentUser && req.headers.authorization?.startsWith("Bearer")) {
-      try {
-        const token = req.headers.authorization.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        currentUser = await User.findById(decoded.id).populate("assigned_areas").populate("areaId");
-      } catch (err) {
-        // ignore jwt errors
-      }
-    }
+    const currentUser = await resolveCurrentUser(req);
+    const isPublic = !currentUser;
 
     if (currentUser && (currentUser.role === "staff" || currentUser.role === "manager")) {
       const userAreaIds = getUserAreaIds(currentUser);
       const hasArea = userAreaIds?.some(
-        (areaId) => areaId.toString() === bike.area_id?.toString()
+        (areaId) => areaId.toString() === (bike.area_id?._id || bike.area_id)?.toString()
       );
       if (!hasArea) {
         return res.status(403).json({ message: "Access denied: You do not have access to this area" });
       }
+    }
+
+    // Mask sensitive fields if public request
+    if (isPublic) {
+      const sanitized = bike.toObject();
+      delete sanitized.bike_owner;
+      delete sanitized.fine_owner;
+      delete sanitized.bike_expenses;
+      delete sanitized.gps_installed_date;
+      delete sanitized.last_service_date;
+      delete sanitized.last_battery_changed;
+      delete sanitized.last_tyre_change;
+      return res.json(sanitized);
     }
 
     res.json(bike);
@@ -304,8 +447,3 @@ module.exports = {
   deleteBike,
   getSingleBike,
 };
-
-
-
-
-
