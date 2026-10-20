@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Bike = require("../models/Bike");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -35,14 +36,20 @@ const resolveCurrentUser = async (req) => {
 const sanitizeBikeData = (body) => {
   const data = { ...body };
 
-  // 1. Sanitize ObjectId references (convert "" or "none" to null)
+  // 1. Sanitize ObjectId references (convert "", "none", "[object Object]" or objects to valid ObjectId string or null)
+  if (typeof data.area_id === "object" && data.area_id !== null) {
+    data.area_id = data.area_id._id || data.area_id.id || null;
+  }
   if (
     !data.area_id ||
     data.area_id === "" ||
     data.area_id === "none" ||
     data.area_id === "null" ||
-    data.area_id === "undefined"
+    data.area_id === "undefined" ||
+    data.area_id === "[object Object]"
   ) {
+    data.area_id = null;
+  } else if (!mongoose.Types.ObjectId.isValid(data.area_id)) {
     data.area_id = null;
   }
 
@@ -294,8 +301,14 @@ const getBikes = async (req, res) => {
  */
 const updateBike = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid bike ID" });
+    }
+
     const bike = await Bike.findById(req.params.id);
     if (!bike || bike.is_deleted) return res.status(404).json({ message: "Bike not found" });
+
+    const updateData = sanitizeBikeData(req.body);
 
     // Area check for staff/manager
     if (req.user && (req.user.role === "staff" || req.user.role === "manager")) {
@@ -308,9 +321,9 @@ const updateBike = async (req, res) => {
           .status(403)
           .json({ message: "Access denied: You are not assigned to the bike's current area" });
       }
-      if (req.body.area_id) {
+      if (updateData.area_id) {
         const hasNewArea = userAreaIds?.some(
-          (areaId) => areaId.toString() === req.body.area_id.toString()
+          (areaId) => areaId.toString() === updateData.area_id.toString()
         );
         if (!hasNewArea) {
           return res
@@ -344,8 +357,6 @@ const updateBike = async (req, res) => {
     ) {
       return res.status(400).json({ message: "Pricing and expenses cannot be negative" });
     }
-
-    const updateData = sanitizeBikeData(req.body);
 
     // 1. Handle Main Profile Image
     if (req.files?.image_url) {
@@ -416,6 +427,10 @@ const updateBike = async (req, res) => {
  */
 const deleteBike = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid bike ID" });
+    }
+
     const bike = await Bike.findById(req.params.id);
     if (!bike || bike.is_deleted) return res.status(404).json({ message: "Bike not found" });
 

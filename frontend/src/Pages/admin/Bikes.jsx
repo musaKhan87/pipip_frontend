@@ -430,11 +430,18 @@ const filteredBikes = (bikes || []).filter((bike) => {
         formData[key] !== undefined &&
         formData[key] !== null
       ) {
-        const val = formData[key];
-        // Do not send empty string for area_id or date fields to prevent Mongoose CastErrors
-        if (typeof val === "string" && val.trim() === "") {
-          if (key === "area_id" || key.endsWith("_date") || key.startsWith("last_")) {
-            return;
+        let val = formData[key];
+        // If an object accidentally slipped in (like populated area_id), extract _id
+        if (typeof val === "object" && val !== null) {
+          val = val._id || val.id || "";
+        }
+        // Do not send empty string or [object Object] for area_id or date fields to prevent Mongoose CastErrors
+        if (typeof val === "string") {
+          const trimmed = val.trim();
+          if (trimmed === "" || trimmed === "[object Object]") {
+            if (key === "area_id" || key.endsWith("_date") || key.startsWith("last_")) {
+              return;
+            }
           }
         }
         data.append(key, val);
@@ -491,6 +498,12 @@ const filteredBikes = (bikes || []).filter((bike) => {
       if (!dateStr) return "";
       return new Date(dateStr).toISOString().split("T")[0];
     };
+
+    const cleanAreaId =
+      typeof bike.area_id === "object" && bike.area_id !== null
+        ? bike.area_id._id || ""
+        : bike.area_id || "";
+
     setFormData({
       model: bike.model,
       number_plate: bike.number_plate,
@@ -500,7 +513,7 @@ const filteredBikes = (bikes || []).filter((bike) => {
       image_url: bike.image_url || "",
       status: bike.status,
       description: bike.description || "",
-      area_id: bike.area_id || "",
+      area_id: cleanAreaId,
       bike_name: bike.bike_name || "",
       bike_colour: bike.bike_colour || "",
       bike_owner: bike.bike_owner || "",
@@ -527,8 +540,12 @@ const filteredBikes = (bikes || []).filter((bike) => {
   };
 
   const handleDelete = async (id) => {
-    if (confirm("Are you sure you want to delete this bike?")) {
-      await deleteBike.mutateAsync(id);
+    if (window.confirm("Are you sure you want to delete this bike?")) {
+      try {
+        await deleteBike.mutateAsync(id);
+      } catch (err) {
+        console.error("Delete Error:", err);
+      }
     }
   };
 
