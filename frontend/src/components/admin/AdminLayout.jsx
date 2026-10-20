@@ -1,5 +1,6 @@
 import { Outlet, Navigate , useLocation } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
+import NotFound from "../../Pages/NotFound";
 import { Loader2, MapPin } from "lucide-react";
 import { useAuth } from "../../lib/AuthProvider";
 import { useAdminArea } from "../../lib/AreaContext";
@@ -209,27 +210,8 @@ export default function AdminLayout() {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (!hasPanelAccess) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center p-8 bg-card border border-border rounded-2xl shadow-golden max-w-md">
-          <h2 className="text-2xl font-bold text-destructive mb-2">
-            Access Denied
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            You don't have permission to access the admin panel. Please contact
-            an administrator to get access.
-          </p>
-          <a href="/" className="text-primary hover:underline">
-            Return to Website
-          </a>
-        </div>
-      </div>
-    );
+  if (!user || !hasPanelAccess) {
+    return <NotFound />;
   }
 
   // Role-based route protection
