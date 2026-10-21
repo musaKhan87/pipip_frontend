@@ -2,6 +2,7 @@ const express = require("express");
 const {
   login,
   register,
+  createStaff,
   getStaff,
   deleteStaff,
   getMe,
@@ -55,7 +56,7 @@ router.delete("/investors/:id", protect, adminOnly, deleteInvestor);
 
 // Staff Routes (Super Admin, Admin, Area Manager)
 router.get("/staff", protect, authorizeRoles("super_admin", "admin", "manager"), getStaff);
-router.post("/staff", protect, authorizeRoles("super_admin", "admin", "manager"), register);
+router.post("/staff", protect, authorizeRoles("super_admin", "admin", "manager"), createStaff);
 router.put("/staff/:id", protect, authorizeRoles("super_admin", "admin", "manager"), updateStaff);
 router.delete("/staff/:id", protect, authorizeRoles("super_admin", "admin", "manager"), deleteStaff);
 router.delete("/:id", protect, authorizeRoles("super_admin", "admin", "manager"), deleteStaff);

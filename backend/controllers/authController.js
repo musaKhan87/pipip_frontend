@@ -238,6 +238,12 @@ exports.register = async (req, res) => {
   }
 };
 
+// @desc    Create Staff Member (Dedicated endpoint for /api/auth/staff)
+exports.createStaff = async (req, res) => {
+  req.body.role = "staff";
+  return exports.register(req, res);
+};
+
 // @desc    Create Area Manager (Super Admin)
 exports.createManager = async (req, res) => {
   try {
@@ -245,6 +251,10 @@ exports.createManager = async (req, res) => {
 
     if (!fullName || !email || !password || !areaId) {
       return res.status(400).json({ message: "Full name, email, password, and assigned area are required." });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long." });
     }
 
     const userExists = await User.findOne({ email });
@@ -317,6 +327,9 @@ exports.updateManager = async (req, res) => {
     }
 
     if (password && password.trim() !== "") {
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long." });
+      }
       const salt = await bcrypt.genSalt(10);
       manager.password = await bcrypt.hash(password, salt);
     }
@@ -383,6 +396,9 @@ exports.updateInvestor = async (req, res) => {
     if (status) investor.status = status;
 
     if (password && password.trim() !== "") {
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long." });
+      }
       const salt = await bcrypt.genSalt(10);
       investor.password = await bcrypt.hash(password, salt);
     }
@@ -524,6 +540,9 @@ exports.updateStaff = async (req, res) => {
     }
 
     if (password && password.trim() !== "") {
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long." });
+      }
       const salt = await bcrypt.genSalt(10);
       staff.password = await bcrypt.hash(password, salt);
     }

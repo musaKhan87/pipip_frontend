@@ -11,6 +11,7 @@ import {
   Mail,
   ShieldCheck,
   RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -41,6 +42,7 @@ export default function Managers() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingManager, setEditingManager] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [formError, setFormError] = useState("");
 
   const { isSuperAdmin } = useAuth();
   const { data: areas, isLoading: isAreasLoading } = useAllAreas();
@@ -84,6 +86,7 @@ export default function Managers() {
 
   const handleOpenChange = (open) => {
     setIsOpen(open);
+    setFormError("");
     if (!open) {
       setEditingManager(null);
       setFormData({
@@ -98,6 +101,7 @@ export default function Managers() {
 
   const handleEdit = (manager) => {
     setEditingManager(manager);
+    setFormError("");
     const assignedArea = manager.areaId?._id || manager.areaId || manager.assigned_areas?.[0]?._id || manager.assigned_areas?.[0] || "";
     setFormData({
       fullName: manager.fullName || "",
@@ -111,8 +115,29 @@ export default function Managers() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormError("");
+    if (!formData.fullName || !formData.email) {
+      const msg = "Full name and email are required";
+      setFormError(msg);
+      toast.error(msg);
+      return;
+    }
     if (!formData.areaId) {
-      toast.error("Please select an area for this manager");
+      const msg = "Please select an area for this manager";
+      setFormError(msg);
+      toast.error(msg);
+      return;
+    }
+    if (!editingManager && !formData.password) {
+      const msg = "Password is required for new manager";
+      setFormError(msg);
+      toast.error(msg);
+      return;
+    }
+    if (formData.password && formData.password.length < 6) {
+      const msg = "Password must be at least 6 characters long.";
+      setFormError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -130,9 +155,12 @@ export default function Managers() {
       }
 
       setIsOpen(false);
+      setFormError("");
       fetchManagers();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to save manager");
+      const msg = error.response?.data?.message || error.message || "Failed to save manager";
+      setFormError(msg);
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -203,6 +231,15 @@ export default function Managers() {
               </DialogHeader>
 
               <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+                {formError && (
+                  <div className="p-3 bg-destructive/15 border border-destructive/30 text-destructive rounded-lg text-sm flex items-start gap-2.5 animate-in fade-in duration-200">
+                    <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-destructive">Action Failed</p>
+                      <p className="text-xs text-destructive/90 mt-0.5">{formError}</p>
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label>Full Name</Label>
                   <Input

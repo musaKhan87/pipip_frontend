@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Shield,
   TrendingUp,
+  AlertCircle,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -102,6 +103,11 @@ export default function Settings() {
     status: "active",
   });
 
+  // Dialog Error States (visible directly in modals)
+  const [staffError, setStaffError] = useState("");
+  const [managerError, setManagerError] = useState("");
+  const [investorError, setInvestorError] = useState("");
+
   // Token helper
   const getAuthHeader = () => {
     const token = localStorage.getItem("token");
@@ -174,6 +180,7 @@ export default function Settings() {
   // ==========================
   const handleOpenAddStaff = () => {
     setEditingStaff(null);
+    setStaffError("");
     setStaffForm({
       fullName: "",
       email: "",
@@ -186,6 +193,7 @@ export default function Settings() {
 
   const handleEditStaff = (staff) => {
     setEditingStaff(staff);
+    setStaffError("");
     const assignedArea =
       staff.areaId?._id ||
       staff.areaId ||
@@ -205,12 +213,23 @@ export default function Settings() {
 
   const handleStaffSubmit = async (e) => {
     e.preventDefault();
+    setStaffError("");
     if (!staffForm.fullName || !staffForm.email) {
-      toast.error("Full name and email are required");
+      const msg = "Full name and email are required";
+      setStaffError(msg);
+      toast.error(msg);
       return;
     }
     if (!editingStaff && !staffForm.password) {
-      toast.error("Password is required for new staff");
+      const msg = "Password is required for new staff";
+      setStaffError(msg);
+      toast.error(msg);
+      return;
+    }
+    if (staffForm.password && staffForm.password.length < 6) {
+      const msg = "Password must be at least 6 characters long.";
+      setStaffError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -232,14 +251,17 @@ export default function Settings() {
         await axios.put(`${API_AUTH}/staff/${editingStaff._id}`, payload, getAuthHeader());
         toast.success("Staff member updated successfully");
       } else {
-        await axios.post(`${API_AUTH}/register`, payload, getAuthHeader());
+        await axios.post(`${API_AUTH}/staff`, payload, getAuthHeader());
         toast.success("Staff member created successfully");
       }
 
       setIsStaffModalOpen(false);
+      setStaffError("");
       fetchStaff();
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || "Failed to save staff member");
+      const msg = err.response?.data?.message || err.message || "Failed to save staff member";
+      setStaffError(msg);
+      toast.error(msg);
     } finally {
       setIsStaffSubmitting(false);
     }
@@ -266,6 +288,7 @@ export default function Settings() {
   // ==========================
   const handleOpenAddManager = () => {
     setEditingManager(null);
+    setManagerError("");
     setManagerForm({
       fullName: "",
       email: "",
@@ -278,6 +301,7 @@ export default function Settings() {
 
   const handleEditManager = (mgr) => {
     setEditingManager(mgr);
+    setManagerError("");
     const assignedArea =
       mgr.areaId?._id ||
       mgr.areaId ||
@@ -297,12 +321,29 @@ export default function Settings() {
 
   const handleManagerSubmit = async (e) => {
     e.preventDefault();
+    setManagerError("");
+    if (!managerForm.fullName || !managerForm.email) {
+      const msg = "Full name and email are required";
+      setManagerError(msg);
+      toast.error(msg);
+      return;
+    }
     if (!managerForm.areaId) {
-      toast.error("Please select an area for this manager");
+      const msg = "Please select an area for this manager";
+      setManagerError(msg);
+      toast.error(msg);
       return;
     }
     if (!editingManager && !managerForm.password) {
-      toast.error("Password is required for new manager");
+      const msg = "Password is required for new manager";
+      setManagerError(msg);
+      toast.error(msg);
+      return;
+    }
+    if (managerForm.password && managerForm.password.length < 6) {
+      const msg = "Password must be at least 6 characters long.";
+      setManagerError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -327,9 +368,12 @@ export default function Settings() {
       }
 
       setIsManagerModalOpen(false);
+      setManagerError("");
       fetchManagers();
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || "Failed to save area manager");
+      const msg = err.response?.data?.message || err.message || "Failed to save area manager";
+      setManagerError(msg);
+      toast.error(msg);
     } finally {
       setIsManagerSubmitting(false);
     }
@@ -352,12 +396,14 @@ export default function Settings() {
   // ==========================
   const handleOpenAddInvestor = () => {
     setEditingInvestor(null);
+    setInvestorError("");
     setInvestorForm({ fullName: "", email: "", password: "", status: "active" });
     setIsInvestorModalOpen(true);
   };
 
   const handleEditInvestor = (inv) => {
     setEditingInvestor(inv);
+    setInvestorError("");
     setInvestorForm({
       fullName: inv.fullName || "",
       email: inv.email || "",
@@ -369,12 +415,23 @@ export default function Settings() {
 
   const handleInvestorSubmit = async (e) => {
     e.preventDefault();
+    setInvestorError("");
     if (!investorForm.fullName || !investorForm.email) {
-      toast.error("Full name and email are required");
+      const msg = "Full name and email are required";
+      setInvestorError(msg);
+      toast.error(msg);
       return;
     }
     if (!editingInvestor && !investorForm.password) {
-      toast.error("Password is required for new investor");
+      const msg = "Password is required for new investor";
+      setInvestorError(msg);
+      toast.error(msg);
+      return;
+    }
+    if (investorForm.password && investorForm.password.length < 6) {
+      const msg = "Password must be at least 6 characters long.";
+      setInvestorError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -402,9 +459,12 @@ export default function Settings() {
         toast.success("Investor created successfully");
       }
       setIsInvestorModalOpen(false);
+      setInvestorError("");
       fetchInvestors();
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || "Failed to save investor");
+      const msg = err.response?.data?.message || err.message || "Failed to save investor";
+      setInvestorError(msg);
+      toast.error(msg);
     } finally {
       setIsInvestorSubmitting(false);
     }
@@ -858,7 +918,13 @@ export default function Settings() {
       {/* ======================================================= */}
       {/* DIALOG: STAFF CREATE & EDIT (CREDENTIALS + AREA)       */}
       {/* ======================================================= */}
-      <Dialog open={isStaffModalOpen} onOpenChange={setIsStaffModalOpen}>
+      <Dialog
+        open={isStaffModalOpen}
+        onOpenChange={(open) => {
+          setIsStaffModalOpen(open);
+          if (!open) setStaffError("");
+        }}
+      >
         <DialogContent className="bg-card border-border sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-foreground text-xl flex items-center gap-2">
@@ -868,6 +934,15 @@ export default function Settings() {
           </DialogHeader>
 
           <form onSubmit={handleStaffSubmit} className="space-y-4 mt-2">
+            {staffError && (
+              <div className="p-3 bg-destructive/15 border border-destructive/30 text-destructive rounded-lg text-sm flex items-start gap-2.5 animate-in fade-in duration-200">
+                <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-destructive">Action Failed</p>
+                  <p className="text-xs text-destructive/90 mt-0.5">{staffError}</p>
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Full Name</Label>
               <Input
@@ -972,7 +1047,13 @@ export default function Settings() {
       {/* ======================================================= */}
       {/* DIALOG: MANAGER CREATE & EDIT (CREDENTIALS + AREA)     */}
       {/* ======================================================= */}
-      <Dialog open={isManagerModalOpen} onOpenChange={setIsManagerModalOpen}>
+      <Dialog
+        open={isManagerModalOpen}
+        onOpenChange={(open) => {
+          setIsManagerModalOpen(open);
+          if (!open) setManagerError("");
+        }}
+      >
         <DialogContent className="bg-card border-border sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-foreground text-xl flex items-center gap-2">
@@ -982,6 +1063,15 @@ export default function Settings() {
           </DialogHeader>
 
           <form onSubmit={handleManagerSubmit} className="space-y-4 mt-2">
+            {managerError && (
+              <div className="p-3 bg-destructive/15 border border-destructive/30 text-destructive rounded-lg text-sm flex items-start gap-2.5 animate-in fade-in duration-200">
+                <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-destructive">Action Failed</p>
+                  <p className="text-xs text-destructive/90 mt-0.5">{managerError}</p>
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Full Name</Label>
               <Input
@@ -1086,7 +1176,13 @@ export default function Settings() {
       {/* ======================================================= */}
       {/* DIALOG: INVESTOR CREATE & EDIT                         */}
       {/* ======================================================= */}
-      <Dialog open={isInvestorModalOpen} onOpenChange={setIsInvestorModalOpen}>
+      <Dialog
+        open={isInvestorModalOpen}
+        onOpenChange={(open) => {
+          setIsInvestorModalOpen(open);
+          if (!open) setInvestorError("");
+        }}
+      >
         <DialogContent className="bg-card border-border sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-foreground text-xl flex items-center gap-2">
@@ -1096,6 +1192,15 @@ export default function Settings() {
           </DialogHeader>
 
           <form onSubmit={handleInvestorSubmit} className="space-y-4 mt-2">
+            {investorError && (
+              <div className="p-3 bg-destructive/15 border border-destructive/30 text-destructive rounded-lg text-sm flex items-start gap-2.5 animate-in fade-in duration-200">
+                <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-destructive">Action Failed</p>
+                  <p className="text-xs text-destructive/90 mt-0.5">{investorError}</p>
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Full Name</Label>
               <Input
