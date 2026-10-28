@@ -219,6 +219,7 @@
 const Bike = require("../models/Bike");
 const Booking = require("../models/Booking");
 const Cluster = require("../models/Cluster");
+const Customer = require("../models/Customer");
 const { sendOrderAlerts } = require("./notificationController");
 const { getUserAreaIds, getAreaScope } = require("../middleware/auth");
 const { logAudit, getClientIp } = require("../utils/auditLogger");
@@ -246,9 +247,6 @@ const checkBookingAreaAccess = async (booking, user) => {
 };
 
 exports.createBooking = async (req, res) => {
-  // const booking = await Booking.create(req.body);
-  // res.status(201).json(booking);
-
   try {
     // Force the source to "online" so your database knows it came from the website
     const bookingData = {
@@ -261,6 +259,68 @@ exports.createBooking = async (req, res) => {
     // 2. 🔥 CRITICAL HOOK: Trigger the live websocket and smartphone push notification stream!
     // This transmits the fresh document down to your admin panel dashboard screens.
     sendOrderAlerts(booking, req.app.get("io"));
+
+    // 3. 🛡️ AUDIT LOG: Record Online Booking permanently in the AuditLog collection
+    try {
+      let customerName = "Online Customer";
+      let customerEmail = req.body.customer_email || null;
+      let customerPhone = req.body.customer_phone || null;
+
+      if (booking.customer_id) {
+        const customer = await Customer.findById(booking.customer_id).lean();
+        if (customer) {
+          customerName = customer.name || customerName;
+          customerEmail = customer.email || customerEmail;
+          customerPhone = customer.phone || customerPhone;
+        }
+      }
+
+      let bikeName = booking.vehicle_make_model || "Online Bike";
+      let numberPlate = null;
+      if (booking.bike_id) {
+        const bike = await Bike.findById(booking.bike_id).lean();
+        if (bike) {
+          bikeName = `${bike.bike_name || bike.model} (${bike.number_plate})`;
+          numberPlate = bike.number_plate;
+        }
+      } else if (booking.cluster_id) {
+        const cluster = await Cluster.findById(booking.cluster_id).lean();
+        if (cluster) {
+          bikeName = `Cluster: ${cluster.name}`;
+        }
+      }
+
+      await logAudit({
+        action: "ONLINE_BOOKING_CREATED",
+        severity: "info",
+        performed_by: null, // Public online customer checkout
+        user_email: customerEmail,
+        ip_address: getClientIp(req),
+        user_agent: req.headers["user-agent"] || "",
+        target_id: booking._id?.toString(),
+        target_name: `${bikeName} - ${customerName}`,
+        details: {
+          booking_id: booking._id,
+          booking_source: "online",
+          customer_id: booking.customer_id,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          customer_email: customerEmail,
+          bike_id: booking.bike_id || null,
+          cluster_id: booking.cluster_id || null,
+          vehicle_model: bikeName,
+          number_plate: numberPlate,
+          start_datetime: booking.start_datetime,
+          end_datetime: booking.end_datetime,
+          total_amount: booking.total_amount,
+          deposit_amount: booking.deposit_amount,
+          payment_status: booking.payment_status || "paid",
+          payment_order_id: booking.payment_order_id || null,
+        },
+      });
+    } catch (auditErr) {
+      console.error("Online Booking Audit Error:", auditErr.message);
+    }
 
     res.status(201).json(booking);
   } catch (error) {
@@ -716,22 +776,6 @@ exports.adminCreateBooking = async (req, res) => {
       status: "confirmed",
       updated_by_admin: true,
 
-    });
-
-    await logAudit({
-      action: "CREATE_BOOKING",
-      severity: "info",
-      performed_by: req.user?._id || req.user?.id,
-      user_email: req.user?.email,
-      ip_address: getClientIp(req),
-      target_id: booking._id,
-      target_name: customer_name,
-      details: {
-        total_amount: booking.total_amount,
-        deposit_amount: booking.deposit_amount,
-        bike_id,
-        status: booking.status,
-      },
     });
 
     res.status(201).json(booking);
