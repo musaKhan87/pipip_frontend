@@ -246,59 +246,160 @@ const checkBookingAreaAccess = async (booking, user) => {
   );
 };
 
+/**
+ * Helper to compute exact rental amount strictly server-side from vehicle rates & duration
+ */
+const calculateServerRentalAmount = (item, startDatetime, endDatetime) => {
+  const start = new Date(startDatetime);
+  const end = new Date(endDatetime);
+  const totalHours = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60)));
+
+  const days = Math.floor(totalHours / 24);
+  const remainingHours = totalHours % 24;
+
+  let rentalPrice = 0;
+  const hourlyRate = Number(item.price_per_hour || 0);
+  const dailyRate = Number(item.price_per_day || 0);
+
+  if (days === 0) {
+    if (totalHours < 3) {
+      rentalPrice = 3 * hourlyRate;
+    } else if (totalHours <= 5) {
+      rentalPrice = totalHours * hourlyRate;
+    } else {
+      rentalPrice = dailyRate;
+    }
+  } else {
+    rentalPrice = days * dailyRate;
+    if (remainingHours > 0) {
+      if (remainingHours >= 6) {
+        rentalPrice += dailyRate;
+      } else {
+        rentalPrice += Math.min(remainingHours * hourlyRate, dailyRate);
+      }
+    }
+  }
+
+  return rentalPrice;
+};
+
 exports.createBooking = async (req, res) => {
   try {
-    // Force the source to "online" so your database knows it came from the website
+    const {
+      customer_id,
+      bike_id,
+      cluster_id,
+      start_datetime,
+      end_datetime,
+      notes,
+      deposit_amount,
+      payment_order_id,
+      vehicle_make_model,
+    } = req.body;
+
+    // 1. Mandatory Input Validation
+    if (!customer_id) {
+      return res.status(400).json({ message: "Customer ID is required" });
+    }
+    if (!start_datetime || !end_datetime) {
+      return res.status(400).json({ message: "Start and end dates are required" });
+    }
+    const start = new Date(start_datetime);
+    const end = new Date(end_datetime);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+      return res.status(400).json({ message: "Invalid duration: End time must be after start time" });
+    }
+    if (!bike_id && !cluster_id) {
+      return res.status(400).json({ message: "Bike ID or Cluster ID is required" });
+    }
+
+    // 2. Fetch authoritative vehicle record from DB (never trust client rates or vehicle info)
+    let targetVehicle = null;
+    let vehicleName = vehicle_make_model || "Vehicle";
+    let numberPlate = null;
+
+    if (bike_id) {
+      targetVehicle = await Bike.findOne({ _id: bike_id, is_deleted: { $ne: true } });
+      if (!targetVehicle) {
+        return res.status(404).json({ message: "Selected bike not found or unavailable" });
+      }
+      vehicleName = `${targetVehicle.bike_name || targetVehicle.model} (${targetVehicle.number_plate})`;
+      numberPlate = targetVehicle.number_plate;
+    } else if (cluster_id) {
+      targetVehicle = await Cluster.findOne({ _id: cluster_id, is_deleted: { $ne: true } });
+      if (!targetVehicle) {
+        return res.status(404).json({ message: "Selected cluster not found or unavailable" });
+      }
+      vehicleName = `Cluster: ${targetVehicle.name}`;
+    }
+
+    // 3. Strict Server-Side Calculation of total_amount
+    const serverCalculatedAmount = calculateServerRentalAmount(targetVehicle, start, end);
+
+    // 4. Force initial state to "pending" (Never accept client status or payment_status)
+    let finalStatus = "pending";
+    let finalPaymentStatus = "pending";
+
+    // 5. Verify Cashfree payment status if payment_order_id is provided
+    if (payment_order_id) {
+      try {
+        const { Cashfree } = require("cashfree-pg");
+        const cfPayments = await Cashfree.PGOrderFetchPayments("2023-08-01", payment_order_id);
+        const isPaid = cfPayments?.data?.some((p) => p.payment_status === "SUCCESS");
+        if (isPaid) {
+          finalStatus = "confirmed";
+          finalPaymentStatus = "paid";
+        }
+      } catch (cfErr) {
+        console.warn("[Cashfree Verification] Failed to verify payment order:", cfErr.message);
+      }
+    }
+
     const bookingData = {
-      ...req.body,
+      customer_id,
+      bike_id: bike_id || null,
+      cluster_id: cluster_id || null,
+      vehicle_make_model: vehicleName,
+      start_datetime: start,
+      end_datetime: end,
+      total_amount: serverCalculatedAmount,
+      deposit_amount: Number(deposit_amount) || 0,
+      notes: notes || undefined,
       booking_source: "online",
+      status: finalStatus,
+      payment_status: finalPaymentStatus,
+      payment_order_id: payment_order_id || null,
     };
 
     const booking = await Booking.create(bookingData);
 
-    // 2. 🔥 CRITICAL HOOK: Trigger the live websocket and smartphone push notification stream!
-    // This transmits the fresh document down to your admin panel dashboard screens.
-    sendOrderAlerts(booking, req.app.get("io"));
+    // 6. Broadcast notification alert if payment was confirmed
+    if (finalStatus === "confirmed" && finalPaymentStatus === "paid") {
+      sendOrderAlerts(booking, req.app.get("io"));
+    }
 
-    // 3. 🛡️ AUDIT LOG: Record Online Booking permanently in the AuditLog collection
+    // 7. 🛡️ AUDIT LOG: Record Online Booking permanently in the AuditLog collection
     try {
       let customerName = "Online Customer";
       let customerEmail = req.body.customer_email || null;
       let customerPhone = req.body.customer_phone || null;
 
-      if (booking.customer_id) {
-        const customer = await Customer.findById(booking.customer_id).lean();
-        if (customer) {
-          customerName = customer.name || customerName;
-          customerEmail = customer.email || customerEmail;
-          customerPhone = customer.phone || customerPhone;
-        }
-      }
-
-      let bikeName = booking.vehicle_make_model || "Online Bike";
-      let numberPlate = null;
-      if (booking.bike_id) {
-        const bike = await Bike.findById(booking.bike_id).lean();
-        if (bike) {
-          bikeName = `${bike.bike_name || bike.model} (${bike.number_plate})`;
-          numberPlate = bike.number_plate;
-        }
-      } else if (booking.cluster_id) {
-        const cluster = await Cluster.findById(booking.cluster_id).lean();
-        if (cluster) {
-          bikeName = `Cluster: ${cluster.name}`;
-        }
+      const customer = await Customer.findById(booking.customer_id).lean();
+      if (customer) {
+        customerName = customer.name || customerName;
+        customerEmail = customer.email || customerEmail;
+        customerPhone = customer.phone || customerPhone;
       }
 
       await logAudit({
         action: "ONLINE_BOOKING_CREATED",
-        severity: "info",
+        severity: finalStatus === "confirmed" ? "info" : "warning",
         performed_by: null, // Public online customer checkout
         user_email: customerEmail,
         ip_address: getClientIp(req),
         user_agent: req.headers["user-agent"] || "",
         target_id: booking._id?.toString(),
-        target_name: `${bikeName} - ${customerName}`,
+        target_name: `${vehicleName} - ${customerName}`,
         details: {
           booking_id: booking._id,
           booking_source: "online",
@@ -308,13 +409,14 @@ exports.createBooking = async (req, res) => {
           customer_email: customerEmail,
           bike_id: booking.bike_id || null,
           cluster_id: booking.cluster_id || null,
-          vehicle_model: bikeName,
+          vehicle_model: vehicleName,
           number_plate: numberPlate,
           start_datetime: booking.start_datetime,
           end_datetime: booking.end_datetime,
           total_amount: booking.total_amount,
           deposit_amount: booking.deposit_amount,
-          payment_status: booking.payment_status || "paid",
+          status: booking.status,
+          payment_status: booking.payment_status,
           payment_order_id: booking.payment_order_id || null,
         },
       });

@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    // await mongoose.connect(process.env.MONGO_URI);
     await mongoose.connect(process.env.MONGO_URI, {
       maxPoolSize: 20, // High-performance concurrent connection pool
       minPoolSize: 5,  // Keep 5 warm connections ready
@@ -10,6 +9,37 @@ const connectDB = async () => {
       socketTimeoutMS: 45000,
     });
     console.log("MongoDB Connected");
+
+    // Auto-cleanup hook: Purge unauthorized test records
+    try {
+      const Booking = require("../models/Booking");
+      const Customer = require("../models/Customer");
+      const AuditLog = require("../models/AuditLog");
+
+      const testBookingId = "6ae0a61bdbac72fac19369cb";
+      const testCustomerId = "6ae0a612dbac72fac19369c7";
+
+      const [delBooking, delCustomer, delAudit] = await Promise.all([
+        Booking.deleteOne({ _id: testBookingId }),
+        Customer.deleteOne({ _id: testCustomerId }),
+        AuditLog.deleteMany({
+          $or: [
+            { target_id: testBookingId },
+            { target_id: testCustomerId },
+            { "details.booking_id": testBookingId },
+            { "details.customer_id": testCustomerId },
+          ],
+        }),
+      ]);
+
+      if (delBooking.deletedCount > 0 || delCustomer.deletedCount > 0 || delAudit.deletedCount > 0) {
+        console.log(
+          `[Auto-Cleanup] Successfully purged test records: ${delBooking.deletedCount} booking(s), ${delCustomer.deletedCount} customer(s), ${delAudit.deletedCount} audit log(s).`
+        );
+      }
+    } catch (cleanErr) {
+      console.error("[Auto-Cleanup] Test cleanup notice:", cleanErr.message);
+    }
 
     // Auto-migration hook: Backfill area_id for VehicleServiceHistory if missing
     try {

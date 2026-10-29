@@ -1081,6 +1081,9 @@ exports.verifyPayment = async (req, res) => {
       const booking = await Booking.findOne({ payment_order_id: orderId });
 
       if (booking) {
+        booking.payment_status = "paid";
+        booking.status = "confirmed";
+        await booking.save();
         // Only trigger live alerts if the booking row exists in your DB
         sendOrderAlerts(booking, req.app.get("io"));
       } else {

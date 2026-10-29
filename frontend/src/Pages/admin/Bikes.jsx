@@ -27,7 +27,8 @@ import {
   useUpdateBike,
   useDeleteBike,
 } from "../../hooks/useBikes";
-import { useAreas } from "../../hooks/useAreas";
+import { useAreas, useAllAreas } from "../../hooks/useAreas";
+import { useAdminArea } from "../../lib/AreaContext";
 import { useBookings } from "../../hooks/useBooking";
 
 import {
@@ -111,14 +112,33 @@ export default function Bikes() {
   const { data: bikes, isLoading } = useBikes();
   const { data: bookings } = useBookings("active");
   const { data: areas } = useAreas();
+  const { data: allAreas } = useAllAreas();
+  const { areas: adminAreas } = useAdminArea();
   const { user, isStaff, isInvestor, isManager } = useAuth();
+
+  // Comprehensive deduplicated area list across all sources
+  const availableAreas = (function () {
+    const list = [
+      ...(Array.isArray(allAreas) ? allAreas : []),
+      ...(Array.isArray(areas) ? areas : []),
+      ...(Array.isArray(adminAreas) ? adminAreas : []),
+    ];
+    const map = new Map();
+    list.forEach((a) => {
+      if (a && (a._id || a.id)) {
+        map.set(String(a._id || a.id), a);
+      }
+    });
+    return Array.from(map.values());
+  })();
+
   const displayAreas = (isStaff || isManager)
     ? (user?.assigned_areas && user.assigned_areas.length > 0
         ? user.assigned_areas
         : user?.areaId
           ? [user.areaId]
           : [])
-    : (areas || []);
+    : (availableAreas.length > 0 ? availableAreas : (areas || []));
 
   useEffect(() => {
     if ((isStaff || isManager) && displayAreas.length > 0) {
@@ -294,15 +314,42 @@ const availableCount =
 
   const getAreaName = (area) => {
     if (!area) return "Not Assigned";
+
     // 1. If bike.area_id is already a populated object with a name
-    if (typeof area === "object" && area.name) {
-      return area.name;
+    if (typeof area === "object") {
+      if (area.name) return area.name;
+      if (area.area_name) return area.area_name;
     }
-    // 2. If it is an ID (or object with _id), match with areas array
+
+    // 2. Extract target ID or name
     const targetId = typeof area === "object" ? (area._id || area.id) : area;
-    if (!targetId || !areas) return "Not Assigned";
-    const matched = areas.find((a) => String(a._id || a.id) === String(targetId));
-    return matched?.name || "Unknown";
+    if (!targetId) return "Not Assigned";
+
+    // 3. Search in availableAreas, displayAreas, and user assigned areas
+    const pool = [
+      ...availableAreas,
+      ...(Array.isArray(displayAreas) ? displayAreas : []),
+      ...(Array.isArray(user?.assigned_areas) ? user.assigned_areas : []),
+      ...(user?.areaId ? [user.areaId] : []),
+    ];
+
+    const matched = pool.find((a) => {
+      if (!a) return false;
+      const aId = a._id || a.id;
+      return (
+        (aId && String(aId) === String(targetId)) ||
+        (a.name && a.name.toLowerCase() === String(targetId).toLowerCase())
+      );
+    });
+
+    if (matched?.name) return matched.name;
+
+    // 4. If targetId is not a 24-character hexadecimal ObjectId, it is likely already an Area Name string (e.g. "Andheri", "Mumbai")
+    if (typeof targetId === "string" && targetId.trim() !== "" && !/^[0-9a-fA-F]{24}$/.test(targetId)) {
+      return targetId;
+    }
+
+    return "Not Assigned";
   };
 
 

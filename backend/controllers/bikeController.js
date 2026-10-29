@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Bike = require("../models/Bike");
+const Area = require("../models/Area");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { logAudit, getClientIp } = require("../utils/auditLogger");
@@ -159,7 +160,8 @@ const createBike = async (req, res) => {
       },
     });
 
-    res.status(201).json(bike);
+    const populatedBike = await Bike.findById(bike._id).populate("area_id", "name city");
+    res.status(201).json(populatedBike || bike);
   } catch (error) {
     console.error("Create Bike Error:", error);
     if (error.code === 11000) {
@@ -248,7 +250,7 @@ const getBikes = async (req, res) => {
       const [bikes, totalCount, statusCounts] = await Promise.all([
         Bike.find(filter)
           .select(isPublic ? SENSITIVE_PROJECTION : "")
-          .populate("area_id", "name location")
+          .populate("area_id", "name city")
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit)
@@ -285,7 +287,7 @@ const getBikes = async (req, res) => {
     // Dual-Mode Branch B: Standard Array for Public Catalog / Legacy Consumers
     const bikes = await Bike.find(filter)
       .select(isPublic ? SENSITIVE_PROJECTION : "")
-      .populate("area_id", "name location")
+      .populate("area_id", "name city")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -406,7 +408,7 @@ const updateBike = async (req, res) => {
       req.params.id,
       { $set: updateData },
       { new: true, runValidators: true }
-    );
+    ).populate("area_id", "name city");
 
     res.status(200).json(updatedBike);
   } catch (error) {
@@ -477,7 +479,7 @@ const getSingleBike = async (req, res) => {
   try {
     const bike = await Bike.findOne({ _id: req.params.id, is_deleted: { $ne: true } }).populate(
       "area_id",
-      "name location"
+      "name city"
     );
 
     if (!bike) {

@@ -1,3 +1,4 @@
+import { Turnstile } from "@marsidev/react-turnstile";
 import { useState, useEffect , useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -152,6 +153,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const { checkAvailability, checking } = useBikeAvailability();
 
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
   const [activePolicy, setActivePolicy] = useState(null); // 'terms' | 'privacy' | 'refund' | null
 
   const SECURITY_DEPOSIT = 2000;
@@ -279,8 +281,17 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
     if (!area) return "Mumbai";
     if (typeof area === "object" && area.name) return area.name;
     const targetId = typeof area === "object" ? (area._id || area.id) : area;
-    if (!targetId || !areas) return "Mumbai";
-    return areas.find((a) => String(a._id || a.id) === String(targetId))?.name || "Mumbai";
+    if (!targetId) return "Mumbai";
+    const matched = (areas || []).find(
+      (a) =>
+        String(a._id || a.id) === String(targetId) ||
+        (a.name && a.name.toLowerCase() === String(targetId).toLowerCase())
+    );
+    if (matched?.name) return matched.name;
+    if (typeof targetId === "string" && targetId.trim() !== "" && !/^[0-9a-fA-F]{24}$/.test(targetId)) {
+      return targetId;
+    }
+    return "Mumbai";
   };
 
   // const calculatePrice = () => {
@@ -623,6 +634,10 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
   const handleBookingSubmit = async () => {
     if (!bike || !startDate || !endDate) return;
+    if (!turnstileToken) {
+      toast.error("Bot verification in progress. Please complete the security check.");
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -690,7 +705,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
           status: "confirmed", // Mark as confirmed immediately
           payment_status: "paid",
           payment_order_id: paymentOrder.orderId,
-          
+          turnstile_token: turnstileToken,
         });
 
         setConfirmedBookingId(booking._id);
@@ -2260,6 +2275,19 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
                           {isSubmitting ? "Submitting..." : "Confirm Booking"}
                         </Button>
                       </div> */}
+                      {/* Cloudflare Turnstile Invisible/Managed Bot Protection Widget */}
+                      <div className="my-3 flex flex-col items-center justify-center">
+                        <Turnstile
+                          siteKey={
+                            import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY ||
+                            "1x00000000000000000000AA"
+                          }
+                          onSuccess={(token) => setTurnstileToken(token)}
+                          onError={() => setTurnstileToken("")}
+                          onExpire={() => setTurnstileToken("")}
+                        />
+                      </div>
+
                       <div className="flex gap-4">
                         <Button
                           variant="outline"
@@ -2272,7 +2300,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
                         <Button
                           onClick={handleBookingSubmit}
                           className="flex-1 gradient-sunset text-primary-foreground"
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || !turnstileToken}
                         >
                           {isSubmitting ? (
                             <div className="flex items-center gap-2">

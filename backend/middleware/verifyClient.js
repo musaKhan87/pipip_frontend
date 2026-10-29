@@ -1,8 +1,8 @@
 /**
- * Client Handshake Middleware (Postman & Unofficial Client Protection)
+ * Client Handshake & Agent Filtering Middleware
  *
- * Verifies that requests are originating from the official Pipip Mumbai frontend application
- * by inspecting the custom handshake header 'x-client-signature' and blocking raw Postman agents.
+ * Blocks direct Postman Runtime and automated scrapers from hitting internal endpoints.
+ * Public booking & customer creation endpoints are protected cryptographically via Cloudflare Turnstile.
  */
 const verifyClient = (req, res, next) => {
   // 1. Allow CORS preflight requests
@@ -27,16 +27,7 @@ const verifyClient = (req, res, next) => {
     });
   }
 
-  // 4. Verify secret client handshake signature
-  const signature = req.headers["x-client-signature"];
-  const expectedSignature = process.env.CLIENT_SIGNATURE || "PIPIP_SECURE_FRONTEND_V1";
-
-  if (!signature || signature !== expectedSignature) {
-    return res.status(403).json({
-      message: "Access forbidden: Unofficial client or missing signature.",
-    });
-  }
-
+  // Allow clean browser requests through
   next();
 };
 

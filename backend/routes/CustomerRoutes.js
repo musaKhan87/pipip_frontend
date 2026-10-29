@@ -1,30 +1,20 @@
 const express = require("express");
-const { createCustomer, getCustomer, updateCustomer, deleteCustomer , getCustomerBookings } = require("../controllers/Customercontroller");
+const { createCustomer, getCustomer, updateCustomer, deleteCustomer, getCustomerBookings } = require("../controllers/Customercontroller");
 const upload = require("../middleware/upload");
 const { protect, adminOnly } = require("../middleware/auth");
+const { customerCreationLimiter } = require("../middleware/rateLimiter");
 const router = express.Router();
 
-
-// CREATE customer (aadhaar OR license OR both)
-// router.post(
-// "/",
-// upload.fields([
-// { name: "aadhaar_image", maxCount: 1 },
-// { name: "license_image", maxCount: 1 },
-// ]),
-// createCustomer
-// );
-
-// routes/CustomerRoutes.js
-
+// CREATE customer (Protected with Rate Limiter)
 router.post(
   "/",
+  customerCreationLimiter,
   upload.fields([
     { name: "aadhaar_image", maxCount: 1 },
     { name: "license_image", maxCount: 1 },
-    { name: "extra_documents", maxCount: 5 }, // Added this
+    { name: "extra_documents", maxCount: 5 },
   ]),
-  createCustomer,
+  createCustomer
 );
 
 router.put(
@@ -32,15 +22,15 @@ router.put(
   upload.fields([
     { name: "aadhaar_image", maxCount: 1 },
     { name: "license_image", maxCount: 1 },
-    { name: "extra_documents", maxCount: 5 }, // Added this
+    { name: "extra_documents", maxCount: 5 },
   ]),
-  updateCustomer,
+  updateCustomer
 );
 
 router.get("/", getCustomer);
-// router.put("/:id", updateCustomer);
 router.delete("/:id", protect, adminOnly, deleteCustomer);
 
 // booking history
 router.get("/:id/bookings", getCustomerBookings);
+
 module.exports = router;

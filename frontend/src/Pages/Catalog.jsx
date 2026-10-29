@@ -874,9 +874,17 @@ const Catalog = () => {
     if (!area) return null;
     if (typeof area === "object" && area.name) return area.name;
     const targetId = typeof area === "object" ? (area._id || area.id) : area;
-    if (!targetId || !areas) return null;
-    const matched = areas.find((a) => String(a._id || a.id) === String(targetId));
-    return matched ? matched.name : null;
+    if (!targetId) return null;
+    const matched = (areas || []).find(
+      (a) =>
+        String(a._id || a.id) === String(targetId) ||
+        (a.name && a.name.toLowerCase() === String(targetId).toLowerCase())
+    );
+    if (matched?.name) return matched.name;
+    if (typeof targetId === "string" && targetId.trim() !== "" && !/^[0-9a-fA-F]{24}$/.test(targetId)) {
+      return targetId;
+    }
+    return null;
   };
 
   const clusteredBikeIds = useMemo(() => {
