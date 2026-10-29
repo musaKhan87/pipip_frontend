@@ -4,22 +4,19 @@ const {
   createArea,
   updateArea,
   deleteArea,
-  getAreas
+  getAreas,
 } = require("../controllers/areaController");
 const { protect, adminOnly } = require("../middleware/auth");
 
 const router = express.Router();
 
+// Public active areas for catalog & booking forms
 router.get("/", getActiveAreas);
-// router.post("/", createArea);
-// router.put("/:id", updateArea);
-// router.delete("/:id", deleteArea);
 
-// Admin Only
+// 🔒 Admin Only
 router.post("/", protect, adminOnly, createArea);
 router.put("/:id", protect, adminOnly, updateArea);
 router.delete("/:id", protect, adminOnly, deleteArea);
-router.get("/areas", getAreas);
+router.get("/areas", protect, adminOnly, getAreas);
 
 module.exports = router;
-

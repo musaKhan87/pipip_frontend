@@ -5,24 +5,35 @@ const {
   updateEntry,
   deleteEntry,
 } = require("../controllers/DailyAccountcontroller");
-const { protect, adminOnly } = require("../middleware/auth");
+const { protect, adminOnly, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
 
-// Apply protect and adminOnly middleware to all routes below
+// 🔒 All daily account endpoints require authentication
 router.use(protect);
-router.use(adminOnly);
 
 // CREATE operational balance entry
-router.post("/", createEntry);
+router.post(
+  "/",
+  authorizeRoles("super_admin", "admin", "manager", "staff"),
+  createEntry
+);
 
 // GET all entries with search/filter queries
-router.get("/", getEntries);
+router.get(
+  "/",
+  authorizeRoles("super_admin", "admin", "manager", "staff"),
+  getEntries
+);
 
 // UPDATE operational balance entry
-router.put("/:id", updateEntry);
+router.put(
+  "/:id",
+  authorizeRoles("super_admin", "admin", "manager"),
+  updateEntry
+);
 
-// DELETE operational balance entry
-router.delete("/:id", deleteEntry);
+// DELETE operational balance entry (Admin Only)
+router.delete("/:id", adminOnly, deleteEntry);
 
 module.exports = router;
