@@ -1,17 +1,23 @@
 const Area = require("../models/Area");
 const { logAudit, getClientIp } = require("../utils/auditLogger");
 
-// PUBLIC
+// PUBLIC: Only return the exact 3 fields needed for customer dropdowns (_id, name, city)
 const getActiveAreas = async (req, res) => {
   try {
-    const areas = await Area.find({ is_active: true, is_deleted: { $ne: true } });
-    res.json(areas);
+    res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+
+    const areas = await Area.find({ is_active: true, is_deleted: { $ne: true } })
+      .select("_id name city") // 👈 Whitelist: ONLY returns _id, name, and city
+      .sort({ name: 1 })
+      .lean();
+
+    res.status(200).json(areas);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch areas" });
   }
 };
 
-// ADMIN
+// ADMIN: Create Area
 const createArea = async (req, res) => {
   try {
     const area = await Area.create(req.body);
@@ -21,6 +27,7 @@ const createArea = async (req, res) => {
   }
 };
 
+// ADMIN: Update Area
 const updateArea = async (req, res) => {
   try {
     const area = await Area.findByIdAndUpdate(
@@ -34,6 +41,7 @@ const updateArea = async (req, res) => {
   }
 };
 
+// ADMIN: Soft Delete Area
 const deleteArea = async (req, res) => {
   try {
     const area = await Area.findById(req.params.id);
@@ -58,9 +66,12 @@ const deleteArea = async (req, res) => {
   }
 };
 
+// ADMIN / STAFF / MANAGER: Get all areas including internal flags
 const getAreas = async (req, res) => {
   try {
-    const areas = await Area.find({ is_deleted: { $ne: true } });
+    const areas = await Area.find({ is_deleted: { $ne: true } })
+      .sort({ name: 1 })
+      .lean();
     res.json(areas);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch areas" });
@@ -72,5 +83,5 @@ module.exports = {
   createArea,
   updateArea,
   deleteArea,
-  getAreas
+  getAreas,
 };
