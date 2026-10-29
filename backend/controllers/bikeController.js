@@ -360,14 +360,23 @@ const updateBike = async (req, res) => {
       return res.status(400).json({ message: "Pricing and expenses cannot be negative" });
     }
 
-    // 1. Handle Main Profile Image
+    // 1. Handle Main Profile Image (Upload new or Delete existing)
     if (req.files?.image_url) {
       updateData.image_url = req.files.image_url[0].path;
+    } else if (
+      req.body.remove_main_image === "true" ||
+      req.body.remove_main_image === true ||
+      req.body.image_url === "" ||
+      req.body.image_url === "null" ||
+      req.body.image_url === null
+    ) {
+      updateData.image_url = "";
     }
+    delete updateData.remove_main_image;
 
     // 2. Handle Extra Images
     let finalExtraImages = [];
-    if (req.body.remaining_extra_images) {
+    if (req.body.remaining_extra_images !== undefined) {
       try {
         finalExtraImages = JSON.parse(req.body.remaining_extra_images);
       } catch (e) {

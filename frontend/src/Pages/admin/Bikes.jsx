@@ -503,6 +503,10 @@ const filteredBikes = (bikes || []).filter((bike) => {
     // 2. Main Profile Image
     if (selectedFile) {
       data.append("image_url", selectedFile);
+    } else if (editingBike && !formData.image_url) {
+      // User explicitly deleted the main image in edit modal
+      data.append("remove_main_image", "true");
+      data.append("image_url", "");
     }
 
     // --- NEW CHANGE START ---
@@ -701,10 +705,13 @@ const filteredBikes = (bikes || []).filter((bike) => {
                         <button
                           type="button"
                           onClick={() => {
-                            setFormData({ ...formData, image_url: "" });
+                            setFormData((prev) => ({ ...prev, image_url: "" }));
                             setSelectedFile(null); // Clear the binary file too
+                            const fileInput = document.getElementById("image_upload");
+                            if (fileInput) fileInput.value = "";
                           }}
-                          className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl-md"
+                          className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl-md hover:bg-red-600 transition-colors"
+                          title="Delete image"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
