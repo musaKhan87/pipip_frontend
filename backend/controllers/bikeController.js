@@ -6,8 +6,10 @@ const User = require("../models/User");
 const { logAudit, getClientIp } = require("../utils/auditLogger");
 const { getUserAreaIds, getAreaScope } = require("../middleware/auth");
 
-const SENSITIVE_PROJECTION =
-  "-bike_owner -fine_owner -bike_expenses -gps_installed_date -last_service_date -last_battery_changed -last_tyre_change";
+// Strict Positive Whitelist Projection for Public Catalog & Anonymous Visitors
+// Excludes all sensitive fields: investor/owner, expenses, telemetry, compliance, and extra_images
+const PUBLIC_CATALOG_FIELDS =
+  "_id bike_name model cc number_plate price_per_hour price_per_day status image_url bike_colour area_id";
 
 /**
  * Helper to resolve user from auth token (optional auth endpoints)
@@ -184,8 +186,10 @@ const getBikes = async (req, res) => {
     const currentUser = await resolveCurrentUser(req);
     const isPublic = !currentUser;
 
-    // 1. Status Filter
-    if (req.query.status && req.query.status !== "all") {
+    // 🔒 Security Gate 1: Public visitors can ONLY see 'available' bikes
+    if (isPublic) {
+      filter.status = "available";
+    } else if (req.query.status && req.query.status !== "all") {
       filter.status = req.query.status;
     }
 
@@ -249,7 +253,7 @@ const getBikes = async (req, res) => {
 
       const [bikes, totalCount, statusCounts] = await Promise.all([
         Bike.find(filter)
-          .select(isPublic ? SENSITIVE_PROJECTION : "")
+          .select(isPublic ? PUBLIC_CATALOG_FIELDS : "")
           .populate("area_id", "name city")
           .sort({ createdAt: -1 })
           .skip(skip)
@@ -286,7 +290,7 @@ const getBikes = async (req, res) => {
 
     // Dual-Mode Branch B: Standard Array for Public Catalog / Legacy Consumers
     const bikes = await Bike.find(filter)
-      .select(isPublic ? SENSITIVE_PROJECTION : "")
+      .select(isPublic ? PUBLIC_CATALOG_FIELDS : "")
       .populate("area_id", "name city")
       .sort({ createdAt: -1 })
       .lean();
@@ -486,17 +490,23 @@ const deleteBike = async (req, res) => {
  */
 const getSingleBike = async (req, res) => {
   try {
-    const bike = await Bike.findOne({ _id: req.params.id, is_deleted: { $ne: true } }).populate(
-      "area_id",
-      "name city"
-    );
+    const currentUser = await resolveCurrentUser(req);
+    const isPublic = !currentUser;
+    const projection = isPublic ? PUBLIC_CATALOG_FIELDS : "";
+
+    const bike = await Bike.findOne({ _id: req.params.id, is_deleted: { $ne: true } })
+      .select(projection)
+      .populate("area_id", "name city")
+      .lean();
 
     if (!bike) {
       return res.status(404).json({ message: "Bike not found" });
     }
 
-    const currentUser = await resolveCurrentUser(req);
-    const isPublic = !currentUser;
+    // 🔒 Security Gate: Public visitors cannot view bikes under maintenance or non-available status
+    if (isPublic && bike.status !== "available") {
+      return res.status(404).json({ message: "Bike not available" });
+    }
 
     if (currentUser && (currentUser.role === "staff" || currentUser.role === "manager")) {
       const userAreaIds = getUserAreaIds(currentUser);
@@ -508,21 +518,9 @@ const getSingleBike = async (req, res) => {
       }
     }
 
-    // Mask sensitive fields if public request
-    if (isPublic) {
-      const sanitized = bike.toObject();
-      delete sanitized.bike_owner;
-      delete sanitized.fine_owner;
-      delete sanitized.bike_expenses;
-      delete sanitized.gps_installed_date;
-      delete sanitized.last_service_date;
-      delete sanitized.last_battery_changed;
-      delete sanitized.last_tyre_change;
-      return res.json(sanitized);
-    }
-
-    res.json(bike);
+    res.status(200).json(bike);
   } catch (err) {
+    console.error("Get Single Bike Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
