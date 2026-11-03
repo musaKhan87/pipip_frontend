@@ -55,7 +55,7 @@ const Footer = () => {
               {[
                 { label: "Home", href: "/#home" },
                 // { label: "About Us", href: "/#about" },
-                 { label: "About Us", href: "/about" },
+                { label: "About Us", href: "/about" },
                 // { label: "Pricing", href: "/#pricing" },
                 { label: "Pricing", href: "/pricing" },
                 { label: "Catalog", href: "/catalog" },
@@ -159,7 +159,7 @@ const Footer = () => {
         {/* Divider */}
         <div className="border-t border-border pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p>© {currentYear} Pipip. All rights reserved.</p>
+            <p>© {currentYear} Pipip Services. All Rights Reserved.</p>
             <p className="flex items-center gap-1">
               Made with{" "}
               <Heart className="w-4 h-4 text-destructive fill-destructive" /> in
