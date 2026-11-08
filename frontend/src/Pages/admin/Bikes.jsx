@@ -319,8 +319,7 @@ const rentedBikeIds = new Set(
   );
 
   const availableCount = availableBikeList.length;
-  const bookedCount =
-    activeRentals.length > 0 ? activeRentals.length : bookedBikeList.length;
+  const bookedCount = bookedBikeList.length;
   const maintenanceCount = maintenanceBikeList.length;
 
   const getAreaName = (area) => {

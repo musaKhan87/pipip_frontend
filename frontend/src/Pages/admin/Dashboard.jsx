@@ -392,11 +392,14 @@ export default function Dashboard() {
   // Rented bike IDs
 
   const rentedBikeIds = new Set(
-    activeRentals.map(
-      (booking) =>
-        booking.bike_id?._id ||
-        booking.bike_id
-    )
+    activeRentals
+      .map(
+        (booking) =>
+          booking.bike_id?._id ||
+          booking.bike_id
+      )
+      .filter(Boolean)
+      .flatMap((id) => [String(id), id])
   );
 
   // Maintenance bikes
@@ -412,20 +415,38 @@ export default function Dashboard() {
   const availableBikeList =
     (bikes || []).filter(
       (bike) =>
+        !rentedBikeIds.has(String(bike._id)) &&
         !rentedBikeIds.has(bike._id) &&
         bike.status !== "maintenance"
     );
+
+  // Booked bikes from the fleet
+  const bookedBikeListInFleet =
+    (bikes || []).filter(
+      (bike) =>
+        (rentedBikeIds.has(String(bike._id)) || rentedBikeIds.has(bike._id)) &&
+        bike.status !== "maintenance"
+    );
+
+  const bookedBikeList = activeRentals.filter((booking) => {
+    const bId = booking.bike_id?._id || booking.bike_id;
+    return (
+      bId &&
+      (bikes || []).some(
+        (b) =>
+          (String(b._id) === String(bId) || b._id === bId) &&
+          b.status !== "maintenance"
+      )
+    );
+  });
 
   // Counts
 
   const availableBikes =
     availableBikeList.length;
 
-  const bookedBikeList =
-    activeRentals;
-
   const bookedBikes =
-    bookedBikeList.length;
+    bookedBikeListInFleet.length;
 
   const maintenanceBikes =
     maintenanceBikeList.length;
