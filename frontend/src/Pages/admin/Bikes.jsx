@@ -110,7 +110,7 @@ export default function Bikes() {
   }, [searchQuery]);
 
   const { data: bikes, isLoading } = useBikes();
-  const { data: bookings } = useBookings("active");
+  const { data: bookings } = useBookings("all");
   const { data: areas } = useAreas();
   const { data: allAreas } = useAllAreas();
   const { areas: adminAreas } = useAdminArea();
@@ -192,11 +192,14 @@ const activeRentals =
   );
 
 const rentedBikeIds = new Set(
-  activeRentals.map(
-    (booking) =>
-      booking.bike_id?._id ||
-      booking.bike_id
-  )
+  activeRentals
+    .map(
+      (booking) =>
+        booking.bike_id?._id ||
+        booking.bike_id
+    )
+    .filter(Boolean)
+    .flatMap((id) => [String(id), id])
 );
 
   // File selection handler (One by One)
@@ -297,20 +300,28 @@ const rentedBikeIds = new Set(
 
   // Get rented bike IDs
   
-  // Maintenance bikes
-  const maintenanceCount =
-  (bikes || []).filter(
+  // Fleet calculation matching Dashboard logic
+  const maintenanceBikeList = (bikes || []).filter(
+    (bike) => bike.status === "maintenance"
+  );
+
+  const availableBikeList = (bikes || []).filter(
     (bike) =>
-      bike.status === "maintenance"
-  ).length;
+      !rentedBikeIds.has(String(bike._id)) &&
+      !rentedBikeIds.has(bike._id) &&
+      bike.status !== "maintenance"
+  );
 
-const bookedCount =
-  rentedBikeIds.size;
+  const bookedBikeList = (bikes || []).filter(
+    (bike) =>
+      (rentedBikeIds.has(String(bike._id)) || rentedBikeIds.has(bike._id)) &&
+      bike.status !== "maintenance"
+  );
 
-const availableCount =
-  (bikes?.length || 0)
-  - bookedCount
-  - maintenanceCount;
+  const availableCount = availableBikeList.length;
+  const bookedCount =
+    activeRentals.length > 0 ? activeRentals.length : bookedBikeList.length;
+  const maintenanceCount = maintenanceBikeList.length;
 
   const getAreaName = (area) => {
     if (!area) return "Not Assigned";
@@ -370,7 +381,8 @@ const filteredBikes = (bikes || []).filter((bike) => {
     String(bikeAreaId) === String(areaFilter);
 
   // 🔥 CORRECT STATUS LOGIC
-  const isBooked = rentedBikeIds.has(bike._id);
+  const isBooked =
+    rentedBikeIds.has(String(bike._id)) || rentedBikeIds.has(bike._id);
 
   const displayStatus =
     bike.status === "maintenance"
@@ -1367,9 +1379,24 @@ const filteredBikes = (bikes || []).filter((bike) => {
                     />
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">Status</p>
-                      <Badge className={`${statusColors[viewingBike.status]}`}>
-                        {viewingBike.status}
-                      </Badge>
+                      {(() => {
+                        const viewingIsBooked =
+                          rentedBikeIds.has(String(viewingBike._id)) ||
+                          rentedBikeIds.has(viewingBike._id);
+                        const viewingDisplayStatus =
+                          viewingBike.status === "maintenance"
+                            ? "maintenance"
+                            : viewingIsBooked
+                              ? "booked"
+                              : "available";
+                        return (
+                          <Badge
+                            className={`${statusColors[viewingDisplayStatus] || statusColors[viewingBike.status]}`}
+                          >
+                            {viewingDisplayStatus}
+                          </Badge>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -1561,7 +1588,7 @@ const filteredBikes = (bikes || []).filter((bike) => {
                   </Badge> */}
 
                   {(() => {
-                    const isBooked = rentedBikeIds.has(bike._id);
+                    const isBooked = rentedBikeIds.has(String(bike._id)) || rentedBikeIds.has(bike._id);
 
                     const displayStatus =
                       bike.status === "maintenance"
