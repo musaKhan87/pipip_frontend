@@ -8,7 +8,7 @@ const getClientIp = (req) => {
     req.headers["cf-connecting-ip"] ||
     req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
     req.ip ||
-    "unknown-ip"
+    "127.0.0.1"
   );
 };
 
@@ -21,6 +21,7 @@ const bookingCreationLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   keyGenerator: getClientIp,
   statusCode: 429,
   message: {
@@ -37,6 +38,7 @@ const customerCreationLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   keyGenerator: getClientIp,
   statusCode: 429,
   message: {
@@ -48,4 +50,3 @@ module.exports = {
   bookingCreationLimiter,
   customerCreationLimiter,
 };
-

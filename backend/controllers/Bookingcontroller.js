@@ -681,7 +681,7 @@ exports.adminCreateBooking = async (req, res) => {
       lead_source,
       source_name,
 
-      vehicle_make_model: (vehicle_make_model ? vehicle_make_model.replace(/^undefined\s*/i, "").trim() : (bike ? (bike.bike_name && bike.model && bike.bike_name !== bike.model ? `${bike.bike_name} ${bike.model}` : (bike.bike_name || bike.model || "Bike")) : "Bike")),
+      vehicle_make_model,
       rental_type,
       total_amount: manual_total_amount,
       paid_amount,
@@ -1659,7 +1659,7 @@ exports.assignBikeToBooking = async (req, res) => {
 
     // Assign bike, confirm booking, mark bike as booked
     booking.bike_id = bike_id;
-    booking.vehicle_make_model = `${bike.bike_name || ""} ${bike.model}`;
+    booking.vehicle_make_model = (bike.bike_name && bike.model && bike.bike_name !== bike.model ? `${bike.bike_name} ${bike.model}` : (bike.bike_name || bike.model || "Bike")).replace(/^undefined\s*/i, "").trim();
     booking.status = "confirmed";
     booking.updated_by_admin = true;
     await booking.save();

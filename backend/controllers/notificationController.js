@@ -4,11 +4,17 @@ const Bike = require("../models/Bike");
 const Cluster = require("../models/Cluster");
 
 // Configure VAPID standard identification keys
-webpush.setVapidDetails(
-  "mailto:pipip6296@gmail.com",
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY,
-);
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  try {
+    webpush.setVapidDetails(
+      "mailto:pipip6296@gmail.com",
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    );
+  } catch (err) {
+    console.warn("VAPID details could not be configured:", err.message);
+  }
+}
 
 // Save admin mobile browser subscription token configuration keys
 exports.subscribeDevice = async (req, res) => {

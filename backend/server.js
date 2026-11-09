@@ -130,11 +130,13 @@ const globalApiLimiter = rateLimit({
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   keyGenerator: (req) => {
     return (
       req.headers["cf-connecting-ip"] ||
       req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
-      req.ip
+      req.ip ||
+      "127.0.0.1"
     );
   },
   message: { message: "Too many requests from this IP, please try again in a minute." },
