@@ -124,8 +124,8 @@ const Index = () => {
   const location = useLocation();
 
   useSEO({
-    title: "Pipip | Bike Rental in Mumbai - Rent Scooty & Bikes on Rent",
-    description: "Affordable self drive bike rental in Mumbai. Rent a scooty or bike online starting from Rs. 600/day . Choose Activa, Burgman , Royal Enfield, and KTM. Easy online booking, pay on pickup."
+    title: "Pipip Services | Bike & Scooty Rental in Mumbai & Surat",
+    description: "Affordable bike and scooty rentals in Mumbai & Surat starting at ₹600/day. Rent Activa, Burgman, Royal Enfield, and KTM. Zero deposit hassle, free helmets, easy online booking."
   });
 
   useEffect(() => {

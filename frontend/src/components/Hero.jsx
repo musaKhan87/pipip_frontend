@@ -160,7 +160,7 @@
 // export default Hero;
 
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Calendar, Clock, ChevronDown, Sparkles } from "lucide-react";
 import { Check, IndianRupee } from "lucide-react";
 import heroImage from "../assets/hero-scooter.jpg";
@@ -171,7 +171,23 @@ import { API_BASE_URL } from "../config/api";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useActiveAreas } from "../hooks/useAreas";
 
+const cyclingLocations = [
+  { name: "Mumbai", colorClass: "text-[#00e5ff]" },
+  { name: "Surat", colorClass: "text-[#ffb300]" },
+  { name: "Andheri", colorClass: "text-[#00e5ff]" },
+  { name: "Dongri", colorClass: "text-[#ffb300]" },
+  { name: "Thane", colorClass: "text-[#00e5ff]" },
+];
+
 const Hero = () => {
+  const [locationIndex, setLocationIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLocationIndex((prev) => (prev + 1) % cyclingLocations.length);
+    }, 2400);
+    return () => clearInterval(timer);
+  }, []);
 const navigate = useNavigate();
 const { data: areas = [] } = useActiveAreas();
 
@@ -252,15 +268,23 @@ useEffect(() => {
 
     {/* Visually Hidden SEO Header for search engines */}
       <h1 className="sr-only">
-        Bike Rental in Mumbai | Rent a Bike, Scooty on Rent & Two Wheeler Rental in Mumbai - Pipip Services
+        Bike Rental in Mumbai & Surat | Rent a Bike, Scooty on Rent & Two Wheeler Rental in Mumbai & Surat - Pipip Services
       </h1>
+      <div className="sr-only">
+        <h2>Self Drive Two Wheeler, Bike and Scooty on Rent in Mumbai and Surat</h2>
+        <p>
+          Pipip Services provides affordable bike rentals across Mumbai (Andheri, Thane, Dongri, 
+          Bandra, Kurla, Bhendi Bazar) and Surat (Adajan, Vesu, Ring Road). Rent Activa, 
+          Royal Enfield, KTM, and Jupiter with zero deposit hassle and free helmets.
+        </p>
+      </div>
 
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
           // alt="Pipip Scooter in Mumbai"
-          alt="Self drive bike rental in Mumbai - Pipip scooty on rent"
+          alt="Self drive bike & scooty rental in Mumbai and Surat - Pipip Services"
           loading="eager"
           fetchPriority="high"
           decoding="async"
@@ -328,13 +352,28 @@ useEffect(() => {
             </motion.h1>
 
             {/* Tagline */}
+            {/* Tagline with Dynamic Rotating Cities */}
             <motion.h2
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-3xl md:text-5xl font-bold text-foreground mb-6"
+              className="text-3xl md:text-5xl font-bold text-foreground mb-6 flex flex-wrap items-baseline gap-x-2.5"
             >
-              Explore Mumbai{" "}
+              <span>Explore</span>
+              <span className="relative inline-flex overflow-hidden h-[1.25em] min-w-[3.8ch] align-baseline">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={cyclingLocations[locationIndex].name}
+                    initial={{ y: 22, opacity: 0, filter: "blur(4px)" }}
+                    animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
+                    exit={{ y: -22, opacity: 0, filter: "blur(4px)" }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className={`inline-block font-extrabold ${cyclingLocations[locationIndex].colorClass}`}
+                  >
+                    {cyclingLocations[locationIndex].name}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
               <span className="text-gradient-teal">Your Way!</span>
             </motion.h2>
 

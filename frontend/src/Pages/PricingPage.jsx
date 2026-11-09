@@ -5,8 +5,8 @@ import ScrollToTop from "../components/ScrollToTop";
 import useSEO from "../hooks/useSEO";
 const PricingPage = () => {
   useSEO({
-    title: "Pricing | Pipip - Self Drive Bike & Scooter Rental Rates in Mumbai",
-    description: "Check transparent bike rental rates in Mumbai. Rent scooters and bikes daily, weekly, or monthly with no hidden charges.",
+    title: "Pricing | Pipip Services - Self Drive Bike & Scooter Rental Rates in Mumbai & Surat",
+    description: "Check transparent bike and scooty rental rates in Mumbai and Surat. Rent daily, weekly, or monthly with zero hidden charges.",
   });
   return (
     <div className="min-h-screen bg-background">

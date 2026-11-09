@@ -51,8 +51,8 @@ import {useBikeAvailability} from "../hooks/useBikeAvailability"
 //   const urlEnd = searchParams.get("end");
 
 //   useSEO({
-//     title: "Bikes & Scooters Catalog | Rent a Bike in Mumbai - Pipip",
-//     description: "Choose from our complete catalog of well-maintained self-drive scooters and motorcycles in Mumbai. Activa, KTM, Jupiter, and Royal Enfield available at cheap hourly and daily rates."
+//     title: "Bikes & Scooters Catalog | Rent a Bike in Mumbai & Surat - Pipip Services",
+//     description: "Choose from our complete catalog of well-maintained self-drive scooters and motorcycles in Mumbai and Surat. Activa, KTM, Jupiter, and Royal Enfield available at cheap hourly and daily rates."
 //   });
 
 //   const [selectedArea, setSelectedArea] = useState("all");

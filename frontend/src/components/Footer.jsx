@@ -14,8 +14,7 @@ const Footer = () => {
               Pipip
             </h3>
             <p className="text-muted-foreground mb-4">
-              Self-drive scooters in Mumbai. Explore the city your way with our
-              reliable and affordable rental service.
+              Self-drive scooter & bike rentals by Pipip Services — available across Mumbai and Surat. Explore your way with our reliable, zero-deposit fleet.
             </p>
             <div className="flex gap-4">
               <a
@@ -163,7 +162,7 @@ const Footer = () => {
             <p className="flex items-center gap-1">
               Made with{" "}
               <Heart className="w-4 h-4 text-destructive fill-destructive" /> in
-              Mumbai
+              Mumbai & Surat
             </p>
           </div>
         </div>
