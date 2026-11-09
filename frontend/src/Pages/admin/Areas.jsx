@@ -11,6 +11,7 @@ import {
 
 import { Input } from "../../components/ui/input";
 import { Card, CardContent } from "../../components/ui/card";
+import ConfirmationDialog from "../../components/ui/ConfirmationDialog";
 
 import {
   Dialog,
@@ -41,6 +42,16 @@ export default function Areas() {
     is_active: true,
   });
   const [searchQuery, setSearchQuery] = useState("");
+  const [confirmConfig, setConfirmConfig] = useState({
+    open: false,
+    title: "",
+    description: "",
+    type: "info",
+    confirmText: "Confirm",
+    details: [],
+    onConfirm: () => {},
+    isLoading: false,
+  });
 
   const { isAdmin } = useAuth();
   const { data: areas, isLoading } = useAllAreas();
@@ -54,19 +65,87 @@ export default function Areas() {
       area.city.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
+  const executeSaveArea = () => {
+    setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
     if (editingArea) {
       updateArea.mutate(
         { id: editingArea._id, ...formData },
-        { onSuccess: () => setIsOpen(false) }
+        {
+          onSuccess: () => {
+            setIsOpen(false);
+            setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+          },
+          onError: () => {
+            setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+          },
+        }
       );
     } else {
       createArea.mutate(formData, {
-        onSuccess: () => setIsOpen(false),
+        onSuccess: () => {
+          setIsOpen(false);
+          setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+        },
+        onError: () => {
+          setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+        },
       });
     }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name?.trim()) {
+      toast.error("Hub name is required");
+      return;
+    }
+    if (!formData.city?.trim()) {
+      toast.error("City is required");
+      return;
+    }
+
+    setConfirmConfig({
+      open: true,
+      title: editingArea ? "Confirm Hub Details Update" : "Confirm New Hub Creation",
+      description: editingArea
+        ? `Please verify the updated operational details for hub "${formData.name}".`
+        : `Are you sure you want to register and activate the new hub "${formData.name}"?`,
+      type: "info",
+      confirmText: editingArea ? "Save Changes" : "Create Hub",
+      details: [
+        { label: "Hub Name", value: formData.name },
+        { label: "City", value: formData.city },
+        { label: "Status", value: formData.is_active ? "Operational (Active)" : "Inactive" },
+      ],
+      onConfirm: executeSaveArea,
+      isLoading: false,
+    });
+  };
+
+  const handleDeleteClick = (area) => {
+    setConfirmConfig({
+      open: true,
+      title: "Delete Hub / Area",
+      description: `Are you sure you want to permanently delete hub "${area.name}"? Bikes, bookings, and managers assigned to this hub may be affected.`,
+      type: "danger",
+      confirmText: "Yes, Delete Hub",
+      details: [
+        { label: "Hub Name", value: area.name },
+        { label: "City", value: area.city || "Mumbai" },
+      ],
+      isLoading: false,
+      onConfirm: () => {
+        setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
+        deleteArea.mutate(area._id, {
+          onSuccess: () => {
+            setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+          },
+          onError: () => {
+            setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+          },
+        });
+      },
+    });
   };
 
   const handleEdit = (area) => {
@@ -228,7 +307,7 @@ export default function Areas() {
   //                 <Button
   //                   size="sm"
   //                   variant="destructive"
-  //                   onClick={() => deleteArea.mutate(area._id)}
+  //                   onClick={() => handleDeleteClick(area)}
   //                   className="flex-1"
   //                 >
   //                   <Trash2 className="w-3 h-3 mr-1" />
@@ -389,7 +468,7 @@ export default function Areas() {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => deleteArea.mutate(area._id)}
+                      onClick={() => handleDeleteClick(area)}
                       className="flex-1"
                     >
                       <Trash2 className="w-3 h-3 mr-1" />

@@ -29,6 +29,7 @@ import { Label } from "../../components/ui/label";
 import { Switch } from "../../components/ui/switch";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
+import ConfirmationDialog from "../../components/ui/ConfirmationDialog";
 import { useAllAreas } from "../../hooks/useAreas";
 import { useAuth } from "../../lib/AuthProvider";
 import { API_BASE_URL } from "../../config/api";
@@ -43,6 +44,16 @@ export default function Managers() {
   const [editingManager, setEditingManager] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formError, setFormError] = useState("");
+  const [confirmConfig, setConfirmConfig] = useState({
+    open: false,
+    title: "",
+    description: "",
+    type: "info",
+    confirmText: "Confirm",
+    details: [],
+    onConfirm: () => {},
+    isLoading: false,
+  });
 
   const { isSuperAdmin } = useAuth();
   const { data: areas, isLoading: isAreasLoading } = useAllAreas();
@@ -113,7 +124,36 @@ export default function Managers() {
     setIsOpen(true);
   };
 
-  const handleSubmit = async (e) => {
+  const executeSaveManager = async () => {
+    try {
+      setIsSubmitting(true);
+      setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
+      const token = localStorage.getItem("token");
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+
+      if (editingManager) {
+        await axios.put(`${API_BASE}/${editingManager._id}`, formData, config);
+        toast.success("Area Manager updated successfully");
+      } else {
+        await axios.post(API_BASE, formData, config);
+        toast.success("Area Manager created successfully");
+      }
+
+      setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+      setIsOpen(false);
+      setFormError("");
+      fetchManagers();
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || "Failed to save manager";
+      setFormError(msg);
+      toast.error(msg);
+      setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
     setFormError("");
     if (!formData.fullName || !formData.email) {
@@ -141,43 +181,60 @@ export default function Managers() {
       return;
     }
 
-    try {
-      setIsSubmitting(true);
-      const token = localStorage.getItem("token");
-      const config = { headers: { Authorization: `Bearer ${token}` } };
+    const assignedAreaName = areas?.find((a) => a._id === formData.areaId)?.name || "Assigned Area";
 
-      if (editingManager) {
-        await axios.put(`${API_BASE}/${editingManager._id}`, formData, config);
-        toast.success("Area Manager updated successfully");
-      } else {
-        await axios.post(API_BASE, formData, config);
-        toast.success("Area Manager created successfully");
-      }
-
-      setIsOpen(false);
-      setFormError("");
-      fetchManagers();
-    } catch (error) {
-      const msg = error.response?.data?.message || error.message || "Failed to save manager";
-      setFormError(msg);
-      toast.error(msg);
-    } finally {
-      setIsSubmitting(false);
-    }
+    setConfirmConfig({
+      open: true,
+      title: editingManager ? "Confirm Manager Update" : "Confirm Area Manager Creation",
+      description: editingManager
+        ? `Are you sure you want to update permissions for ${formData.fullName}?`
+        : `You are granting Area Manager authority over ${assignedAreaName} to ${formData.fullName}. Please confirm below.`,
+      type: "info",
+      confirmText: editingManager ? "Update Manager" : "Create Area Manager",
+      details: [
+        { label: "Role", value: "Area Manager", badge: "Hub Lead" },
+        { label: "Full Name", value: formData.fullName },
+        { label: "Email", value: formData.email },
+        { label: "Designated Hub", value: assignedAreaName },
+        { label: "Login Access", value: formData.status === "active" ? "Enabled (Active)" : "Disabled (Inactive)" },
+      ],
+      onConfirm: executeSaveManager,
+      isLoading: false,
+    });
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to remove this Area Manager?")) return;
-    try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_BASE}/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success("Area Manager deleted successfully");
-      fetchManagers();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete manager");
-    }
+  const handleDelete = (id) => {
+    const mgr = managers.find((m) => m._id === id);
+    const mgrName = mgr?.fullName || "this Area Manager";
+
+    setConfirmConfig({
+      open: true,
+      title: "Remove Area Manager",
+      description: `Are you sure you want to remove Area Manager ${mgrName}? Hub operations for this manager will be revoked immediately.`,
+      type: "danger",
+      confirmText: "Yes, Remove Manager",
+      details: [
+        { label: "Area Manager", value: mgrName },
+        { label: "Email", value: mgr?.email || "N/A" },
+        { label: "Assigned Hub", value: mgr?.areaId?.name || "Unassigned" },
+      ],
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
+          const token = localStorage.getItem("token");
+          await axios.delete(`${API_BASE}/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          toast.success("Area Manager deleted successfully");
+          setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+          fetchManagers();
+        } catch (error) {
+          toast.error(error.response?.data?.message || "Failed to delete manager");
+          setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+        }
+      },
+    });
   };
 
   const filteredManagers = managers?.filter((mgr) => {

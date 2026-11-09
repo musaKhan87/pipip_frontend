@@ -31,6 +31,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
+import ConfirmationDialog from "../../components/ui/ConfirmationDialog";
 import { Switch } from "../../components/ui/switch";
 import {
   Dialog,
@@ -107,6 +108,16 @@ export default function Settings() {
   const [staffError, setStaffError] = useState("");
   const [managerError, setManagerError] = useState("");
   const [investorError, setInvestorError] = useState("");
+  const [confirmConfig, setConfirmConfig] = useState({
+    open: false,
+    title: "",
+    description: "",
+    type: "warning",
+    confirmText: "Confirm",
+    details: [],
+    onConfirm: () => {},
+    isLoading: false,
+  });
 
   // Token helper
   const getAuthHeader = () => {
@@ -199,8 +210,7 @@ export default function Settings() {
       staff.areaId ||
       staff.assigned_areas?.[0]?._id ||
       staff.assigned_areas?.[0] ||
-      (areas.length > 0 ? areas[0]._id : "");
-
+      "";
     setStaffForm({
       fullName: staff.fullName || "",
       email: staff.email || "",
@@ -211,7 +221,45 @@ export default function Settings() {
     setIsStaffModalOpen(true);
   };
 
-  const handleStaffSubmit = async (e) => {
+  const executeSaveStaff = async () => {
+    try {
+      setIsStaffSubmitting(true);
+      setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
+      const payload = {
+        fullName: staffForm.fullName,
+        email: staffForm.email,
+        status: staffForm.status,
+        areaId: staffForm.areaId || null,
+        assigned_areas: staffForm.areaId ? [staffForm.areaId] : [],
+        role: "staff",
+      };
+      if (staffForm.password && staffForm.password.trim() !== "") {
+        payload.password = staffForm.password;
+      }
+
+      if (editingStaff) {
+        await axios.put(`${API_AUTH}/staff/${editingStaff._id}`, payload, getAuthHeader());
+        toast.success("Staff member updated successfully");
+      } else {
+        await axios.post(`${API_AUTH}/staff`, payload, getAuthHeader());
+        toast.success("Staff member created successfully");
+      }
+
+      setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+      setIsStaffModalOpen(false);
+      setStaffError("");
+      fetchStaff();
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || "Failed to save staff member";
+      setStaffError(msg);
+      toast.error(msg);
+      setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+    } finally {
+      setIsStaffSubmitting(false);
+    }
+  };
+
+  const handleStaffSubmit = (e) => {
     e.preventDefault();
     setStaffError("");
     if (!staffForm.fullName || !staffForm.email) {
@@ -233,54 +281,61 @@ export default function Settings() {
       return;
     }
 
-    try {
-      setIsStaffSubmitting(true);
-      const payload = {
-        fullName: staffForm.fullName,
-        email: staffForm.email,
-        status: staffForm.status,
-        areaId: staffForm.areaId || null,
-        assigned_areas: staffForm.areaId ? [staffForm.areaId] : [],
-        role: "staff",
-      };
-      if (staffForm.password && staffForm.password.trim() !== "") {
-        payload.password = staffForm.password;
-      }
+    const assignedAreaName = areas?.find((a) => a._id === staffForm.areaId)?.name || "All / None";
 
-      if (editingStaff) {
-        await axios.put(`${API_AUTH}/staff/${editingStaff._id}`, payload, getAuthHeader());
-        toast.success("Staff member updated successfully");
-      } else {
-        await axios.post(`${API_AUTH}/staff`, payload, getAuthHeader());
-        toast.success("Staff member created successfully");
-      }
-
-      setIsStaffModalOpen(false);
-      setStaffError("");
-      fetchStaff();
-    } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Failed to save staff member";
-      setStaffError(msg);
-      toast.error(msg);
-    } finally {
-      setIsStaffSubmitting(false);
-    }
+    setConfirmConfig({
+      open: true,
+      title: editingStaff ? "Confirm Staff Update" : "Confirm Staff Creation",
+      description: editingStaff
+        ? `Are you sure you want to save changes for ${staffForm.fullName}?`
+        : `You are creating a new Staff account with access to ${assignedAreaName}. Please verify details below.`,
+      type: "info",
+      confirmText: editingStaff ? "Update Staff" : "Create Staff Account",
+      details: [
+        { label: "Role", value: "Staff Member", badge: "Hub Operator" },
+        { label: "Full Name", value: staffForm.fullName },
+        { label: "Email", value: staffForm.email },
+        { label: "Assigned Hub", value: assignedAreaName },
+        { label: "Login Access", value: staffForm.status === "active" ? "Enabled (Active)" : "Disabled (Inactive)" },
+      ],
+      onConfirm: executeSaveStaff,
+      isLoading: false,
+    });
   };
 
-  const handleDeleteStaff = async (staffId) => {
+  const handleDeleteStaff = (staffId) => {
     if (staffId === user?._id) {
       toast.error("You cannot delete yourself");
       return;
     }
-    if (!window.confirm("Are you sure you want to remove this staff member?")) return;
+    const staffMember = staffList.find((s) => s._id === staffId);
+    const staffName = staffMember?.fullName || "this staff member";
 
-    try {
-      await axios.delete(`${API_AUTH}/staff/${staffId}`, getAuthHeader());
-      toast.success("Staff member removed successfully");
-      fetchStaff();
-    } catch (err) {
-      toast.error(err.response?.data?.message || err.message || "Failed to remove staff member");
-    }
+    setConfirmConfig({
+      open: true,
+      title: "Remove Staff Member",
+      description: `Are you sure you want to permanently remove ${staffName}? Their login access will be revoked immediately.`,
+      type: "danger",
+      confirmText: "Yes, Remove Staff",
+      details: [
+        { label: "Full Name", value: staffName },
+        { label: "Email", value: staffMember?.email || "N/A" },
+        { label: "Assigned Hub", value: staffMember?.areaId?.name || "Unassigned" },
+      ],
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
+          await axios.delete(`${API_AUTH}/staff/${staffId}`, getAuthHeader());
+          toast.success("Staff member removed successfully");
+          setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+          fetchStaff();
+        } catch (err) {
+          toast.error(err.response?.data?.message || err.message || "Failed to remove staff member");
+          setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+        }
+      },
+    });
   };
 
   // ==========================
@@ -307,8 +362,7 @@ export default function Settings() {
       mgr.areaId ||
       mgr.assigned_areas?.[0]?._id ||
       mgr.assigned_areas?.[0] ||
-      (areas.length > 0 ? areas[0]._id : "");
-
+      "";
     setManagerForm({
       fullName: mgr.fullName || "",
       email: mgr.email || "",
@@ -319,7 +373,43 @@ export default function Settings() {
     setIsManagerModalOpen(true);
   };
 
-  const handleManagerSubmit = async (e) => {
+  const executeSaveManager = async () => {
+    try {
+      setIsManagerSubmitting(true);
+      setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
+      const payload = {
+        fullName: managerForm.fullName,
+        email: managerForm.email,
+        areaId: managerForm.areaId,
+        status: managerForm.status,
+      };
+      if (managerForm.password && managerForm.password.trim() !== "") {
+        payload.password = managerForm.password;
+      }
+
+      if (editingManager) {
+        await axios.put(`${API_AUTH}/managers/${editingManager._id}`, payload, getAuthHeader());
+        toast.success("Area Manager updated successfully");
+      } else {
+        await axios.post(`${API_AUTH}/managers`, payload, getAuthHeader());
+        toast.success("Area Manager created successfully");
+      }
+
+      setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+      setIsManagerModalOpen(false);
+      setManagerError("");
+      fetchManagers();
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || "Failed to save area manager";
+      setManagerError(msg);
+      toast.error(msg);
+      setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+    } finally {
+      setIsManagerSubmitting(false);
+    }
+  };
+
+  const handleManagerSubmit = (e) => {
     e.preventDefault();
     setManagerError("");
     if (!managerForm.fullName || !managerForm.email) {
@@ -347,48 +437,57 @@ export default function Settings() {
       return;
     }
 
-    try {
-      setIsManagerSubmitting(true);
-      const payload = {
-        fullName: managerForm.fullName,
-        email: managerForm.email,
-        areaId: managerForm.areaId,
-        status: managerForm.status,
-      };
-      if (managerForm.password && managerForm.password.trim() !== "") {
-        payload.password = managerForm.password;
-      }
+    const assignedAreaName = areas?.find((a) => a._id === managerForm.areaId)?.name || "Assigned Hub";
 
-      if (editingManager) {
-        await axios.put(`${API_AUTH}/managers/${editingManager._id}`, payload, getAuthHeader());
-        toast.success("Area Manager updated successfully");
-      } else {
-        await axios.post(`${API_AUTH}/managers`, payload, getAuthHeader());
-        toast.success("Area Manager created successfully");
-      }
-
-      setIsManagerModalOpen(false);
-      setManagerError("");
-      fetchManagers();
-    } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Failed to save area manager";
-      setManagerError(msg);
-      toast.error(msg);
-    } finally {
-      setIsManagerSubmitting(false);
-    }
+    setConfirmConfig({
+      open: true,
+      title: editingManager ? "Confirm Manager Update" : "Confirm Area Manager Creation",
+      description: editingManager
+        ? `Are you sure you want to update permissions for ${managerForm.fullName}?`
+        : `You are granting Area Manager authority over ${assignedAreaName} to ${managerForm.fullName}. Please confirm below.`,
+      type: "info",
+      confirmText: editingManager ? "Update Manager" : "Create Area Manager",
+      details: [
+        { label: "Role", value: "Area Manager", badge: "Hub Lead" },
+        { label: "Full Name", value: managerForm.fullName },
+        { label: "Email", value: managerForm.email },
+        { label: "Designated Hub", value: assignedAreaName },
+        { label: "Login Access", value: managerForm.status === "active" ? "Enabled (Active)" : "Disabled (Inactive)" },
+      ],
+      onConfirm: executeSaveManager,
+      isLoading: false,
+    });
   };
 
-  const handleDeleteManager = async (mgrId) => {
-    if (!window.confirm("Are you sure you want to remove this Area Manager?")) return;
+  const handleDeleteManager = (mgrId) => {
+    const mgrMember = managersList.find((m) => m._id === mgrId);
+    const mgrName = mgrMember?.fullName || "this Area Manager";
 
-    try {
-      await axios.delete(`${API_AUTH}/managers/${mgrId}`, getAuthHeader());
-      toast.success("Area Manager removed successfully");
-      fetchManagers();
-    } catch (err) {
-      toast.error(err.response?.data?.message || err.message || "Failed to remove area manager");
-    }
+    setConfirmConfig({
+      open: true,
+      title: "Remove Area Manager",
+      description: `Are you sure you want to remove Area Manager ${mgrName}? Hub operations for this manager will be revoked.`,
+      type: "danger",
+      confirmText: "Yes, Remove Manager",
+      details: [
+        { label: "Area Manager", value: mgrName },
+        { label: "Email", value: mgrMember?.email || "N/A" },
+        { label: "Hub", value: mgrMember?.areaId?.name || "Unassigned" },
+      ],
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
+          await axios.delete(`${API_AUTH}/managers/${mgrId}`, getAuthHeader());
+          toast.success("Area Manager removed successfully");
+          setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+          fetchManagers();
+        } catch (err) {
+          toast.error(err.response?.data?.message || err.message || "Failed to remove area manager");
+          setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+        }
+      },
+    });
   };
 
   // ==========================
@@ -413,7 +512,50 @@ export default function Settings() {
     setIsInvestorModalOpen(true);
   };
 
-  const handleInvestorSubmit = async (e) => {
+  const executeSaveInvestor = async () => {
+    try {
+      setIsInvestorSubmitting(true);
+      setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
+      if (editingInvestor) {
+        const payload = {
+          fullName: investorForm.fullName,
+          email: investorForm.email,
+          status: investorForm.status,
+        };
+        if (investorForm.password && investorForm.password.trim() !== "") {
+          payload.password = investorForm.password;
+        }
+        await axios.put(`${API_AUTH}/investors/${editingInvestor._id}`, payload, getAuthHeader());
+        toast.success("Investor updated successfully");
+      } else {
+        await axios.post(
+          `${API_AUTH}/investors`,
+          {
+            fullName: investorForm.fullName,
+            email: investorForm.email,
+            password: investorForm.password,
+            role: "investor",
+            status: investorForm.status,
+          },
+          getAuthHeader()
+        );
+        toast.success("Investor created successfully");
+      }
+      setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+      setIsInvestorModalOpen(false);
+      setInvestorError("");
+      fetchInvestors();
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || "Failed to save investor";
+      setInvestorError(msg);
+      toast.error(msg);
+      setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+    } finally {
+      setIsInvestorSubmitting(false);
+    }
+  };
+
+  const handleInvestorSubmit = (e) => {
     e.preventDefault();
     setInvestorError("");
     if (!investorForm.fullName || !investorForm.email) {
@@ -435,50 +577,53 @@ export default function Settings() {
       return;
     }
 
-    try {
-      setIsInvestorSubmitting(true);
-      if (editingInvestor) {
-        const payload = {
-          fullName: investorForm.fullName,
-          email: investorForm.email,
-          status: investorForm.status,
-        };
-        if (investorForm.password && investorForm.password.trim() !== "") {
-          payload.password = investorForm.password;
-        }
-        await axios.put(`${API_AUTH}/investors/${editingInvestor._id}`, payload, getAuthHeader());
-        toast.success("Investor updated successfully");
-      } else {
-        await axios.post(`${API_AUTH}/investors`, {
-          fullName: investorForm.fullName,
-          email: investorForm.email,
-          password: investorForm.password,
-          role: "investor",
-          status: investorForm.status,
-        }, getAuthHeader());
-        toast.success("Investor created successfully");
-      }
-      setIsInvestorModalOpen(false);
-      setInvestorError("");
-      fetchInvestors();
-    } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Failed to save investor";
-      setInvestorError(msg);
-      toast.error(msg);
-    } finally {
-      setIsInvestorSubmitting(false);
-    }
+    setConfirmConfig({
+      open: true,
+      title: editingInvestor ? "Confirm Investor Update" : "Confirm Investor Registration",
+      description: editingInvestor
+        ? `Please review the updated details for ${investorForm.fullName}.`
+        : `You are granting investor dashboard access to ${investorForm.fullName}. Their full name must match the Bike Owner records in the fleet.`,
+      type: "info",
+      confirmText: editingInvestor ? "Update Investor" : "Register Investor",
+      details: [
+        { label: "Role", value: "Fleet Investor", badge: "Analytics Portal" },
+        { label: "Full Name", value: investorForm.fullName },
+        { label: "Email", value: investorForm.email },
+        { label: "Login Access", value: investorForm.status === "active" ? "Enabled (Active)" : "Disabled (Inactive)" },
+      ],
+      onConfirm: executeSaveInvestor,
+      isLoading: false,
+    });
   };
 
-  const handleDeleteInvestor = async (invId) => {
-    if (!window.confirm("Are you sure you want to remove this investor?")) return;
-    try {
-      await axios.delete(`${API_AUTH}/investors/${invId}`, getAuthHeader());
-      toast.success("Investor removed successfully");
-      fetchInvestors();
-    } catch (err) {
-      toast.error(err.response?.data?.message || err.message || "Failed to remove investor");
-    }
+  const handleDeleteInvestor = (invId) => {
+    const invMember = investorsList.find((i) => i._id === invId);
+    const invName = invMember?.fullName || "this investor";
+
+    setConfirmConfig({
+      open: true,
+      title: "Remove Investor",
+      description: `Are you sure you want to remove ${invName}? They will no longer have access to their vehicle analytics.`,
+      type: "danger",
+      confirmText: "Yes, Remove Investor",
+      details: [
+        { label: "Investor", value: invName },
+        { label: "Email", value: invMember?.email || "N/A" },
+      ],
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
+          await axios.delete(`${API_AUTH}/investors/${invId}`, getAuthHeader());
+          toast.success("Investor removed successfully");
+          setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+          fetchInvestors();
+        } catch (err) {
+          toast.error(err.response?.data?.message || err.message || "Failed to remove investor");
+          setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+        }
+      },
+    });
   };
 
   // Filtered lists
@@ -1300,6 +1445,19 @@ export default function Settings() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Reusable Confirmation Dialog Alert */}
+      <ConfirmationDialog
+        open={confirmConfig.open}
+        onOpenChange={(open) => setConfirmConfig((prev) => ({ ...prev, open }))}
+        title={confirmConfig.title}
+        description={confirmConfig.description}
+        type={confirmConfig.type}
+        confirmText={confirmConfig.confirmText}
+        details={confirmConfig.details}
+        onConfirm={confirmConfig.onConfirm}
+        isLoading={confirmConfig.isLoading}
+      />
     </div>
   );
 }

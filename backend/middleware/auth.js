@@ -106,14 +106,30 @@ const getAreaScope = (req) => {
   const isSuper = user.role === "super_admin" || user.role === "admin";
 
   if (isSuper) {
-    const requestedArea = req.headers?.["x-area-id"] || req.query?.areaId;
+    const requestedArea =
+      req.headers?.["x-area-id"] ||
+      req.query?.areaId ||
+      req.query?.area_id;
+
     if (
       requestedArea &&
       requestedArea !== "all" &&
       requestedArea !== "undefined" &&
       requestedArea !== "null"
     ) {
-      return [requestedArea.toString()];
+      // Support comma-separated IDs e.g. "id1,id2" for multi-hub super admin checklist
+      const ids = requestedArea
+        .toString()
+        .split(",")
+        .map((s) => s.trim())
+        .filter(
+          (s) =>
+            s &&
+            s !== "all" &&
+            s !== "undefined" &&
+            s !== "null"
+        );
+      return ids.length > 0 ? ids : null;
     }
     return null; // Null means All Areas (no restriction)
   }

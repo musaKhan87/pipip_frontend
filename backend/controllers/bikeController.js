@@ -193,9 +193,18 @@ const getBikes = async (req, res) => {
       filter.status = req.query.status;
     }
 
-    // 2. Area Filter
+    // 2. Area Filter (Supports single or multi-hub comma-separated IDs)
     if (req.query.area_id && req.query.area_id !== "all") {
-      filter.area_id = req.query.area_id;
+      const queryAreaIds = req.query.area_id
+        .toString()
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s && s !== "all" && s !== "undefined" && s !== "null");
+      if (queryAreaIds.length > 1) {
+        filter.area_id = { $in: queryAreaIds };
+      } else if (queryAreaIds.length === 1) {
+        filter.area_id = queryAreaIds[0];
+      }
     }
 
     // 3. User Role Scoping

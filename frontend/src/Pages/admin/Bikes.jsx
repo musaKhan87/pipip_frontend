@@ -51,6 +51,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
+import ConfirmationDialog from "../../components/ui/ConfirmationDialog";
 import { toast } from "sonner";
 import { useAuth } from "../../lib/AuthProvider";
 
@@ -160,6 +161,16 @@ export default function Bikes() {
   const [extraFiles, setExtraFiles] = useState([]);
   // State for previews (blob urls)
   const [extraPreviews, setExtraPreviews] = useState([]);
+  const [confirmConfig, setConfirmConfig] = useState({
+    open: false,
+    title: "",
+    description: "",
+    type: "warning",
+    confirmText: "Confirm",
+    details: [],
+    onConfirm: () => {},
+    isLoading: false,
+  });
 
 
   useEffect(() => {
@@ -606,14 +617,35 @@ const filteredBikes = (bikes || []).filter((bike) => {
     setIsOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this bike?")) {
-      try {
-        await deleteBike.mutateAsync(id);
-      } catch (err) {
-        console.error("Delete Error:", err);
-      }
-    }
+  const handleDelete = (id) => {
+    const bike = (bikes || []).find((b) => b._id === id);
+    const bikeTitle = bike ? `${bike.bike_name || bike.model} (${bike.number_plate})` : "this bike";
+
+    setConfirmConfig({
+      open: true,
+      title: "Delete Vehicle from Fleet",
+      description: `Are you sure you want to permanently delete ${bikeTitle}? This action removes the vehicle from the rental catalog and admin fleet records.`,
+      type: "danger",
+      confirmText: "Yes, Delete Bike",
+      details: [
+        { label: "Vehicle", value: bike?.bike_name || bike?.model || "Bike" },
+        { label: "Number Plate", value: bike?.number_plate || "N/A" },
+        { label: "Hub", value: getAreaName(bike?.area_id) },
+        { label: "Owner", value: bike?.bike_owner || "Pipip Fleet" },
+      ],
+      isLoading: false,
+      onConfirm: async () => {
+        try {
+          setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
+          await deleteBike.mutateAsync(id);
+          toast.success("Vehicle deleted from fleet successfully");
+          setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+        } catch (err) {
+          toast.error(err.response?.data?.message || "Failed to delete bike");
+          setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+        }
+      },
+    });
   };
 
   const handleOpenChange = (open) => {

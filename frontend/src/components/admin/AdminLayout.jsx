@@ -4,6 +4,7 @@ import NotFound from "../../Pages/NotFound";
 import { Loader2, MapPin } from "lucide-react";
 import { useAuth } from "../../lib/AuthProvider";
 import { useAdminArea } from "../../lib/AreaContext";
+import HubChecklistDropdown from "./HubChecklistDropdown";
 import { useEffect, useRef, useState, useMemo } from "react";
 import io from "socket.io-client";
 import { useBikes } from "../../hooks/useBikes";
@@ -12,7 +13,7 @@ import { BACKEND_URL } from "../../config/api";
 export default function AdminLayout() {
 
   const { user, isAdminOrStaff, hasPanelAccess, isSuperAdmin, loading } = useAuth();
-  const { areas, selectedAreaId, setSelectedAreaId } = useAdminArea();
+  const { areas, selectedAreaId, selectedAreaIds, setSelectedAreaId } = useAdminArea();
   const location = useLocation();
   const scrollRef = useRef(null); // Create a reference to the scrollable area
 
@@ -280,14 +281,14 @@ export default function AdminLayout() {
       });
     }
     // Super Admin:
-    if (!selectedAreaId || selectedAreaId === "all") {
+    if (!selectedAreaIds || selectedAreaIds.length === 0 || selectedAreaIds.includes("all")) {
       return logs;
     }
     return logs.filter((log) => {
       if (!log.areaId) return true;
-      return log.areaId.toString() === selectedAreaId.toString();
+      return selectedAreaIds.includes(log.areaId.toString());
     });
-  }, [logs, user, isSuperAdmin, userAssignedAreaIds, selectedAreaId]);
+  }, [logs, user, isSuperAdmin, userAssignedAreaIds, selectedAreaIds]);
 
   const unreadCount = filteredLogs.filter((log) => !log.read).length;
 
@@ -317,24 +318,7 @@ export default function AdminLayout() {
 
           <div className="flex items-center gap-4">
             {isSuperAdmin ? (
-              <div className="flex items-center gap-2 bg-muted/80 border border-border/80 px-3 py-1.5 rounded-xl shadow-sm hover:border-amber-500/50 transition-colors">
-                <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
-                <span className="text-xs font-semibold text-muted-foreground hidden md:inline">
-                  Area:
-                </span>
-                <select
-                  value={selectedAreaId}
-                  onChange={(e) => setSelectedAreaId(e.target.value)}
-                  className="bg-transparent text-foreground text-xs font-semibold focus:outline-none cursor-pointer pr-1"
-                >
-                  <option value="all" className="bg-card text-foreground">📍 All Areas (Global)</option>
-                  {areas.map((area) => (
-                    <option key={area._id} value={area._id} className="bg-card text-foreground">
-                      📍 {area.name} {area.city ? `(${area.city})` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <HubChecklistDropdown />
             ) : (
               <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">
                 <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
