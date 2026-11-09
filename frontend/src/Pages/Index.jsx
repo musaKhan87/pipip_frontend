@@ -8,6 +8,7 @@
 // import RentalForm from "../components/RentalForm";
 // import { useEffect } from "react";
 // import FeaturedBikes from "../components/FeaturedBIke";
+import CustomerReviews from "../components/CustomerReviews";
 // // import FAQ from "../components/FAQ";
 // import useSEO from "../hooks/useSEO";
 // import { motion } from "framer-motion";
