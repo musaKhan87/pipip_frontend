@@ -1543,11 +1543,7 @@ export default function Bookings() {
         })
         ?.filter((booking) => {
           if (paymentFilter === "all") return true;
-          const { pendingAmount, paidAmount, isNew } = getBookingFinancials(booking);
-          if (!isNew) {
-            if (paymentFilter === "paid") return booking.payment_status === "paid";
-            return false;
-          }
+          const { pendingAmount, paidAmount } = getBookingFinancials(booking);
           if (paymentFilter === "pending_due") return pendingAmount > 0 && booking.status !== "cancelled";
           if (paymentFilter === "partial") return booking.payment_status === "partial" || (paidAmount > 0 && pendingAmount > 0);
           if (paymentFilter === "paid") return booking.payment_status === "paid" || (pendingAmount === 0 && paidAmount > 0);
@@ -3037,11 +3033,12 @@ export default function Bookings() {
             onValueChange={(v) => setData({ ...data, payment_method: v })}
           >
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Select Payment Mode" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="cash">Cash</SelectItem>
               <SelectItem value="upi">UPI / Online</SelectItem>
+              <SelectItem value="online">Online / Web</SelectItem>
               <SelectItem value="card">Card</SelectItem>
               <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
             </SelectContent>
@@ -3341,24 +3338,9 @@ export default function Bookings() {
       )}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Payment
+          Fuel & Operations
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Payment Method</Label>
-            <Select
-              value={data.payment_method}
-              onValueChange={(v) => setData({ ...data, payment_method: v })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="online">Online</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <div className="space-y-2">
             <Label>Fuel Quantity (L)</Label>
             <Input
@@ -3931,6 +3913,7 @@ export default function Bookings() {
                     <SelectContent>
                       <SelectItem value="cash">Cash</SelectItem>
                       <SelectItem value="upi">UPI / Online</SelectItem>
+                      <SelectItem value="online">Online / Web</SelectItem>
                       <SelectItem value="card">Debit / Credit Card</SelectItem>
                       <SelectItem value="bank_transfer">Bank Transfer / IMPS</SelectItem>
                     </SelectContent>
@@ -4387,7 +4370,7 @@ export default function Bookings() {
                       {/* 🎯 Row 2: Bottom Actions Bar (Separate lower row across full width) */}
                       {(() => {
                         const { isNew, pendingAmount } = getBookingFinancials(booking);
-                        const canCollectPayment = isNew && pendingAmount > 0 && booking.status !== "cancelled";
+                        const canCollectPayment = pendingAmount > 0 && booking.status !== "cancelled";
                         const canMarkPaidOld = !isNew && booking.payment_status !== "paid" && booking.status !== "cancelled";
 
                         const utilityButtons = (
