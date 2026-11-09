@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Plus,
   Search,
@@ -57,7 +57,7 @@ import {
   useHistoricalReports,
   useReportSettings,
   useUpdateReportSettings,
-  
+
 } from "../../hooks/useDailyReports";
 import { useBikes } from "../../hooks/useBikes";
 import {
@@ -267,8 +267,8 @@ export default function Expenses() {
     const existingAreaId = exp.area_id?._id
       ? exp.area_id._id.toString()
       : exp.area_id
-      ? exp.area_id.toString()
-      : "";
+        ? exp.area_id.toString()
+        : "";
 
     setFormData({
       expense_date: format(new Date(exp.expense_date), "yyyy-MM-dd"),
@@ -671,11 +671,10 @@ export default function Expenses() {
       <div className="flex border-b border-border gap-6 overflow-x-auto">
         <button
           onClick={() => setActiveTab("claims")}
-          className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${
-            activeTab === "claims"
+          className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "claims"
               ? "text-primary font-bold"
               : "text-muted-foreground hover:text-foreground"
-          }`}
+            }`}
         >
           Expense Claims
           {activeTab === "claims" && (
@@ -690,11 +689,10 @@ export default function Expenses() {
           <>
             <button
               onClick={() => setActiveTab("daily_account")}
-              className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${
-                activeTab === "daily_account"
+              className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "daily_account"
                   ? "text-primary font-bold"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Daily Account Information
               {activeTab === "daily_account" && (
@@ -706,11 +704,10 @@ export default function Expenses() {
             </button>
             <button
               onClick={() => setActiveTab("daily_report")}
-              className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${
-                activeTab === "daily_report"
+              className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "daily_report"
                   ? "text-primary font-bold"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Daily Report
               {activeTab === "daily_report" && (
@@ -725,11 +722,10 @@ export default function Expenses() {
 
         <button
           onClick={() => setActiveTab("service_history")}
-          className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${
-            activeTab === "service_history"
+          className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "service_history"
               ? "text-primary font-bold"
               : "text-muted-foreground hover:text-foreground"
-          }`}
+            }`}
         >
           Vehicle Service History
           {activeTab === "service_history" && (
@@ -761,12 +757,12 @@ export default function Expenses() {
                       {periodFilter === "day"
                         ? "Today's Expenses"
                         : periodFilter === "weekly"
-                        ? "Weekly Expenses"
-                        : periodFilter === "monthly"
-                        ? "Monthly Expenses"
-                        : periodFilter === "custom"
-                        ? "Custom Period Total"
-                        : "Total Expenses (All Time)"}
+                          ? "Weekly Expenses"
+                          : periodFilter === "monthly"
+                            ? "Monthly Expenses"
+                            : periodFilter === "custom"
+                              ? "Custom Period Total"
+                              : "Total Expenses (All Time)"}
                     </p>
                     <p className="text-2xl sm:text-3xl font-black text-rose-500 tracking-tight">
                       ₹{totalExpenseAmount.toLocaleString()}
@@ -829,12 +825,12 @@ export default function Expenses() {
                       {periodFilter === "day"
                         ? "Today (Day)"
                         : periodFilter === "weekly"
-                        ? "This Week"
-                        : periodFilter === "monthly"
-                        ? format(new Date(), "MMMM yyyy")
-                        : periodFilter === "custom"
-                        ? "Custom Range"
-                        : "All Time"}
+                          ? "This Week"
+                          : periodFilter === "monthly"
+                            ? format(new Date(), "MMMM yyyy")
+                            : periodFilter === "custom"
+                              ? "Custom Range"
+                              : "All Time"}
                     </p>
                     <p className="text-[11px] text-primary font-medium flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
@@ -869,11 +865,10 @@ export default function Expenses() {
                         setPeriodFilter(tab.id);
                         setCurrentPage(1);
                       }}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
-                        periodFilter === tab.id
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${periodFilter === tab.id
                           ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25 font-bold"
                           : "bg-muted/80 text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
+                        }`}
                     >
                       {tab.label}
                     </button>
@@ -1203,82 +1198,82 @@ export default function Expenses() {
               </Card>
             ) : (
               <>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {paginatedExpenses?.map((exp) => (
-                  <Card
-                    key={exp._id}
-                    className="bg-card border-border hover:border-primary/50 transition-colors cursor-pointer"
-                    onClick={() => setSelectedExpense(exp)}
-                  >
-                    <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center gap-2">
-                          <Badge className="bg-primary/10 text-primary border-none text-xs font-semibold px-2.5 py-1">
-                            {exp.expense_category}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1.5 shrink-0">
-                            <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                            {format(new Date(exp.expense_date), "PP")}
-                          </span>
-                        </div>
-
-                        <div>
-                          <h3 className="font-bold text-foreground text-lg line-clamp-1">
-                            {exp.expense_name}
-                          </h3>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Receiver: <span className="text-foreground/90 font-medium">{exp.vendor_receiver_name}</span>
-                          </p>
-                        </div>
-
-                        {/* Branch / Area Address Box */}
-                        {exp.area_id && (
-                          <div className="flex items-start gap-2 bg-muted/40 border border-border/70 rounded-xl p-2.5 text-xs">
-                            <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium text-foreground text-xs leading-snug break-words">
-                                {exp.area_id?.name || "Assigned Branch"}
-                              </p>
-                              {exp.area_id?.city && exp.area_id.city !== exp.area_id.name && (
-                                <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
-                                  {exp.area_id.city}
-                                </p>
-                              )}
-                            </div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {paginatedExpenses?.map((exp) => (
+                    <Card
+                      key={exp._id}
+                      className="bg-card border-border hover:border-primary/50 transition-colors cursor-pointer"
+                      onClick={() => setSelectedExpense(exp)}
+                    >
+                      <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center gap-2">
+                            <Badge className="bg-primary/10 text-primary border-none text-xs font-semibold px-2.5 py-1">
+                              {exp.expense_category}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground flex items-center gap-1.5 shrink-0">
+                              <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                              {format(new Date(exp.expense_date), "PP")}
+                            </span>
                           </div>
-                        )}
-                      </div>
 
-                      <div className="border-t border-border pt-3 flex justify-between items-center">
-                        <div>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                            Amount
-                          </p>
-                          <p className="text-xl font-black text-foreground">
-                            ₹{exp.expense_amount}
-                          </p>
+                          <div>
+                            <h3 className="font-bold text-foreground text-lg line-clamp-1">
+                              {exp.expense_name}
+                            </h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Receiver: <span className="text-foreground/90 font-medium">{exp.vendor_receiver_name}</span>
+                            </p>
+                          </div>
+
+                          {/* Branch / Area Address Box */}
+                          {exp.area_id && (
+                            <div className="flex items-start gap-2 bg-muted/40 border border-border/70 rounded-xl p-2.5 text-xs">
+                              <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-foreground text-xs leading-snug break-words">
+                                  {exp.area_id?.name || "Assigned Branch"}
+                                </p>
+                                {exp.area_id?.city && exp.area_id.city !== exp.area_id.name && (
+                                  <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
+                                    {exp.area_id.city}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
-                        <div className="flex gap-1.5">
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(exp);
-                            }}
-                            className="border-border gap-1"
-                          >
-                            <Pencil className="w-3.5 h-3.5" /> Edit
-                          </Button>
-                          <Button size="xs" variant="ghost" className="text-primary gap-1">
-                            <Eye className="w-4 h-4" /> View
-                          </Button>
+                        <div className="border-t border-border pt-3 flex justify-between items-center">
+                          <div>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                              Amount
+                            </p>
+                            <p className="text-xl font-black text-foreground">
+                              ₹{exp.expense_amount}
+                            </p>
+                          </div>
+
+                          <div className="flex gap-1.5">
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(exp);
+                              }}
+                              className="border-border gap-1"
+                            >
+                              <Pencil className="w-3.5 h-3.5" /> Edit
+                            </Button>
+                            <Button size="xs" variant="ghost" className="text-primary gap-1">
+                              <Eye className="w-4 h-4" /> View
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
 
                 {/* Pagination Controls */}
@@ -1310,8 +1305,8 @@ export default function Expenses() {
                         Next
                       </Button>
                     </div>
-              </div>
-              )}
+                  </div>
+                )}
               </>
             )}
 
@@ -1675,11 +1670,10 @@ export default function Expenses() {
                           </td>
                           <td className="px-6 py-4">
                             <Badge
-                              className={`border ${
-                                entry.entry_type === "Morning"
+                              className={`border ${entry.entry_type === "Morning"
                                   ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
                                   : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
-                              }`}
+                                }`}
                             >
                               {entry.entry_type}
                             </Badge>
@@ -1734,11 +1728,10 @@ export default function Expenses() {
                             {format(new Date(entry.date), "PP")}
                           </span>
                           <Badge
-                            className={`border ${
-                              entry.entry_type === "Morning"
+                            className={`border ${entry.entry_type === "Morning"
                                 ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
                                 : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
-                            }`}
+                              }`}
                           >
                             {entry.entry_type}
                           </Badge>
@@ -1805,11 +1798,10 @@ export default function Expenses() {
                       <div>
                         <span className="text-xs text-muted-foreground uppercase tracking-widest block">Shift type</span>
                         <Badge
-                          className={`border mt-1 ${
-                            selectedDailyEntry.entry_type === "Morning"
+                          className={`border mt-1 ${selectedDailyEntry.entry_type === "Morning"
                               ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
                               : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
-                          }`}
+                            }`}
                         >
                           {selectedDailyEntry.entry_type}
                         </Badge>
@@ -2255,9 +2247,8 @@ export default function Expenses() {
                                     setSelectedBikeId(bId);
                                     setIsBikeDropdownOpen(false);
                                   }}
-                                  className={`p-3 flex items-center justify-between cursor-pointer hover:bg-primary/10 transition-colors ${
-                                    isSel ? "bg-primary/15 border-l-4 border-primary" : ""
-                                  }`}
+                                  className={`p-3 flex items-center justify-between cursor-pointer hover:bg-primary/10 transition-colors ${isSel ? "bg-primary/15 border-l-4 border-primary" : ""
+                                    }`}
                                 >
                                   <div className="flex items-center gap-3">
                                     {b.image_url ? (
