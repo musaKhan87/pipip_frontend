@@ -293,8 +293,10 @@ export const isBookingNewFlow = (b) => {
 // 🎯 Authoritative calculation of due, paid, and pending balances
 export const getBookingFinancials = (b) => {
   if (!b) return { totalDue: 0, paidAmount: 0, pendingAmount: 0, isNew: false };
-  const totalDue = (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0);
   const isNew = isBookingNewFlow(b);
+  const totalDue = isNew
+    ? (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)
+    : (Number(b.total_amount) || 0);
   let paidAmount = isNew
     ? (Number(b.paid_amount) || 0)
     : (b.payment_status === "paid" ? totalDue : 0);
@@ -5111,7 +5113,7 @@ export default function Bookings() {
                           Total Amount Paid
                         </span>
                         <p className="text-5xl font-black text-black">
-                          ₹{(Number(downloadingBooking.total_amount || 0) + Number(downloadingBooking.extended_amount || 0)).toLocaleString()}
+                          ₹{(getBookingFinancials(downloadingBooking).totalDue).toLocaleString()}
                         </p>
                       </div>
                       <div className="text-right">
