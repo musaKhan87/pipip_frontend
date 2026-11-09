@@ -15,10 +15,10 @@
 
 // const getServer = async () => {
 //     const response = await axios.get("http://localhost:5000/api/rentals");
-    
+
 //   };
 
-  
+
 //   useEffect(() => {
 //     getServer();
 //   }, []);
@@ -174,8 +174,8 @@ import { useActiveAreas } from "../hooks/useAreas";
 const cyclingLocations = [
   { name: "Mumbai", colorClass: "text-[#00e5ff]" },
   { name: "Surat", colorClass: "text-[#ffb300]" },
-  { name: "Andheri", colorClass: "text-[#00e5ff]" },
-  { name: "Dongri", colorClass: "text-[#ffb300]" },
+  // { name: "Andheri", colorClass: "text-[#00e5ff]" },
+  // { name: "Dongri", colorClass: "text-[#ffb300]" },
   { name: "Thane", colorClass: "text-[#00e5ff]" },
 ];
 
@@ -188,18 +188,18 @@ const Hero = () => {
     }, 2400);
     return () => clearInterval(timer);
   }, []);
-const navigate = useNavigate();
-const { data: areas = [] } = useActiveAreas();
+  const navigate = useNavigate();
+  const { data: areas = [] } = useActiveAreas();
 
-const [selectedArea, setSelectedArea] = useState("");
-const [startDate, setStartDate] = useState("");
-const [startTime, setStartTime] = useState("12:00"); // Added Time State
-const [endDate, setEndDate] = useState("");
-const [endTime, setEndTime] = useState("12:00"); // Added Time State
-const [isAreaOpen, setIsAreaOpen] = useState(false);
+  const [selectedArea, setSelectedArea] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("12:00"); // Added Time State
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("12:00"); // Added Time State
+  const [isAreaOpen, setIsAreaOpen] = useState(false);
 
 
-// --- MIN/MAX DATE LOGIC START ---
+  // --- MIN/MAX DATE LOGIC START ---
   // Helper to get local YYYY-MM-DD string
   const getLocalDateString = (date) => {
     const year = date.getFullYear();
@@ -216,65 +216,65 @@ const [isAreaOpen, setIsAreaOpen] = useState(false);
   const maxDate = getLocalDateString(sevenDaysLater); // 7 days from now
   // --- MIN/MAX DATE LOGIC END ---
 
-const handleSearch = () => {
-  if (!selectedArea) {
-    toast.error("Please select a pickup location");
-    return;
-  }
-
-  const params = new URLSearchParams();
-  params.set("area", selectedArea);
-  // Combine date and time for the search
-  if (startDate) params.set("start", `${startDate}T${startTime}`);
-  if (endDate) params.set("end", `${endDate}T${endTime}`);
-
-  navigate(`/catalog?${params.toString()}`);
-};
-
-const toast = {
-  error: (msg) => {
-    const el = document.getElementById("area-error");
-    if (el) {
-      el.textContent = msg;
-      el.classList.remove("hidden");
-      setTimeout(() => el.classList.add("hidden"), 3000);
+  const handleSearch = () => {
+    if (!selectedArea) {
+      toast.error("Please select a pickup location");
+      return;
     }
-  },
-};
 
-const selectedAreaName =
-  areas.find((a) => a._id === selectedArea)?.name || "Select Location";
-const features = [
-  "Self-Drive Scooters",
-  "Save Time & Money",
-  "Freedom to Explore",
-];
+    const params = new URLSearchParams();
+    params.set("area", selectedArea);
+    // Combine date and time for the search
+    if (startDate) params.set("start", `${startDate}T${startTime}`);
+    if (endDate) params.set("end", `${endDate}T${endTime}`);
 
-useEffect(() => {
-  const getServer = async () => {
-    try {
-      await axios.get(`${API_BASE_URL}/rentals`);
-    } catch (err) {
-      console.error("Server ping failed", err);
-    }
+    navigate(`/catalog?${params.toString()}`);
   };
-  getServer();
-}, []);
+
+  const toast = {
+    error: (msg) => {
+      const el = document.getElementById("area-error");
+      if (el) {
+        el.textContent = msg;
+        el.classList.remove("hidden");
+        setTimeout(() => el.classList.add("hidden"), 3000);
+      }
+    },
+  };
+
+  const selectedAreaName =
+    areas.find((a) => a._id === selectedArea)?.name || "Select Location";
+  const features = [
+    "Self-Drive Scooters",
+    "Save Time & Money",
+    "Freedom to Explore",
+  ];
+
+  useEffect(() => {
+    const getServer = async () => {
+      try {
+        await axios.get(`${API_BASE_URL}/rentals`);
+      } catch (err) {
+        console.error("Server ping failed", err);
+      }
+    };
+    getServer();
+  }, []);
   return (
     <section
       id="home"
       className="relative min-h-screen flex items-center pt-[140px] overflow-hidden"
     >
 
-    {/* Visually Hidden SEO Header for search engines */}
+      {/* Visually Hidden SEO Header for search engines */}
       <h1 className="sr-only">
         Bike Rental in Mumbai & Surat | Rent a Bike, Scooty on Rent & Two Wheeler Rental in Mumbai & Surat - Pipip Services
       </h1>
       <div className="sr-only">
         <h2>Self Drive Two Wheeler, Bike and Scooty on Rent in Mumbai and Surat</h2>
         <p>
-          Pipip Services provides affordable bike rentals across Mumbai (Andheri, Thane, Dongri, 
-          Bandra, Kurla, Bhendi Bazar) and Surat (Adajan, Vesu, Ring Road). Rent Activa, 
+          Pipip Services provides affordable bike rentals across Mumbai (Andheri, Thane, Dongri,
+          Bandra, Kurla, Bhendi Bazar) and Surat (Adajan, Vesu, Ring Road). Rent Activa,
           Royal Enfield, KTM, and Jupiter with zero deposit hassle and free helmets.
         </p>
       </div>
@@ -441,11 +441,11 @@ useEffect(() => {
                 </Button>
               </NavLink>
               {/* <a href="#pricing"> */}
-               <NavLink to="/pricing">
+              <NavLink to="/pricing">
                 <Button variant="glass" size="xl">
                   View Pricing
                 </Button>
-              {/* </a> */}
+                {/* </a> */}
               </NavLink>
             </motion.div>
 
@@ -498,9 +498,8 @@ useEffect(() => {
                       </span>
                     </div>
                     <ChevronDown
-                      className={`w-5 h-5 text-gray-400 transition-transform ${
-                        isAreaOpen ? "rotate-180" : ""
-                      }`}
+                      className={`w-5 h-5 text-gray-400 transition-transform ${isAreaOpen ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
 
@@ -596,7 +595,7 @@ useEffect(() => {
                     val: endDate,
                     set: setEndDate,
                     type: "date",
-                    
+
                   },
                   {
                     label: "Start Time",
