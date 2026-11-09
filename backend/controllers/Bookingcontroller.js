@@ -681,7 +681,7 @@ exports.adminCreateBooking = async (req, res) => {
       lead_source,
       source_name,
 
-      vehicle_make_model,
+      vehicle_make_model: (vehicle_make_model ? vehicle_make_model.replace(/^undefined\s*/i, "").trim() : (bike ? (bike.bike_name && bike.model && bike.bike_name !== bike.model ? `${bike.bike_name} ${bike.model}` : (bike.bike_name || bike.model || "Bike")) : "Bike")),
       rental_type,
       total_amount: manual_total_amount,
       paid_amount,
@@ -1082,6 +1082,7 @@ exports.getAllBookings = async (req, res) => {
         // // customers: b.customer_id,
         //  customers: isInvestor ? null : b.customer_id,
         ...b,
+        vehicle_make_model: b.vehicle_make_model ? b.vehicle_make_model.replace(/^undefined\s*/i, "").trim() : (b.bike_id ? (b.bike_id.bike_name || b.bike_id.model || "Bike") : "Bike"),
         customers: isInvestor ? null : b.customer_id,
         bikes: b.bike_id,
         totalDue: (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0),
@@ -1172,6 +1173,9 @@ exports.getBookingById = async (req, res) => {
       ? Math.max(0, totalDue - paidAmount)
       : 0;
 
+    if (bObj.vehicle_make_model) {
+      bObj.vehicle_make_model = bObj.vehicle_make_model.replace(/^undefined\s*/i, "").trim();
+    }
     res.json({
       ...bObj,
       customers: booking.customer_id,

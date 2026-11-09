@@ -576,7 +576,7 @@ export default function Bookings() {
       customerName: booking.customer_name || booking.customers?.name || "Customer",
       phone: booking.contact_number || booking.customers?.phone || "-",
       bike: {
-        model: booking.vehicle_make_model || matchingBike?.model || "Bike",
+        model: (booking.vehicle_make_model || matchingBike?.model || matchingBike?.bike_name || "Bike").replace(/^undefined\s*/i, "").trim(),
         number_plate: matchingBike?.number_plate || booking.bikes?.number_plate || ""
       },
       startDate: booking.start_datetime,
@@ -2061,7 +2061,7 @@ export default function Bookings() {
 
       bookingData.append(
         "vehicle_make_model",
-        selectedBike ? `${selectedBike.brand} ${selectedBike.model}` : "Bike",
+        selectedBike ? (selectedBike.bike_name && selectedBike.model && selectedBike.bike_name !== selectedBike.model ? `${selectedBike.bike_name} ${selectedBike.model}` : (selectedBike.bike_name || selectedBike.model || "Bike")).replace(/^undefined\s*/i, "").trim() : "Bike",
       );
       bookingData.append(
         "account_manager",
@@ -4282,9 +4282,14 @@ export default function Bookings() {
                             Bike
                           </p>
                           <p className="font-bold text-foreground text-sm sm:text-base truncate">
-                            {booking.vehicle_make_model ||
-                              booking.bikes?.model ||
-                              (booking.cluster_id ? booking.cluster_id.name : "—")}
+                            {(() => {
+                              const raw = booking.vehicle_make_model ||
+                                booking.bikes?.model ||
+                                booking.bikes?.bike_name ||
+                                (booking.cluster_id ? booking.cluster_id.name : "—");
+                              const cleaned = raw ? raw.replace(/^undefined\s*/i, "").trim() : "";
+                              return cleaned || (booking.cluster_id ? booking.cluster_id.name : "Bike");
+                            })()}
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5">
                             {booking.bikes?.number_plate ||
@@ -4495,14 +4500,12 @@ export default function Bookings() {
                                   key={action.next}
                                   size="sm"
                                   onClick={() => handleStatusUpdate(booking._id, action.next)}
-                                  className={
-                                    action.next === "active"
-                                      ? "h-9 sm:h-9 px-4 rounded-xl text-xs font-bold gradient-sunset text-primary-foreground flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer flex-1 sm:flex-initial"
-                                      : "h-9 sm:h-9 px-4 rounded-xl text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/25 transition-all cursor-pointer flex-1 sm:flex-initial"
-                                  }
+                                  className="h-9 sm:h-9 px-4 rounded-xl text-xs font-bold gradient-sunset text-primary-foreground flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer flex-1 sm:flex-initial"
                                 >
                                   {action.next === "active" ? (
                                     <Play className="w-3.5 h-3.5 fill-current" />
+                                  ) : action.next === "completed" ? (
+                                    <CheckCircle className="w-3.5 h-3.5" />
                                   ) : (
                                     action.icon
                                   )}
