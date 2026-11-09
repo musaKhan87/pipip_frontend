@@ -1747,6 +1747,19 @@ const filteredBikes = (bikes || []).filter((bike) => {
           )}
         </div>
       )}
+
+      {/* Reusable Confirmation Dialog Alert */}
+      <ConfirmationDialog
+        open={confirmConfig.open}
+        onOpenChange={(open) => setConfirmConfig((prev) => ({ ...prev, open }))}
+        title={confirmConfig.title}
+        description={confirmConfig.description}
+        type={confirmConfig.type}
+        confirmText={confirmConfig.confirmText}
+        details={confirmConfig.details}
+        onConfirm={confirmConfig.onConfirm}
+        isLoading={confirmConfig.isLoading}
+      />
     </div>
   );
 }

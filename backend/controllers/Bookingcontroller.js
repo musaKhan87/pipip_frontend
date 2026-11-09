@@ -1086,9 +1086,13 @@ exports.getAllBookings = async (req, res) => {
         customers: isInvestor ? null : b.customer_id,
         bikes: b.bike_id,
         totalDue: (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0),
-        paid_amount: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0) || b.is_extended === true || (b.extended_amount && Number(b.extended_amount) > 0) || (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z")))
+        paid_amount: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0))
           ? (Number(b.paid_amount) || 0)
           : (b.payment_status === "paid" ? ((Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)) : 0),
+        pending_amount: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0))
+          ? Math.max(0, ((Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)) - (Number(b.paid_amount) || 0))
+          : 0,
+        supports_partial_payments: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0)),
         pending_amount: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0) || b.is_extended === true || (b.extended_amount && Number(b.extended_amount) > 0) || (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z")))
           ? Math.max(0, ((Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)) - (Number(b.paid_amount) || 0))
           : 0,
@@ -1163,8 +1167,7 @@ exports.getBookingById = async (req, res) => {
     const totalDue = (Number(bObj.total_amount) || 0) + (Number(bObj.extended_amount) || 0);
     const isNewFlow = Boolean(
       bObj.supports_partial_payments === true ||
-      (Array.isArray(bObj.payments) && bObj.payments.length > 0) ||
-      (bObj.createdAt && new Date(bObj.createdAt) >= new Date("2026-11-09T12:50:00.000Z"))
+      (Array.isArray(bObj.payments) && bObj.payments.length > 0)
     );
     const paidAmount = isNewFlow
       ? (Number(bObj.paid_amount) || 0)

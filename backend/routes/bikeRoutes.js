@@ -39,6 +39,6 @@ router.put(
 );
 
 // Super Admin Only: Soft Delete Bike
-router.delete("/:id", protect, superAdminOnly, deleteBike);
+router.delete("/:id", protect, authorizeRoles("super_admin", "admin", "manager"), deleteBike);
 
 module.exports = router;

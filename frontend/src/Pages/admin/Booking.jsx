@@ -287,8 +287,6 @@ export const isBookingNewFlow = (b) => {
   if (!b) return false;
   if (b.supports_partial_payments === true) return true;
   if (Array.isArray(b.payments) && b.payments.length > 0) return true;
-  if (b.is_extended === true || (b.extended_amount && Number(b.extended_amount) > 0)) return true;
-  if (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z")) return true;
   return false;
 };
 
@@ -1543,7 +1541,11 @@ export default function Bookings() {
         })
         ?.filter((booking) => {
           if (paymentFilter === "all") return true;
-          const { pendingAmount, paidAmount } = getBookingFinancials(booking);
+          const { pendingAmount, paidAmount, isNew } = getBookingFinancials(booking);
+          if (!isNew) {
+            if (paymentFilter === "paid") return booking.payment_status === "paid";
+            return false;
+          }
           if (paymentFilter === "pending_due") return pendingAmount > 0 && booking.status !== "cancelled";
           if (paymentFilter === "partial") return booking.payment_status === "partial" || (paidAmount > 0 && pendingAmount > 0);
           if (paymentFilter === "paid") return booking.payment_status === "paid" || (pendingAmount === 0 && paidAmount > 0);
@@ -4370,7 +4372,7 @@ export default function Bookings() {
                       {/* 🎯 Row 2: Bottom Actions Bar (Separate lower row across full width) */}
                       {(() => {
                         const { isNew, pendingAmount } = getBookingFinancials(booking);
-                        const canCollectPayment = pendingAmount > 0 && booking.status !== "cancelled";
+                        const canCollectPayment = isNew && pendingAmount > 0 && booking.status !== "cancelled";
                         const canMarkPaidOld = !isNew && booking.payment_status !== "paid" && booking.status !== "cancelled";
 
                         const utilityButtons = (
