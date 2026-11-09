@@ -4495,7 +4495,11 @@ export default function Bookings() {
                                   key={action.next}
                                   size="sm"
                                   onClick={() => handleStatusUpdate(booking._id, action.next)}
-                                  className="h-9 sm:h-9 px-4 rounded-xl text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/25 transition-all cursor-pointer flex-1 sm:flex-initial"
+                                  className={
+                                    action.next === "active"
+                                      ? "h-9 sm:h-9 px-4 rounded-xl text-xs font-bold gradient-sunset text-primary-foreground flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer flex-1 sm:flex-initial"
+                                      : "h-9 sm:h-9 px-4 rounded-xl text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/25 transition-all cursor-pointer flex-1 sm:flex-initial"
+                                  }
                                 >
                                   {action.next === "active" ? (
                                     <Play className="w-3.5 h-3.5 fill-current" />
