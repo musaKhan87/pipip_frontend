@@ -297,3 +297,46 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 #receipt-content.is-downloading .hidden.is-downloading\:flex {
   display: flex !important;
 }
+
+/* Infinite Marquee Animations for Reviews */
+@keyframes marquee-horizontal {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marquee-vertical {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, -50%, 0);
+  }
+}
+
+.animate-marquee-left {
+  animation: marquee-horizontal 40s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-left-fast {
+  animation: marquee-horizontal 30s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-up-1 {
+  animation: marquee-vertical 26s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-up-2 {
+  animation: marquee-vertical 32s linear infinite;
+  will-change: transform;
+}
+
+.pause-on-hover:hover {
+  animation-play-state: paused !important;
+}
