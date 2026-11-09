@@ -4254,376 +4254,307 @@ export default function Bookings() {
                     </div>
 
                     <div className="p-4">
-                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                          <div className="space-y-0.5">
-                            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                              Customer
-                            </p>
-                            <p className="font-semibold text-foreground text-sm truncate">
-                              {booking.customers?.name ||
-                                booking.customer_name ||
+                      {/* 🎯 Row 1: The 4 Data Columns across full card width (2x2 on mobile, 4 columns on laptop/desktop) */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-4 sm:gap-6">
+                        {/* 1. CUSTOMER */}
+                        <div className="space-y-0.5">
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            Customer
+                          </p>
+                          <p className="font-bold text-foreground text-sm sm:text-base truncate">
+                            {booking.customer_name ||
+                              booking.customers?.name ||
+                              "—"}
+                          </p>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                            <Phone className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">
+                              {booking.contact_number ||
+                                booking.customers?.phone ||
                                 "—"}
-                            </p>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <Phone className="w-3 h-3 shrink-0" />
-                              <span className="truncate">
-                                {booking.customers?.phone ||
-                                  booking.contact_number ||
-                                  "—"}
-                              </span>
-                            </div>
+                            </span>
                           </div>
+                        </div>
 
-                          {/* <div className="space-y-0.5">
-                            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                              Bike
-                            </p>
-                            <p className="font-semibold text-foreground text-sm truncate">
-                              {booking.bikes?.model || "—"}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {booking.bikes?.number_plate}
-                            </p>
-                          </div> */}
-
-                          <div className="space-y-0.5">
-                            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                              Bike
-                            </p>
-
-                            {!booking.bike_id && booking.cluster_id ? (
-                              <p className="font-semibold text-primary text-sm truncate">
-                                {booking.cluster_id.name}
+                        {/* 2. BIKE */}
+                        <div className="space-y-0.5">
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            Bike
+                          </p>
+                          <p className="font-bold text-foreground text-sm sm:text-base truncate">
+                            {booking.vehicle_make_model ||
+                              booking.bikes?.model ||
+                              (booking.cluster_id ? booking.cluster_id.name : "—")}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {booking.bikes?.number_plate ||
+                              (booking.cluster_id ? "Not Assigned" : "—")}
+                          </p>
+                          {(() => {
+                            const areaName = getBookingAreaName(booking);
+                            if (!areaName) return null;
+                            return (
+                              <p className="text-[11px] text-amber-400 flex items-center gap-1 font-medium mt-0.5">
+                                <MapPin className="w-2.5 h-2.5 shrink-0 text-amber-400" />
+                                <span className="truncate">{areaName}</span>
                               </p>
-                            ) : (
-                              <p className="font-semibold text-foreground text-sm truncate">
-                                {booking.bikes?.model || "—"}
-                              </p>
-                            )}
+                            );
+                          })()}
+                        </div>
 
-                            <p className="text-xs text-muted-foreground">
-                              {booking.bikes?.number_plate ||
-                                (booking.cluster_id ? "Not Assigned" : "—")}
-                            </p>
-                            {(() => {
-                              const areaName = getBookingAreaName(booking);
-                              if (!areaName) return null;
-                              return (
-                                <p className="text-[11px] text-amber-400 flex items-center gap-1 font-medium mt-0.5">
-                                  <MapPin className="w-2.5 h-2.5 shrink-0 text-amber-400" />
-                                  <span className="truncate">{areaName}</span>
-                                </p>
-                              );
-                            })()}
+                        {/* 3. DURATION */}
+                        <div className="space-y-0.5">
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            Duration
+                          </p>
+                          <div className="flex items-center gap-1.5 text-xs text-foreground mt-0.5">
+                            <Calendar className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                            <span className="font-medium">
+                              {format(new Date(booking.start_datetime), "dd MMM, h:mm a")}
+                            </span>
                           </div>
-
-                          <div className="space-y-0.5">
-                            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                              Duration
-                            </p>
-                            <div className="flex items-center gap-1.5 text-xs text-foreground">
-                              <Calendar className="w-3 h-3 shrink-0 text-primary" />
-                              <span>
-                                {format(
-                                  new Date(booking.start_datetime),
-                                  "dd MMM, h:mm a",
-                                )}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <Clock className="w-3 h-3 shrink-0" />
-                              <span>
-                                to{" "}
-                                {format(
-                                  new Date(booking.end_datetime),
-                                  "dd MMM, h:mm a",
-                                )}
-                              </span>
-                            </div>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                            <Clock className="w-3.5 h-3.5 shrink-0" />
+                            <span>
+                              to {format(new Date(booking.end_datetime), "dd MMM, h:mm a")}
+                            </span>
                           </div>
+                        </div>
 
-                          {/* <div className="space-y-0.5">
-                            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                              Duration
-                            </p>
-                            <div className="flex items-center gap-1.5 text-xs text-foreground">
-                              <Calendar className="w-3 h-3 shrink-0 text-primary" />
-                              <span>
-                                {new Date(
-                                  booking.start_datetime,
-                                ).toLocaleString("en-IN", {
-                                  day: "2-digit",
-                                  month: "short",
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                  hour12: true,
-                                  timeZone: "UTC", // This is the magic line
-                                })}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <Clock className="w-3 h-3 shrink-0" />
-                              <span>
-                                to{" "}
-                                {new Date(booking.end_datetime).toLocaleString(
-                                  "en-IN",
-                                  {
-                                    day: "2-digit",
-                                    month: "short",
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                    timeZone: "UTC",
-                                  },
-                                )}
-                              </span>
-                            </div>
-                          </div> */}
-
-                          {/* {availabilityMessage && (
-                            <div
-                              className={`p-3 rounded-lg text-sm mb-4 ${isAvailable ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}
-                            >
-                              {availabilityMessage}
-                            </div>
-                          )} */}
-
-                          <div className="space-y-0.5">
-                            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                              Amount
-                            </p>
-                            {(() => {
-                              const { isNew, totalDue, paidAmount, pendingAmount } = getBookingFinancials(booking);
-                              if (!isNew) {
-                                return (
-                                  <>
-                                    <p className="text-lg font-bold">
-                                      ₹ {booking.total_amount}
-                                    </p>
-                                    {booking.extended_amount > 0 && (
-                                      <p className="text-sm text-blue-400">
-                                        +₹ {booking.extended_amount} Extended
-                                      </p>
-                                    )}
-                                    {(booking.deposit_amount ?? 0) > 0 && (
-                                      <p className="text-xs text-muted-foreground">
-                                        Dep: ₹{booking.deposit_amount?.toLocaleString()}
-                                      </p>
-                                    )}
-                                  </>
-                                );
-                              }
-
+                        {/* 4. AMOUNT */}
+                        <div className="space-y-0.5">
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            Amount
+                          </p>
+                          {(() => {
+                            const { isNew, totalDue, pendingAmount } = getBookingFinancials(booking);
+                            if (!isNew) {
                               return (
                                 <>
-                                  <p className="text-lg font-bold">
-                                    ₹ {totalDue || booking.total_amount}
+                                  <p className="text-lg sm:text-xl font-bold text-foreground">
+                                    ₹ {booking.total_amount}
                                   </p>
-                                  {pendingAmount > 0 ? (
-                                    <div className="space-y-0.5">
-                                      <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                                        ⚠️ Due: ₹{pendingAmount.toLocaleString()}
-                                      </span>
-                                      <p className="text-[11px] text-muted-foreground">
-                                        Paid: ₹{paidAmount.toLocaleString()}
-                                      </p>
-                                    </div>
-                                  ) : (
-                                    <p className="text-xs font-semibold text-emerald-400">
-                                      ✓ Fully Paid
-                                    </p>
-                                  )}
                                   {booking.extended_amount > 0 && (
-                                    <p className="text-[11px] text-blue-400">
-                                      +₹ {booking.extended_amount} Ext.
+                                    <p className="text-xs text-blue-400 font-medium">
+                                      +₹ {booking.extended_amount} Extended
                                     </p>
                                   )}
                                   {(booking.deposit_amount ?? 0) > 0 && (
-                                    <p className="text-[11px] text-muted-foreground">
+                                    <p className="text-xs text-muted-foreground">
                                       Dep: ₹{booking.deposit_amount?.toLocaleString()}
                                     </p>
                                   )}
                                 </>
                               );
-                            })()}
-                          </div>
+                            }
+
+                            return (
+                              <>
+                                <p className="text-lg sm:text-xl font-bold text-foreground">
+                                  ₹ {totalDue || booking.total_amount}
+                                </p>
+                                {pendingAmount > 0 ? (
+                                  <div className="pt-0.5">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#261c0d] text-[#facc15] border border-[#facc15]/40 shadow-sm">
+                                      <IndianRupee className="w-3 h-3 text-[#facc15]" /> Due: ₹{pendingAmount.toLocaleString()}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <p className="text-xs font-semibold text-emerald-400 pt-0.5">
+                                    ✓ Fully Paid
+                                  </p>
+                                )}
+                                {(booking.deposit_amount ?? 0) > 0 && (
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    Dep: ₹{booking.deposit_amount?.toLocaleString()}
+                                  </p>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
+                      </div>
 
-                        {(() => {
-                          const { isNew, pendingAmount } = getBookingFinancials(booking);
-                          const canCollectPayment = isNew && pendingAmount > 0 && booking.status !== "cancelled";
-                          const canMarkPaidOld = !isNew && booking.payment_status !== "paid" && booking.status !== "cancelled";
+                      {/* 🎯 Row 2: Bottom Actions Bar (Separate lower row across full width) */}
+                      {(() => {
+                        const { isNew, pendingAmount } = getBookingFinancials(booking);
+                        const canCollectPayment = isNew && pendingAmount > 0 && booking.status !== "cancelled";
+                        const canMarkPaidOld = !isNew && booking.payment_status !== "paid" && booking.status !== "cancelled";
 
-                          const utilityButtons = (
-                            <>
+                        const utilityButtons = (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={isGeneratingBill}
+                              onClick={() => handleBillClick(booking)}
+                              className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl text-xs font-medium border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/50 gap-1.5 cursor-pointer"
+                            >
+                              {isGeneratingBill && fetchingBillId === booking._id ? (
+                                <>
+                                  <span className="animate-spin mr-1 inline-block w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full" />
+                                  Saving...
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="w-3.5 h-3.5" />
+                                  <span>Bill</span>
+                                </>
+                              )}
+                            </Button>
+
+                            {(booking.status === "active" ||
+                              booking.status === "confirmed" ||
+                              booking.status === "pending") && (
                               <Button
                                 size="sm"
                                 variant="outline"
-                                disabled={isGeneratingBill}
-                                onClick={() => handleBillClick(booking)}
-                                className="text-emerald-600 hover:bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:hover:bg-emerald-950/30 dark:border-emerald-800"
+                                onClick={() => handleEditBooking(booking)}
+                                className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl text-xs font-medium border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/50 gap-1.5 cursor-pointer"
                               >
-                                {isGeneratingBill && fetchingBillId === booking._id ? (
-                                  <>
-                                    <span className="animate-spin mr-1 inline-block w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full dark:border-emerald-400"></span>
-                                    Saving...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Download className="w-4 h-4 mr-1" />
-                                    Bill
-                                  </>
-                                )}
+                                <Edit className="w-3.5 h-3.5" />
+                                <span>Edit</span>
+                              </Button>
+                            )}
+
+                            {(booking.status === "active" ||
+                              booking.status === "confirmed" ||
+                              booking.status === "pending") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl text-xs font-medium border-blue-500/40 text-blue-400 bg-blue-500/5 hover:bg-blue-500/15 gap-1.5 cursor-pointer"
+                                onClick={() => handleOpenExtend(booking)}
+                              >
+                                <Clock className="w-3.5 h-3.5 text-blue-400" />
+                                <span>Extend</span>
+                              </Button>
+                            )}
+
+                            {canMarkPaidOld && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleMarkPaid(booking._id)}
+                                className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl text-xs font-medium border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 gap-1.5 cursor-pointer"
+                              >
+                                <CreditCard className="w-3.5 h-3.5" />
+                                <span>Paid</span>
+                              </Button>
+                            )}
+
+                            {statusActions[booking.status]
+                              ?.filter((a) => a.next === "cancelled")
+                              .map((action) => (
+                                <Button
+                                  key={action.next}
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleStatusUpdate(booking._id, action.next)}
+                                  className="h-8 sm:h-9 px-2 sm:px-3.5 rounded-full sm:rounded-xl text-xs font-medium border-red-500/40 text-red-400 bg-red-500/5 hover:bg-red-500/15 gap-1.5 cursor-pointer"
+                                  title="Cancel Booking"
+                                >
+                                  <XCircle className="w-3.5 h-3.5 text-red-400" />
+                                  <span className="hidden sm:inline">Cancel</span>
+                                </Button>
+                              ))}
+                          </>
+                        );
+
+                        const primaryButtons = (
+                          <>
+                            {canCollectPayment && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setCollectPaymentBooking(booking);
+                                  setPaymentAmountInput(String(pendingAmount));
+                                }}
+                                className="h-9 sm:h-9 px-4 rounded-xl text-xs font-bold bg-[#261c0d] hover:bg-[#332512] text-[#facc15] border border-[#facc15]/40 hover:border-[#facc15]/70 flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer flex-1 sm:flex-initial"
+                              >
+                                <IndianRupee className="w-3.5 h-3.5 text-[#facc15]" />
+                                <span>Collect ₹{pendingAmount.toLocaleString()}</span>
+                              </Button>
+                            )}
+
+                            {!booking.bike_id && booking.cluster_id && (
+                              <Button
+                                size="sm"
+                                onClick={() => setAssignDialog(booking)}
+                                className="h-9 sm:h-9 px-4 rounded-xl text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/25 transition-all cursor-pointer flex-1 sm:flex-initial"
+                              >
+                                <Bike className="w-3.5 h-3.5" />
+                                <span>Assign Bike</span>
+                              </Button>
+                            )}
+
+                            {statusActions[booking.status]
+                              ?.filter((a) => a.next !== "cancelled")
+                              .map((action) => (
+                                <Button
+                                  key={action.next}
+                                  size="sm"
+                                  onClick={() => handleStatusUpdate(booking._id, action.next)}
+                                  className="h-9 sm:h-9 px-4 rounded-xl text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/25 transition-all cursor-pointer flex-1 sm:flex-initial"
+                                >
+                                  {action.next === "active" ? (
+                                    <Play className="w-3.5 h-3.5 fill-current" />
+                                  ) : (
+                                    action.icon
+                                  )}
+                                  <span>{action.label}</span>
+                                </Button>
+                              ))}
+                          </>
+                        );
+
+                        return (
+                          <div className="w-full pt-3.5 mt-3 border-t border-border/40">
+                            {/* 💻 Laptop / Desktop Layout: Lower row with [View ⌵] on left and buttons on right */}
+                            <div className="hidden sm:flex items-center justify-between w-full gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setExpandedBookingId(isExpanded ? null : booking._id)}
+                                className="text-muted-foreground hover:text-foreground text-xs font-semibold gap-1.5 px-2 h-9 cursor-pointer"
+                              >
+                                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                <span>{isExpanded ? "Collapse" : "View"}</span>
                               </Button>
 
-                              {(booking.status === "active" ||
-                                booking.status === "confirmed" ||
-                                booking.status === "pending") && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleEditBooking(booking)}
-                                    className="text-blue-600 hover:bg-blue-50 border-blue-200 dark:hover:bg-blue-500/10"
-                                  >
-                                    <Edit className="w-4 h-4 mr-1" /> Edit
-                                  </Button>
-                                )}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {utilityButtons}
+                                {primaryButtons}
+                              </div>
+                            </div>
 
-                              {(booking.status === "active" ||
-                                booking.status === "confirmed" ||
-                                booking.status === "pending") && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-blue-500 text-blue-500 hover:bg-blue-500/10"
-                                    onClick={() => handleOpenExtend(booking)}
-                                  >
-                                    <Clock className="w-4 h-4 mr-1" /> Extend
-                                  </Button>
-                                )}
-
-                              {canMarkPaidOld && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleMarkPaid(booking._id)}
-                                  className="text-green-600 hover:bg-green-50 border-green-200 dark:hover:bg-green-500/10"
-                                >
-                                  <CreditCard className="w-4 h-4 mr-1" />
-                                  Paid
-                                </Button>
-                              )}
-
-                              {statusActions[booking.status]
-                                ?.filter((a) => a.next === "cancelled")
-                                .map((action) => (
-                                  <Button
-                                    key={action.next}
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleStatusUpdate(booking._id, action.next)}
-                                    className="text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
-                                  >
-                                    {action.icon}
-                                    <span className="ml-1 hidden sm:inline">{action.label}</span>
-                                  </Button>
-                                ))}
-                            </>
-                          );
-
-                          const primaryButtons = (
-                            <>
-                              {canCollectPayment && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setCollectPaymentBooking(booking);
-                                    setPaymentAmountInput(String(pendingAmount));
-                                  }}
-                                  className="bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border-amber-500/40 font-semibold"
-                                >
-                                  <CreditCard className="w-4 h-4 mr-1 text-amber-400" />
-                                  <span>Collect ₹{pendingAmount.toLocaleString()}</span>
-                                </Button>
-                              )}
-
-                              {!booking.bike_id && booking.cluster_id && (
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  onClick={() => setAssignDialog(booking)}
-                                  className="gradient-sunset text-primary-foreground font-semibold"
-                                >
-                                  <Bike className="w-4 h-4 mr-1" />
-                                  <span>Assign Bike</span>
-                                </Button>
-                              )}
-
-                              {statusActions[booking.status]
-                                ?.filter((a) => a.next !== "cancelled")
-                                .map((action) => (
-                                  <Button
-                                    key={action.next}
-                                    size="sm"
-                                    variant="default"
-                                    onClick={() => handleStatusUpdate(booking._id, action.next)}
-                                    className="gradient-sunset text-primary-foreground font-semibold"
-                                  >
-                                    {action.icon}
-                                    <span className="ml-1">{action.label}</span>
-                                  </Button>
-                                ))}
-                            </>
-                          );
-
-                          return (
-                            <div className="w-full lg:w-auto shrink-0 space-y-2">
-                              {/* 💻 Desktop: Single cohesive horizontal bar */}
-                              <div className="hidden sm:flex items-center justify-end gap-2 flex-wrap">
+                            {/* 📱 Mobile Layout: 2-Tier Layout */}
+                            <div className="flex sm:hidden flex-col w-full gap-2.5">
+                              {/* Tier 1: View toggle on left, compact utility buttons on right */}
+                              <div className="flex items-center justify-between gap-1 w-full">
                                 <Button
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => setExpandedBookingId(isExpanded ? null : booking._id)}
-                                  className="text-muted-foreground hover:text-foreground"
+                                  className="h-8 px-2 text-xs font-semibold text-muted-foreground hover:text-foreground gap-1 cursor-pointer"
                                 >
-                                  {isExpanded ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}
-                                  {isExpanded ? "Collapse" : "View"}
+                                  {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                  <span>{isExpanded ? "Collapse" : "View"}</span>
                                 </Button>
-                                {utilityButtons}
-                                {primaryButtons}
+                                <div className="flex items-center gap-1.5">{utilityButtons}</div>
                               </div>
 
-                              {/* 📱 Mobile: 2-Tier Layout */}
-                              <div className="flex sm:hidden flex-col w-full gap-2 pt-2 border-t border-border/40">
-                                {/* Tier 1: Utility & View toggle */}
-                                <div className="flex items-center justify-between gap-1 w-full overflow-x-auto">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => setExpandedBookingId(isExpanded ? null : booking._id)}
-                                    className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                  >
-                                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5 mr-1" /> : <ChevronDown className="w-3.5 h-3.5 mr-1" />}
-                                    {isExpanded ? "Collapse" : "View"}
-                                  </Button>
-                                  <div className="flex items-center gap-1.5">{utilityButtons}</div>
+                              {/* Tier 2: Large primary CTAs side-by-side */}
+                              {(canCollectPayment || (!booking.bike_id && booking.cluster_id) || statusActions[booking.status]?.some((a) => a.next !== "cancelled")) && (
+                                <div className="flex items-center gap-2.5 w-full pt-0.5">
+                                  {primaryButtons}
                                 </div>
-
-                                {/* Tier 2: Primary CTAs as large touch targets */}
-                                {(canCollectPayment || (!booking.bike_id && booking.cluster_id) || statusActions[booking.status]?.some((a) => a.next !== "cancelled")) && (
-                                  <div className="flex items-center gap-2 w-full pt-1">
-                                    {primaryButtons}
-                                  </div>
-                                )}
-                              </div>
+                              )}
                             </div>
-                          );
-                        })()}
-                      </div>
-
-                      <AnimatePresence>
+                          </div>
+                        );
+                      })()}
+                    <AnimatePresence>
                         {isExpanded && (
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
