@@ -24,8 +24,6 @@ import {
   Timer,
   MapPin,
   Phone,
-  CreditCard,
-  Wallet,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "../../components/ui/badge";
@@ -703,7 +701,7 @@ export default function Dashboard() {
       </AnimatePresence>
 
       {/* Main Statistics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
             title: "Total Bookings (Month)",
@@ -713,24 +711,9 @@ export default function Dashboard() {
           },
           {
             title: "Revenue (Month)",
-            val: `₹${(stats?.total_revenue || 0).toLocaleString()}`,
+            val: `₹${stats?.total_revenue?.toLocaleString()}`,
             icon: DollarSign,
             gradient: "from-green-500 to-green-600",
-            hideForStaff: true,
-          },
-          {
-            title: "Expenses (Month)",
-            val: `₹${(stats?.total_expenses || 0).toLocaleString()}`,
-            subtitle: `Today: ₹${(todayStats?.total_expenses || 0).toLocaleString()}`,
-            icon: CreditCard,
-            gradient: "from-rose-500 to-rose-600",
-            hideForStaff: true,
-          },
-          {
-            title: "Net Profit (Month)",
-            val: `₹${Math.max(0, (stats?.total_revenue || 0) - (stats?.total_expenses || 0)).toLocaleString()}`,
-            icon: Wallet,
-            gradient: "from-emerald-600 to-teal-700",
             hideForStaff: true,
           },
           {
@@ -745,6 +728,7 @@ export default function Dashboard() {
             icon: Clock,
             gradient: "from-purple-500 to-purple-600",
           },
+          // ].map((item, i) => (
         ]
           .filter((item) => !(role === "staff" && item.hideForStaff))
           .map((item, i) => (
@@ -755,20 +739,15 @@ export default function Dashboard() {
               transition={{ delay: i * 0.1 }}
             >
               <Card
-                className={`bg-gradient-to-br ${item.gradient} text-white border-0 shadow-lg h-full`}
+                className={`bg-gradient-to-br ${item.gradient} text-white border-0 shadow-lg`}
               >
-                <CardContent className="p-5 flex flex-col justify-between h-full">
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-medium opacity-85">{item.title}</p>
-                      <p className="text-2xl font-bold mt-1">{item.val || 0}</p>
-                      {item.subtitle && (
-                        <p className="text-[11px] opacity-80 mt-1 font-semibold">
-                          {item.subtitle}
-                        </p>
-                      )}
+                      <p className="text-sm opacity-80">{item.title}</p>
+                      <p className="text-3xl font-bold">{item.val || 0}</p>
                     </div>
-                    <item.icon className="w-8 h-8 opacity-30 shrink-0 ml-2" />
+                    <item.icon className="w-10 h-10 opacity-30" />
                   </div>
                 </CardContent>
               </Card>

@@ -20,6 +20,9 @@ import {
   Trash2,
   ArrowRight,
   TrendingUp,
+  Receipt,
+  CalendarDays,
+  Filter,
   Settings,
   Phone,
   Wrench,
@@ -142,12 +145,95 @@ export default function Expenses() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 24;
 
+  // 🎯 Filters State: Day, Weekly, Monthly, All Time, and Date-to-Date
+  const [periodFilter, setPeriodFilter] = useState("all"); // "all" | "day" | "weekly" | "monthly" | "custom"
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
   const { data: expenses, isLoading } = useExpenses(searchQuery);
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
 
-  const totalPages = Math.ceil((expenses?.length || 0) / ITEMS_PER_PAGE) || 1;
-  const paginatedExpenses = expenses?.slice(
+  // 🎯 Comprehensive Filter Computation
+  const filteredExpenses = useMemo(() => {
+    if (!expenses) return [];
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    // Week start (Monday)
+    const dayOfWeek = (now.getDay() + 6) % 7; // Monday = 0
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek, 0, 0, 0, 0);
+    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+
+    // Month start / end
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    let customStart = null;
+    let customEnd = null;
+    if (customStartDate) {
+      customStart = new Date(customStartDate);
+      customStart.setHours(0, 0, 0, 0);
+    }
+    if (customEndDate) {
+      customEnd = new Date(customEndDate);
+      customEnd.setHours(23, 59, 59, 999);
+    }
+
+    return expenses.filter((exp) => {
+      // 1. Period / Date Filter
+      if (exp.expense_date) {
+        const expDate = new Date(exp.expense_date);
+
+        if (periodFilter === "day") {
+          if (expDate < todayStart || expDate > todayEnd) return false;
+        } else if (periodFilter === "weekly") {
+          if (expDate < weekStart || expDate > todayEnd) return false;
+        } else if (periodFilter === "monthly") {
+          if (expDate < monthStart || expDate > monthEnd) return false;
+        } else if (periodFilter === "custom") {
+          if (customStart && expDate < customStart) return false;
+          if (customEnd && expDate > customEnd) return false;
+        }
+      }
+
+      // 2. Category Filter
+      if (categoryFilter !== "all") {
+        if (exp.expense_category !== categoryFilter) return false;
+      }
+
+      return true;
+    });
+  }, [expenses, periodFilter, customStartDate, customEndDate, categoryFilter]);
+
+  // 📊 Total Expense Calculations
+  const totalExpenseAmount = useMemo(() => {
+    return (filteredExpenses || []).reduce(
+      (sum, exp) => sum + (Number(exp.expense_amount) || 0),
+      0
+    );
+  }, [filteredExpenses]);
+
+  const totalExpenseCount = filteredExpenses?.length || 0;
+
+  const highestExpense = useMemo(() => {
+    if (!filteredExpenses || filteredExpenses.length === 0) return 0;
+    return Math.max(
+      0,
+      ...filteredExpenses.map((exp) => Number(exp.expense_amount) || 0)
+    );
+  }, [filteredExpenses]);
+
+  const averageExpense = useMemo(() => {
+    if (totalExpenseCount === 0) return 0;
+    return Math.round(totalExpenseAmount / totalExpenseCount);
+  }, [totalExpenseAmount, totalExpenseCount]);
+
+  const totalPages = Math.ceil((filteredExpenses?.length || 0) / ITEMS_PER_PAGE) || 1;
+  const paginatedExpenses = filteredExpenses?.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -666,6 +752,209 @@ export default function Expenses() {
             transition={{ duration: 0.15 }}
             className="space-y-6"
           >
+            {/* 📊 Total Expense Calculation & Summary Metric Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="bg-card border-border shadow-sm p-4 relative overflow-hidden group hover:border-primary/50 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {periodFilter === "day"
+                        ? "Today's Expenses"
+                        : periodFilter === "weekly"
+                        ? "Weekly Expenses"
+                        : periodFilter === "monthly"
+                        ? "Monthly Expenses"
+                        : periodFilter === "custom"
+                        ? "Custom Period Total"
+                        : "Total Expenses (All Time)"}
+                    </p>
+                    <p className="text-2xl sm:text-3xl font-black text-rose-500 tracking-tight">
+                      ₹{totalExpenseAmount.toLocaleString()}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Across {totalExpenseCount} recorded claims
+                    </p>
+                  </div>
+                  <div className="p-3 bg-rose-500/10 text-rose-500 rounded-2xl shrink-0">
+                    <Coins className="w-6 h-6" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="bg-card border-border shadow-sm p-4 relative overflow-hidden group hover:border-primary/50 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Total Claims Count
+                    </p>
+                    <p className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                      {totalExpenseCount}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Avg: ₹{averageExpense.toLocaleString()} / claim
+                    </p>
+                  </div>
+                  <div className="p-3 bg-primary/10 text-primary rounded-2xl shrink-0">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="bg-card border-border shadow-sm p-4 relative overflow-hidden group hover:border-primary/50 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Single Highest Claim
+                    </p>
+                    <p className="text-2xl sm:text-3xl font-black text-amber-400 tracking-tight">
+                      ₹{highestExpense.toLocaleString()}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Maximum expense recorded
+                    </p>
+                  </div>
+                  <div className="p-3 bg-amber-500/10 text-amber-400 rounded-2xl shrink-0">
+                    <TrendingUp className="w-6 h-6" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="bg-card border-border shadow-sm p-4 relative overflow-hidden group hover:border-primary/50 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Active Time Filter
+                    </p>
+                    <p className="text-lg font-bold text-foreground capitalize mt-0.5">
+                      {periodFilter === "day"
+                        ? "Today (Day)"
+                        : periodFilter === "weekly"
+                        ? "This Week"
+                        : periodFilter === "monthly"
+                        ? format(new Date(), "MMMM yyyy")
+                        : periodFilter === "custom"
+                        ? "Custom Range"
+                        : "All Time"}
+                    </p>
+                    <p className="text-[11px] text-primary font-medium flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {periodFilter === "custom" && customStartDate
+                        ? `${format(new Date(customStartDate), "d MMM")} – ${customEndDate ? format(new Date(customEndDate), "d MMM") : "Now"}`
+                        : "Auto-synced fleet ledger"}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-blue-500/10 text-blue-400 rounded-2xl shrink-0">
+                    <Calendar className="w-6 h-6" />
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* 🔍 Filter Control Bar: Preset Periods, Date-to-Date Range & Category */}
+            <div className="p-4 rounded-2xl bg-card border border-border shadow-sm space-y-3.5">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                {/* Period Presets: All Time, Day, Weekly, Monthly, Date to Date */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                  {[
+                    { id: "all", label: "All Time" },
+                    { id: "day", label: "Today (Day)" },
+                    { id: "weekly", label: "This Week" },
+                    { id: "monthly", label: "This Month" },
+                    { id: "custom", label: "Date to Date" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setPeriodFilter(tab.id);
+                        setCurrentPage(1);
+                      }}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                        periodFilter === tab.id
+                          ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25 font-bold"
+                          : "bg-muted/80 text-muted-foreground hover:text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Category Dropdown Filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">
+                    Category:
+                  </span>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => {
+                      setCategoryFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="h-8 px-2.5 rounded-lg border border-border bg-input text-foreground text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary/40 cursor-pointer"
+                  >
+                    <option value="all">All Categories ({EXPENSE_CATEGORIES.length})</option>
+                    {EXPENSE_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Custom Date-to-Date Filter Range Picker */}
+              {periodFilter === "custom" && (
+                <div className="pt-3 border-t border-border/60 flex flex-wrap items-center gap-3 animate-in fade-in-0 duration-150">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+                      From Date:
+                    </span>
+                    <Input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => {
+                        setCustomStartDate(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      className="h-8 w-38 text-xs bg-input border-border"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+                      To Date:
+                    </span>
+                    <Input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => {
+                        setCustomEndDate(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      className="h-8 w-38 text-xs bg-input border-border"
+                    />
+                  </div>
+
+                  {(customStartDate || customEndDate) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setCustomStartDate("");
+                        setCustomEndDate("");
+                        setPeriodFilter("all");
+                        setCurrentPage(1);
+                      }}
+                      className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-3 h-3 mr-1" /> Clear Date Filter
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Claims Actions bar */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="relative w-full sm:max-w-md">
@@ -906,7 +1195,7 @@ export default function Expenses() {
               <div className="flex justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : expenses?.length === 0 ? (
+            ) : filteredExpenses?.length === 0 ? (
               <Card className="bg-card border-border p-8 text-center text-muted-foreground">
                 <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-1">No Expenses Found</h3>
@@ -997,8 +1286,8 @@ export default function Expenses() {
                   <div className="flex items-center justify-between border-t border-border/60 pt-4 px-1">
                     <p className="text-sm text-muted-foreground">
                       Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
-                      {Math.min(currentPage * ITEMS_PER_PAGE, expenses?.length || 0)} of{" "}
-                      {expenses?.length || 0} expenses
+                      {Math.min(currentPage * ITEMS_PER_PAGE, filteredExpenses?.length || 0)} of{" "}
+                      {filteredExpenses?.length || 0} expenses
                     </p>
                     <div className="flex items-center gap-2">
                       <Button
