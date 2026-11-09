@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogDescription
 } from "../../components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import {
@@ -4069,11 +4070,10 @@ export default function Bookings() {
                 variant="outline"
                 size="sm"
                 onClick={() => setPaymentFilter(paymentFilter === "pending_due" ? "all" : "pending_due")}
-                className={`h-9 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
-                  paymentFilter === "pending_due"
+                className={`h-9 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${paymentFilter === "pending_due"
                     ? "bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-500/30 font-bold"
                     : "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
-                }`}
+                  }`}
               >
                 <span>⚠️ {pendingDuesCount} Due</span>
               </Button>
@@ -4168,11 +4168,10 @@ export default function Bookings() {
                           return (
                             <Badge
                               variant="outline"
-                              className={`text-[11px] font-semibold gap-1 px-2.5 py-0.5 rounded-full shadow-sm transition-all ${
-                                isMultiArea
+                              className={`text-[11px] font-semibold gap-1 px-2.5 py-0.5 rounded-full shadow-sm transition-all ${isMultiArea
                                   ? "bg-amber-500/25 text-amber-300 border-amber-500/70 ring-2 ring-amber-500/40 font-bold"
                                   : "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                              }`}
+                                }`}
                             >
                               <MapPin className="w-3 h-3 text-amber-400 shrink-0" />
                               <span>{areaName}</span>
@@ -4304,19 +4303,19 @@ export default function Bookings() {
                             )}
 
                             <p className="text-xs text-muted-foreground">
-                                {booking.bikes?.number_plate ||
-                                  (booking.cluster_id ? "Not Assigned" : "—")}
-                              </p>
-                              {(() => {
-                                const areaName = getBookingAreaName(booking);
-                                if (!areaName) return null;
-                                return (
-                                  <p className="text-[11px] text-amber-400 flex items-center gap-1 font-medium mt-0.5">
-                                    <MapPin className="w-2.5 h-2.5 shrink-0 text-amber-400" />
-                                    <span className="truncate">{areaName}</span>
-                                  </p>
-                                );
-                              })()}
+                              {booking.bikes?.number_plate ||
+                                (booking.cluster_id ? "Not Assigned" : "—")}
+                            </p>
+                            {(() => {
+                              const areaName = getBookingAreaName(booking);
+                              if (!areaName) return null;
+                              return (
+                                <p className="text-[11px] text-amber-400 flex items-center gap-1 font-medium mt-0.5">
+                                  <MapPin className="w-2.5 h-2.5 shrink-0 text-amber-400" />
+                                  <span className="truncate">{areaName}</span>
+                                </p>
+                              );
+                            })()}
                           </div>
 
                           <div className="space-y-0.5">
@@ -4481,28 +4480,28 @@ export default function Bookings() {
                               {(booking.status === "active" ||
                                 booking.status === "confirmed" ||
                                 booking.status === "pending") && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleEditBooking(booking)}
-                                  className="text-blue-600 hover:bg-blue-50 border-blue-200 dark:hover:bg-blue-500/10"
-                                >
-                                  <Edit className="w-4 h-4 mr-1" /> Edit
-                                </Button>
-                              )}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleEditBooking(booking)}
+                                    className="text-blue-600 hover:bg-blue-50 border-blue-200 dark:hover:bg-blue-500/10"
+                                  >
+                                    <Edit className="w-4 h-4 mr-1" /> Edit
+                                  </Button>
+                                )}
 
                               {(booking.status === "active" ||
                                 booking.status === "confirmed" ||
                                 booking.status === "pending") && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="border-blue-500 text-blue-500 hover:bg-blue-500/10"
-                                  onClick={() => handleOpenExtend(booking)}
-                                >
-                                  <Clock className="w-4 h-4 mr-1" /> Extend
-                                </Button>
-                              )}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-blue-500 text-blue-500 hover:bg-blue-500/10"
+                                    onClick={() => handleOpenExtend(booking)}
+                                  >
+                                    <Clock className="w-4 h-4 mr-1" /> Extend
+                                  </Button>
+                                )}
 
                               {canMarkPaidOld && (
                                 <Button

@@ -672,8 +672,8 @@ export default function Expenses() {
         <button
           onClick={() => setActiveTab("claims")}
           className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "claims"
-              ? "text-primary font-bold"
-              : "text-muted-foreground hover:text-foreground"
+            ? "text-primary font-bold"
+            : "text-muted-foreground hover:text-foreground"
             }`}
         >
           Expense Claims
@@ -690,8 +690,8 @@ export default function Expenses() {
             <button
               onClick={() => setActiveTab("daily_account")}
               className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "daily_account"
-                  ? "text-primary font-bold"
-                  : "text-muted-foreground hover:text-foreground"
+                ? "text-primary font-bold"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               Daily Account Information
@@ -705,8 +705,8 @@ export default function Expenses() {
             <button
               onClick={() => setActiveTab("daily_report")}
               className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "daily_report"
-                  ? "text-primary font-bold"
-                  : "text-muted-foreground hover:text-foreground"
+                ? "text-primary font-bold"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               Daily Report
@@ -723,8 +723,8 @@ export default function Expenses() {
         <button
           onClick={() => setActiveTab("service_history")}
           className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "service_history"
-              ? "text-primary font-bold"
-              : "text-muted-foreground hover:text-foreground"
+            ? "text-primary font-bold"
+            : "text-muted-foreground hover:text-foreground"
             }`}
         >
           Vehicle Service History
@@ -866,8 +866,8 @@ export default function Expenses() {
                         setCurrentPage(1);
                       }}
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${periodFilter === tab.id
-                          ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25 font-bold"
-                          : "bg-muted/80 text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25 font-bold"
+                        : "bg-muted/80 text-muted-foreground hover:text-foreground hover:bg-muted"
                         }`}
                     >
                       {tab.label}
@@ -1671,8 +1671,8 @@ export default function Expenses() {
                           <td className="px-6 py-4">
                             <Badge
                               className={`border ${entry.entry_type === "Morning"
-                                  ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                  : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
+                                ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
                                 }`}
                             >
                               {entry.entry_type}
@@ -1729,8 +1729,8 @@ export default function Expenses() {
                           </span>
                           <Badge
                             className={`border ${entry.entry_type === "Morning"
-                                ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
+                              ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                              : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
                               }`}
                           >
                             {entry.entry_type}
@@ -1799,8 +1799,8 @@ export default function Expenses() {
                         <span className="text-xs text-muted-foreground uppercase tracking-widest block">Shift type</span>
                         <Badge
                           className={`border mt-1 ${selectedDailyEntry.entry_type === "Morning"
-                              ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                              : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
+                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                            : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
                             }`}
                         >
                           {selectedDailyEntry.entry_type}
