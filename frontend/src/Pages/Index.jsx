@@ -195,9 +195,9 @@ const Index = () => {
         <div className="content-auto">
           <FeaturedBikes />
         </div>
-        <div className="content-auto">
+        {/* <div className="content-auto">
           <CustomerReviews />
-        </div>
+        </div> */}
         {/* <div className="content-auto">
           <Pricing />
         </div> */}
