@@ -1086,13 +1086,13 @@ exports.getAllBookings = async (req, res) => {
         customers: isInvestor ? null : b.customer_id,
         bikes: b.bike_id,
         totalDue: (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0),
-        paid_amount: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0) || (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z")))
+        paid_amount: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0) || b.is_extended === true || (b.extended_amount && Number(b.extended_amount) > 0) || (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z")))
           ? (Number(b.paid_amount) || 0)
           : (b.payment_status === "paid" ? ((Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)) : 0),
-        pending_amount: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0) || (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z")))
+        pending_amount: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0) || b.is_extended === true || (b.extended_amount && Number(b.extended_amount) > 0) || (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z")))
           ? Math.max(0, ((Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)) - (Number(b.paid_amount) || 0))
           : 0,
-        supports_partial_payments: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0) || (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z"))),
+        supports_partial_payments: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0) || b.is_extended === true || (b.extended_amount && Number(b.extended_amount) > 0) || (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z"))),
         // Format for display: "21/04/2026, 7:00:00 pm"
         // start_datetime_display: b.start_datetime.toLocaleString("en-IN", {
           //  
@@ -1590,9 +1590,32 @@ exports.extendBooking = async (req, res) => {
 
     // ✅ Update booking
     booking.end_datetime = newEnd;
-    booking.total_amount = (booking.total_amount || 0) + extraNum;
-    booking.extended_amount = (booking.extended_amount || 0) + extraNum;
+    // Preserving customer's prior paid balance if booking was marked 'paid' previously
+    let currentPaid = Number(booking.paid_amount || 0);
+    const prevTotalDue = (Number(booking.total_amount) || 0) + (Number(booking.extended_amount) || 0);
+    if (booking.payment_status === "paid" && (currentPaid === 0 || currentPaid < prevTotalDue)) {
+      currentPaid = prevTotalDue;
+      booking.paid_amount = currentPaid;
+    }
+
+    // Fix Bug 2: DO NOT add extraNum to booking.total_amount (only to extended_amount)
+    // to prevent double-counting since totalDue = total_amount + extended_amount
+    booking.extended_amount = (Number(booking.extended_amount) || 0) + extraNum;
     booking.is_extended = true;
+    booking.supports_partial_payments = true;
+
+    // Fix Bug 3: Re-evaluate payment_status based on updated totalDue and currentPaid
+    const newTotalDue = (Number(booking.total_amount) || 0) + (Number(booking.extended_amount) || 0);
+    if (extraNum > 0) {
+      if (currentPaid >= newTotalDue) {
+        booking.payment_status = "paid";
+      } else if (currentPaid > 0) {
+        booking.payment_status = "partial";
+      } else {
+        booking.payment_status = "pending";
+      }
+    }
+
     await booking.save();
 
     await logAudit({
@@ -1607,13 +1630,23 @@ exports.extendBooking = async (req, res) => {
         previous_end_datetime: oldEnd,
         new_end_datetime: newEnd,
         extra_amount: extraNum,
+        extended_amount: booking.extended_amount,
         total_amount: booking.total_amount,
+        total_due: (Number(booking.total_amount) || 0) + (Number(booking.extended_amount) || 0),
+        paid_amount: booking.paid_amount,
+        payment_status: booking.payment_status,
       },
     });
 
+    const finalTotalDue = (Number(booking.total_amount) || 0) + (Number(booking.extended_amount) || 0);
     res.json({
       message: "Booking extended successfully",
-      booking,
+      booking: {
+        ...booking.toObject(),
+        totalDue: finalTotalDue,
+        paid_amount: booking.paid_amount,
+        pending_amount: Math.max(0, finalTotalDue - (Number(booking.paid_amount) || 0)),
+      },
     });
   } catch (error) {
     res.status(500).json({

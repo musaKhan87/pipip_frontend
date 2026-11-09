@@ -287,6 +287,7 @@ export const isBookingNewFlow = (b) => {
   if (!b) return false;
   if (b.supports_partial_payments === true) return true;
   if (Array.isArray(b.payments) && b.payments.length > 0) return true;
+  if (b.is_extended === true || (b.extended_amount && Number(b.extended_amount) > 0)) return true;
   if (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z")) return true;
   return false;
 };
@@ -296,12 +297,15 @@ export const getBookingFinancials = (b) => {
   if (!b) return { totalDue: 0, paidAmount: 0, pendingAmount: 0, isNew: false };
   const totalDue = (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0);
   const isNew = isBookingNewFlow(b);
-  const paidAmount = isNew
+  let paidAmount = isNew
     ? (Number(b.paid_amount) || 0)
     : (b.payment_status === "paid" ? totalDue : 0);
+  if (paidAmount === 0 && b.payment_status === "paid" && totalDue > 0) {
+    paidAmount = totalDue;
+  }
   const pendingAmount = isNew
     ? Math.max(0, totalDue - paidAmount)
-    : 0;
+    : (b.payment_status === "paid" ? 0 : totalDue);
   return { totalDue, paidAmount, pendingAmount, isNew };
 };
 
@@ -5122,7 +5126,7 @@ export default function Bookings() {
                           Total Amount Paid
                         </span>
                         <p className="text-5xl font-black text-black">
-                          ₹{downloadingBooking.total_amount}
+                          ₹{(Number(downloadingBooking.total_amount || 0) + Number(downloadingBooking.extended_amount || 0)).toLocaleString()}
                         </p>
                       </div>
                       <div className="text-right">
