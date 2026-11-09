@@ -26,6 +26,7 @@ exports.getBookingStats = async (req, res) => {
     }
 
     // 2. Date filtering logic
+    let expenseDateRange = null;
     if (startDate && endDate) {
       const start = new Date(startDate);
       start.setHours(0, 0, 0, 0);
@@ -34,20 +35,22 @@ exports.getBookingStats = async (req, res) => {
       end.setHours(23, 59, 59, 999);
 
       query.start_datetime = { $gte: start, $lte: end };
+      expenseDateRange = { $gte: start, $lte: end };
     } else if (period !== "all") {
       let start, end;
       const now = new Date();
-      if (period === "today") {
+      if (period === "today" || period === "day") {
         start = startOfDay(now);
         end = endOfDay(now);
-      } else if (period === "week") {
-        start = startOfWeek(now);
-        end = endOfWeek(now);
-      } else if (period === "month") {
+      } else if (period === "week" || period === "weekly") {
+        start = startOfWeek(now, { weekStartsOn: 1 });
+        end = endOfWeek(now, { weekStartsOn: 1 });
+      } else if (period === "month" || period === "monthly") {
         start = startOfMonth(now);
         end = endOfMonth(now);
       }
       query.start_datetime = { $gte: start, $lte: end };
+      expenseDateRange = { $gte: start, $lte: end };
     }
 
     // 3. Unified Area Scope (Super Admin Selector & Manager/Staff Access Control)
@@ -77,10 +80,23 @@ exports.getBookingStats = async (req, res) => {
       }).select("_id").lean();
       const userIdsInArea = areaUsers.map((u) => u._id);
 
-      expenseFilter.$or = [
+      const areaConditions = [
         { area_id: { $in: scope } },
         { created_by: { $in: [...userIdsInArea, req.user._id] } }
       ];
+
+      if (expenseDateRange) {
+        expenseFilter = {
+          $and: [
+            { expense_date: expenseDateRange },
+            { $or: areaConditions }
+          ]
+        };
+      } else {
+        expenseFilter.$or = areaConditions;
+      }
+    } else if (expenseDateRange) {
+      expenseFilter.expense_date = expenseDateRange;
     }
 
     const bookings = await Booking.find(query)

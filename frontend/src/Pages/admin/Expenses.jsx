@@ -25,7 +25,7 @@ import {
   Wrench,
   MapPin,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isToday, isThisWeek, isThisMonth } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "../../components/ui/button";
@@ -139,6 +139,7 @@ export default function Expenses() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [remainingInvoices, setRemainingInvoices] = useState([]);
 
+  const [expensePeriod, setExpensePeriod] = useState("all"); // "day" | "week" | "month" | "all"
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 24;
 
@@ -146,8 +147,58 @@ export default function Expenses() {
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
 
-  const totalPages = Math.ceil((expenses?.length || 0) / ITEMS_PER_PAGE) || 1;
-  const paginatedExpenses = expenses?.slice(
+  // Period calculations for total expense calculation
+  const todayExpenses = (expenses || []).filter((e) => {
+    try {
+      return isToday(new Date(e.expense_date));
+    } catch {
+      return false;
+    }
+  });
+
+  const thisWeekExpenses = (expenses || []).filter((e) => {
+    try {
+      return isThisWeek(new Date(e.expense_date), { weekStartsOn: 1 });
+    } catch {
+      return false;
+    }
+  });
+
+  const thisMonthExpenses = (expenses || []).filter((e) => {
+    try {
+      return isThisMonth(new Date(e.expense_date));
+    } catch {
+      return false;
+    }
+  });
+
+  const todayTotal = todayExpenses.reduce((sum, e) => sum + (Number(e.expense_amount) || 0), 0);
+  const thisWeekTotal = thisWeekExpenses.reduce((sum, e) => sum + (Number(e.expense_amount) || 0), 0);
+  const thisMonthTotal = thisMonthExpenses.reduce((sum, e) => sum + (Number(e.expense_amount) || 0), 0);
+  const allTimeTotal = (expenses || []).reduce((sum, e) => sum + (Number(e.expense_amount) || 0), 0);
+
+  // Filtered by selected period
+  const periodFilteredExpenses = (expenses || []).filter((e) => {
+    if (expensePeriod === "day" || expensePeriod === "today") {
+      try { return isToday(new Date(e.expense_date)); } catch { return false; }
+    }
+    if (expensePeriod === "week" || expensePeriod === "weekly") {
+      try { return isThisWeek(new Date(e.expense_date), { weekStartsOn: 1 }); } catch { return false; }
+    }
+    if (expensePeriod === "month" || expensePeriod === "monthly") {
+      try { return isThisMonth(new Date(e.expense_date)); } catch { return false; }
+    }
+    return true; // "all"
+  });
+
+  const activePeriodTotal =
+    expensePeriod === "day" || expensePeriod === "today" ? todayTotal :
+    expensePeriod === "week" || expensePeriod === "weekly" ? thisWeekTotal :
+    expensePeriod === "month" || expensePeriod === "monthly" ? thisMonthTotal :
+    allTimeTotal;
+
+  const totalPages = Math.ceil((periodFilteredExpenses?.length || 0) / ITEMS_PER_PAGE) || 1;
+  const paginatedExpenses = periodFilteredExpenses?.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -666,8 +717,118 @@ export default function Expenses() {
             transition={{ duration: 0.15 }}
             className="space-y-6"
           >
-            {/* Claims Actions bar */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            {/* Top Financial Calculation Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="bg-gradient-to-br from-amber-500/15 via-card to-card border-amber-500/40 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-3 opacity-10">
+                  <Coins className="w-16 h-16 text-primary" />
+                </div>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase font-bold tracking-wider text-primary">
+                      {expensePeriod === "day"
+                        ? "Today's Expenses"
+                        : expensePeriod === "week"
+                        ? "This Week's Expenses"
+                        : expensePeriod === "month"
+                        ? "This Month's Expenses"
+                        : "Total Expenses (All Time)"}
+                    </span>
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold border-primary/30 text-primary">
+                      {expensePeriod === "all" ? "All Time" : expensePeriod}
+                    </Badge>
+                  </div>
+                  <h3 className="text-2xl font-black text-foreground mt-2">
+                    {formatCurrency(activePeriodTotal)}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {periodFilteredExpenses.length} claims in active view
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card border-border shadow-sm">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase font-bold tracking-wider text-muted-foreground">
+                      Today (Day)
+                    </span>
+                    <Clock className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <h3 className="text-2xl font-black text-foreground mt-2">
+                    {formatCurrency(todayTotal)}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {todayExpenses.length} claims recorded today
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card border-border shadow-sm">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase font-bold tracking-wider text-muted-foreground">
+                      This Week
+                    </span>
+                    <Calendar className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <h3 className="text-2xl font-black text-foreground mt-2">
+                    {formatCurrency(thisWeekTotal)}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {thisWeekExpenses.length} claims recorded this week
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card border-border shadow-sm">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase font-bold tracking-wider text-muted-foreground">
+                      This Month
+                    </span>
+                    <TrendingUp className="w-4 h-4 text-emerald-500" />
+                  </div>
+                  <h3 className="text-2xl font-black text-foreground mt-2">
+                    {formatCurrency(thisMonthTotal)}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {thisMonthExpenses.length} claims recorded this month
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Period Filter Buttons & Actions Bar */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              {/* Period Filter Buttons */}
+              <div className="flex flex-wrap items-center gap-1.5 p-1 bg-muted/60 border border-border rounded-xl">
+                {[
+                  { id: "day", label: "Today (Day)", icon: Clock },
+                  { id: "week", label: "This Week", icon: Calendar },
+                  { id: "month", label: "This Month", icon: TrendingUp },
+                  { id: "all", label: "All Time", icon: Coins },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setExpensePeriod(item.id);
+                      setCurrentPage(1);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      expensePeriod === item.id
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                    }`}
+                  >
+                    <item.icon className="w-3.5 h-3.5" />
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
               <div className="relative w-full sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -900,13 +1061,14 @@ export default function Expenses() {
                 </DialogContent>
               </Dialog>
             </div>
+            </div>
 
             {/* Claims Grid Listing */}
             {isLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : expenses?.length === 0 ? (
+            ) : periodFilteredExpenses?.length === 0 ? (
               <Card className="bg-card border-border p-8 text-center text-muted-foreground">
                 <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-1">No Expenses Found</h3>
@@ -997,8 +1159,8 @@ export default function Expenses() {
                   <div className="flex items-center justify-between border-t border-border/60 pt-4 px-1">
                     <p className="text-sm text-muted-foreground">
                       Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
-                      {Math.min(currentPage * ITEMS_PER_PAGE, expenses?.length || 0)} of{" "}
-                      {expenses?.length || 0} expenses
+                      {Math.min(currentPage * ITEMS_PER_PAGE, periodFilteredExpenses?.length || 0)} of{" "}
+                      {periodFilteredExpenses?.length || 0} expenses
                     </p>
                     <div className="flex items-center gap-2">
                       <Button

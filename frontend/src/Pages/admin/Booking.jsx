@@ -1517,6 +1517,31 @@ export default function Bookings() {
     );
   }, [bookings, activeTab, debouncedSearch]);
 
+  const totalBookingsCount = filteredBookings?.length || 0;
+  const totalBookingValue = useMemo(() => {
+    return (filteredBookings || []).reduce(
+      (sum, b) => sum + (Number(b.total_amount) || 0),
+      0
+    );
+  }, [filteredBookings]);
+
+  const completedRevenue = useMemo(() => {
+    return (filteredBookings || [])
+      .filter((b) => b.status === "completed")
+      .reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+  }, [filteredBookings]);
+
+  const activeRentalsCount = useMemo(() => {
+    return (filteredBookings || []).filter((b) => b.status === "active").length;
+  }, [filteredBookings]);
+
+  const totalDeposits = useMemo(() => {
+    return (filteredBookings || []).reduce(
+      (sum, b) => sum + (Number(b.deposit_amount) || 0),
+      0
+    );
+  }, [filteredBookings]);
+
   const totalPages = Math.ceil((filteredBookings?.length || 0) / BOOKINGS_PER_PAGE) || 1;
   const paginatedBookings = useMemo(() => {
     const start = (currentPage - 1) * BOOKINGS_PER_PAGE;
@@ -3764,6 +3789,50 @@ export default function Bookings() {
             className="pl-10"
           />
         </div> */}
+
+        {/* Booking Financial & Volume Summary Strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <Card className="bg-card border-border/80 p-3.5 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Total Bookings
+            </p>
+            <p className="text-xl font-bold text-foreground mt-1">
+              {totalBookingsCount}
+            </p>
+          </Card>
+          <Card className="bg-card border-border/80 p-3.5 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Total Booking Value
+            </p>
+            <p className="text-xl font-bold text-foreground mt-1">
+              ₹{totalBookingValue.toLocaleString()}
+            </p>
+          </Card>
+          <Card className="bg-card border-border/80 p-3.5 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-500">
+              Completed Revenue
+            </p>
+            <p className="text-xl font-bold text-emerald-500 mt-1">
+              ₹{completedRevenue.toLocaleString()}
+            </p>
+          </Card>
+          <Card className="bg-card border-border/80 p-3.5 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-orange-500">
+              Active Rentals
+            </p>
+            <p className="text-xl font-bold text-orange-500 mt-1">
+              {activeRentalsCount}
+            </p>
+          </Card>
+          <Card className="bg-card border-border/80 p-3.5 shadow-sm col-span-2 sm:col-span-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Deposits Held
+            </p>
+            <p className="text-xl font-bold text-foreground mt-1">
+              ₹{totalDeposits.toLocaleString()}
+            </p>
+          </Card>
+        </div>
 
         <div className="relative w-full max-w-md touch-action-manipulation">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
