@@ -118,6 +118,20 @@
 // }
 
 // export default function Customers() {
+  const { areas, selectedAreaIds } = useAdminArea();
+
+  const getCustomerAreaName = (cust) => {
+    if (!cust) return null;
+    if (cust.area_id?.name) return cust.area_id.name;
+    const aId = typeof cust.area_id === "object" ? cust.area_id?._id : cust.area_id;
+    if (aId && areas && areas.length > 0) {
+      const match = areas.find((a) => a._id === aId || String(a._id) === String(aId));
+      if (match?.name) return match.name;
+    }
+    if (cust.area_name) return cust.area_name;
+    if (cust.address && cust.address.trim() !== "") return cust.address;
+    return null;
+  };
 //   const [isAddOpen, setIsAddOpen] = useState(false);
 //   const [viewingCustomer, setViewingCustomer] = useState(null);
 //   const [formData, setFormData] = useState(initialFormData);
@@ -482,6 +496,7 @@ import {
 } from "../../components/ui/tabs";
 import { ScrollArea } from "../../components/ui/scroll-area";
 import { useAuth } from "../../lib/AuthProvider";
+import { useAdminArea } from "../../lib/AreaContext";
 
 const initialFormData = {
   name: "",
@@ -663,19 +678,39 @@ export default function Customers() {
                   onClick={() => setViewingCustomer(customer)}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-full">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2 bg-primary/10 rounded-full shrink-0">
                           <User className="w-5 h-5 text-primary" />
                         </div>
-                        <div>
-                          <h3 className="font-semibold">{customer.name}</h3>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold truncate">{customer.name}</h3>
                           <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <Phone className="w-3 h-3" />
-                            {customer.phone}
+                            <Phone className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{customer.phone}</span>
                           </div>
                         </div>
                       </div>
+
+                      {/* Area / Hub Badge with Dynamic Multi-Area Highlight */}
+                      {(() => {
+                        const areaName = getCustomerAreaName(customer);
+                        if (!areaName) return null;
+                        const isMultiArea = selectedAreaIds && selectedAreaIds.length > 1;
+                        return (
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] font-semibold gap-1 px-2.5 py-0.5 rounded-full shadow-sm shrink-0 transition-all ${
+                              isMultiArea
+                                ? "bg-amber-500/25 text-amber-300 border-amber-500/70 ring-2 ring-amber-500/40 font-bold"
+                                : "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                            }`}
+                          >
+                            <MapPin className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                            <span className="truncate max-w-[100px] sm:max-w-[130px]">{areaName}</span>
+                          </Badge>
+                        );
+                      })()}
                     </div>
 
                     {customer.email && (
@@ -808,12 +843,30 @@ export default function Customers() {
                     )}
 
                     <div className="flex items-center gap-3 p-3 bg-black-50 rounded-lg">
-                      <Phone className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-xs text-gray-500">Phone</p>
-                        <p className="font-medium">{viewingCustomer.phone}</p>
+                        <Phone className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <p className="text-xs text-gray-500">Phone</p>
+                          <p className="font-medium">{viewingCustomer.phone}</p>
+                        </div>
                       </div>
-                    </div>
+
+                      {/* Customer Hub / Operating Area in Dialog */}
+                      {(() => {
+                        const areaName = getCustomerAreaName(viewingCustomer);
+                        if (!areaName) return null;
+                        return (
+                          <div className="flex items-center gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                            <MapPin className="w-5 h-5 text-amber-500 shrink-0" />
+                            <div>
+                              <p className="text-xs text-amber-400 font-medium">Operating Hub / Area</p>
+                              <p className="font-semibold text-foreground">
+                                {areaName}
+                                {viewingCustomer.area_id?.city ? ` (${viewingCustomer.area_id.city})` : ""}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                     {viewingCustomer.address && (
                       <div className="flex items-center gap-3 p-3 bg-black-50 rounded-lg">

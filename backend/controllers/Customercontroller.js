@@ -101,8 +101,48 @@ exports.getCustomer = async (req, res) => {
 
     const query = andConditions.length > 0 ? { $and: andConditions } : {};
     const customers = await Customer.find(query)
+      .populate("area_id", "name city")
       .sort({ createdAt: -1 })
       .lean();
+
+    // For customers without direct area_id, resolve from their latest booking's bike
+    const customersWithoutArea = customers.filter((c) => !c.area_id);
+    if (customersWithoutArea.length > 0) {
+      const custIds = customersWithoutArea.map((c) => c._id);
+      const recentBookings = await Booking.find({ customer_id: { $in: custIds } })
+        .sort({ createdAt: -1 })
+        .populate({
+          path: "bike_id",
+          select: "area_id",
+          populate: { path: "area_id", select: "name city" },
+        })
+        .populate({
+          path: "cluster_id",
+          select: "area_id",
+          populate: { path: "area_id", select: "name city" },
+        })
+        .lean();
+
+      const custAreaMap = new Map();
+      for (const b of recentBookings) {
+        const cId = b.customer_id?.toString();
+        if (cId && !custAreaMap.has(cId)) {
+          const areaObj = b.bike_id?.area_id || b.cluster_id?.area_id;
+          if (areaObj) {
+            custAreaMap.set(cId, areaObj);
+          }
+        }
+      }
+
+      customers.forEach((c) => {
+        if (!c.area_id) {
+          const resolved = custAreaMap.get(c._id.toString());
+          if (resolved) {
+            c.area_id = resolved;
+          }
+        }
+      });
+    }
 
     res.json(customers);
   } catch (error) {

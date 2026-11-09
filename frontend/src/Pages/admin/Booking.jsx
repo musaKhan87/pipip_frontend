@@ -69,6 +69,7 @@ import { Badge } from "../../components/ui/badge";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useAuth } from "../../lib/AuthProvider";
+import { useAdminArea } from "../../lib/AreaContext";
 import { useEffect } from "react";
 import { useBikeAvailability } from "../../hooks/useBikeAvailability";
 import * as XLSX from "xlsx";
@@ -278,6 +279,27 @@ const roundToHour = (dateTimeStr) => {
 };
 
 export default function Bookings() {
+  const { areas, selectedAreaIds } = useAdminArea();
+
+  const getBookingAreaName = (booking) => {
+    if (!booking) return null;
+    if (booking.bike_id?.area_id?.name) return booking.bike_id.area_id.name;
+    if (booking.cluster_id?.area_id?.name) return booking.cluster_id.area_id.name;
+    const bId = booking.bike_id?._id || booking.bike_id;
+    if (bId && bikes && bikes.length > 0) {
+      const matchBike = bikes.find((b) => b._id === bId || String(b._id) === String(bId));
+      if (matchBike?.area_id?.name) return matchBike.area_id.name;
+      const aId = matchBike?.area_id?._id || matchBike?.area_id;
+      if (aId && areas && areas.length > 0) {
+        const matchArea = areas.find((a) => a._id === aId || String(a._id) === String(aId));
+        if (matchArea?.name) return matchArea.name;
+      }
+    }
+    if (booking.customer_location && booking.customer_location.trim() !== "") {
+      return booking.customer_location;
+    }
+    return null;
+  };
   const [isOpen, setIsOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
@@ -3818,7 +3840,27 @@ export default function Bookings() {
                 >
                   <CardContent className="p-0">
                     <div className="flex items-center justify-between px-4 py-2 bg-muted/30 border-b border-border/50">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Area / Hub Badge with Dynamic Multi-Area Highlight */}
+                        {(() => {
+                          const areaName = getBookingAreaName(booking);
+                          if (!areaName) return null;
+                          const isMultiArea = selectedAreaIds && selectedAreaIds.length > 1;
+                          return (
+                            <Badge
+                              variant="outline"
+                              className={`text-[11px] font-semibold gap-1 px-2.5 py-0.5 rounded-full shadow-sm transition-all ${
+                                isMultiArea
+                                  ? "bg-amber-500/25 text-amber-300 border-amber-500/70 ring-2 ring-amber-500/40 font-bold"
+                                  : "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                              }`}
+                            >
+                              <MapPin className="w-3 h-3 text-amber-400 shrink-0" />
+                              <span>{areaName}</span>
+                            </Badge>
+                          );
+                        })()}
+
                         <Badge
                           className={`${sourceColors[booking.booking_source] || "bg-muted text-muted-foreground"} border text-[11px] gap-1`}
                         >
@@ -3911,9 +3953,19 @@ export default function Bookings() {
                             )}
 
                             <p className="text-xs text-muted-foreground">
-                              {booking.bikes?.number_plate ||
-                                (booking.cluster_id ? "Not Assigned" : "—")}
-                            </p>
+                                {booking.bikes?.number_plate ||
+                                  (booking.cluster_id ? "Not Assigned" : "—")}
+                              </p>
+                              {(() => {
+                                const areaName = getBookingAreaName(booking);
+                                if (!areaName) return null;
+                                return (
+                                  <p className="text-[11px] text-amber-400 flex items-center gap-1 font-medium mt-0.5">
+                                    <MapPin className="w-2.5 h-2.5 shrink-0 text-amber-400" />
+                                    <span className="truncate">{areaName}</span>
+                                  </p>
+                                );
+                              })()}
                           </div>
 
                           <div className="space-y-0.5">

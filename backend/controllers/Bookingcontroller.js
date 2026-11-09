@@ -981,8 +981,16 @@ exports.getAllBookings = async (req, res) => {
 
     let query = Booking.find(filter)
       .populate("customer_id", isInvestor ? "" : "name phone email")
-      .populate("bike_id", "bike_name model number_plate bike_owner")
-      .populate("cluster_id")
+      .populate({
+        path: "bike_id",
+        select: "bike_name model number_plate bike_owner area_id",
+        populate: { path: "area_id", select: "name city" },
+      })
+      .populate({
+        path: "cluster_id",
+        select: "name area_id",
+        populate: { path: "area_id", select: "name city" },
+      })
       .sort({ createdAt: -1 });
 
     if (isPaginated) {
@@ -1069,8 +1077,16 @@ exports.getBookingById = async (req, res) => {
     const booking = await Booking.findById(req.params.id)
       .populate("customer_id", "name phone email")
       // .populate("bike_id", "model number_plate");
-      .populate("bike_id", "model number_plate")
-      .populate("cluster_id");
+      .populate({
+        path: "bike_id",
+        select: "model number_plate area_id",
+        populate: { path: "area_id", select: "name city" },
+      })
+      .populate({
+        path: "cluster_id",
+        select: "name area_id",
+        populate: { path: "area_id", select: "name city" },
+      });
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
