@@ -9,6 +9,7 @@ const {
   adminCreateBooking,
   extendBooking,
   assignBikeToBooking,
+  recordBookingPayment,
 } = require("../controllers/Bookingcontroller");
 const { protect, adminOnly, authorizeRoles } = require("../middleware/auth");
 const upload = require("../middleware/upload");
@@ -26,6 +27,7 @@ router.get("/:id", protect, getBookingById);
 router.put("/:id", protect, upload.single("payment_screenshot"), updateBooking);
 router.patch("/:id/status", protect, updateBookingStatus);
 router.put("/:id/assign-bike", protect, assignBikeToBooking);
+router.post("/:id/payment", protect, recordBookingPayment);
 
 // Protected: Extend Booking (Requires Authentication & Authorized Role)
 router.patch(

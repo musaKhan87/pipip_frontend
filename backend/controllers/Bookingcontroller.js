@@ -368,6 +368,17 @@ exports.createBooking = async (req, res) => {
       booking_source: "online",
       status: finalStatus,
       payment_status: finalPaymentStatus,
+      paid_amount: finalPaymentStatus === "paid" ? serverCalculatedAmount : 0,
+      supports_partial_payments: true,
+      payments: finalPaymentStatus === "paid" ? [
+        {
+          amount: serverCalculatedAmount,
+          payment_method: "online",
+          paid_at: new Date(),
+          notes: "Online Payment verified via Cashfree",
+          recorded_by: "System",
+        }
+      ] : [],
       payment_order_id: payment_order_id || null,
     };
 
@@ -672,8 +683,9 @@ exports.adminCreateBooking = async (req, res) => {
 
       vehicle_make_model,
       rental_type,
-
       total_amount: manual_total_amount,
+      paid_amount,
+      initial_paid_amount,
       deposit_amount,
 
       reference_partner_share,
@@ -843,7 +855,46 @@ exports.adminCreateBooking = async (req, res) => {
       end_datetime: end,
 
 
-      total_amount:final_total_amount,
+      total_amount: final_total_amount,
+
+      paid_amount: (() => {
+        if (paid_amount !== undefined && paid_amount !== "") return Math.max(0, Number(paid_amount) || 0);
+        if (initial_paid_amount !== undefined && initial_paid_amount !== "") return Math.max(0, Number(initial_paid_amount) || 0);
+        return final_total_amount;
+      })(),
+
+      payment_status: (() => {
+        let initialPaid = 0;
+        if (paid_amount !== undefined && paid_amount !== "") initialPaid = Math.max(0, Number(paid_amount) || 0);
+        else if (initial_paid_amount !== undefined && initial_paid_amount !== "") initialPaid = Math.max(0, Number(initial_paid_amount) || 0);
+        else initialPaid = final_total_amount;
+
+        if (initialPaid >= final_total_amount && final_total_amount > 0) return "paid";
+        if (initialPaid > 0) return "partial";
+        return "pending";
+      })(),
+
+      supports_partial_payments: true,
+
+      payments: (() => {
+        let initialPaid = 0;
+        if (paid_amount !== undefined && paid_amount !== "") initialPaid = Math.max(0, Number(paid_amount) || 0);
+        else if (initial_paid_amount !== undefined && initial_paid_amount !== "") initialPaid = Math.max(0, Number(initial_paid_amount) || 0);
+        else initialPaid = final_total_amount;
+
+        if (initialPaid > 0) {
+          return [
+            {
+              amount: initialPaid,
+              payment_method: payment_method || "cash",
+              paid_at: new Date(),
+              notes: notes || "Initial payment on creation",
+              recorded_by: req.user?.fullName || req.user?.name || "Admin",
+            }
+          ];
+        }
+        return [];
+      })(),
 
       // ✅ SAFE NUMBER CONVERSION
       deposit_amount: Number(deposit_amount) || 0,
@@ -1033,6 +1084,14 @@ exports.getAllBookings = async (req, res) => {
         ...b,
         customers: isInvestor ? null : b.customer_id,
         bikes: b.bike_id,
+        totalDue: (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0),
+        paid_amount: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0) || (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z")))
+          ? (Number(b.paid_amount) || 0)
+          : (b.payment_status === "paid" ? ((Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)) : 0),
+        pending_amount: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0) || (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z")))
+          ? Math.max(0, ((Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)) - (Number(b.paid_amount) || 0))
+          : 0,
+        supports_partial_payments: Boolean(b.supports_partial_payments === true || (Array.isArray(b.payments) && b.payments.length > 0) || (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z"))),
         // Format for display: "21/04/2026, 7:00:00 pm"
         // start_datetime_display: b.start_datetime.toLocaleString("en-IN", {
           //  
@@ -1099,10 +1158,28 @@ exports.getBookingById = async (req, res) => {
       }
     }
 
+    const bObj = booking.toObject();
+    const totalDue = (Number(bObj.total_amount) || 0) + (Number(bObj.extended_amount) || 0);
+    const isNewFlow = Boolean(
+      bObj.supports_partial_payments === true ||
+      (Array.isArray(bObj.payments) && bObj.payments.length > 0) ||
+      (bObj.createdAt && new Date(bObj.createdAt) >= new Date("2026-11-09T12:50:00.000Z"))
+    );
+    const paidAmount = isNewFlow
+      ? (Number(bObj.paid_amount) || 0)
+      : (bObj.payment_status === "paid" ? totalDue : 0);
+    const pendingAmount = isNewFlow
+      ? Math.max(0, totalDue - paidAmount)
+      : 0;
+
     res.json({
-      ...booking.toObject(),
+      ...bObj,
       customers: booking.customer_id,
       bikes: booking.bike_id,
+      totalDue,
+      paid_amount: paidAmount,
+      pending_amount: pendingAmount,
+      supports_partial_payments: isNewFlow,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -1595,5 +1672,121 @@ exports.assignBikeToBooking = async (req, res) => {
   } catch (err) {
     console.error("Assign Bike Error:", err);
     res.status(500).json({ message: err.message });
+  }
+};
+/**
+ * RECORD BOOKING PAYMENT (SPLIT / PARTIAL / FULL INSTALLMENT)
+ * POST /api/bookings/:id/payment
+ */
+exports.recordBookingPayment = async (req, res) => {
+  try {
+    const { amount, payment_method, notes } = req.body;
+    const paymentAmount = Number(amount);
+
+    if (!paymentAmount || isNaN(paymentAmount) || paymentAmount <= 0) {
+      return res.status(400).json({ message: "Payment amount must be greater than zero" });
+    }
+
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (req.user && req.user.role === "staff") {
+      const hasAccess = await checkBookingAreaAccess(booking, req.user);
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied: You do not have access to this area's bookings" });
+      }
+    }
+
+    const totalDue = (Number(booking.total_amount) || 0) + (Number(booking.extended_amount) || 0);
+    const currentPaid = Number(booking.paid_amount) || 0;
+    const remainingDue = Math.max(0, totalDue - currentPaid);
+
+    if (paymentAmount > remainingDue) {
+      return res.status(400).json({
+        message: `Payment amount (₹${paymentAmount}) cannot exceed remaining balance (₹${remainingDue})`,
+      });
+    }
+
+    const newPaidAmount = currentPaid + paymentAmount;
+    const newPaymentStatus = newPaidAmount >= totalDue ? "paid" : "partial";
+
+    if (!Array.isArray(booking.payments)) {
+      booking.payments = [];
+    }
+
+    const recordedBy = req.user?.fullName || req.user?.name || req.user?.email || "Admin";
+
+    booking.payments.push({
+      amount: paymentAmount,
+      payment_method: payment_method || "cash",
+      notes: notes || "",
+      paid_at: new Date(),
+      recorded_by: recordedBy,
+    });
+
+    booking.paid_amount = newPaidAmount;
+    booking.payment_status = newPaymentStatus;
+    booking.supports_partial_payments = true;
+    booking.updated_by_admin = true;
+
+    await booking.save();
+
+    try {
+      await logAudit({
+        action: "RECORD_BOOKING_PAYMENT",
+        severity: "info",
+        performed_by: req.user?._id || req.user?.id,
+        user_email: req.user?.email,
+        ip_address: getClientIp(req),
+        target_id: booking._id,
+        target_name: booking.customer_name,
+        details: {
+          amount: paymentAmount,
+          payment_method: payment_method || "cash",
+          notes: notes || "",
+          new_paid_total: newPaidAmount,
+          total_due: totalDue,
+          remaining_due: Math.max(0, totalDue - newPaidAmount),
+          payment_status: newPaymentStatus,
+        },
+      });
+    } catch (auditErr) {
+      console.warn("Audit log error in recordBookingPayment:", auditErr.message);
+    }
+
+    const populated = await Booking.findById(booking._id)
+      .populate("customer_id", "name phone email")
+      .populate({
+        path: "bike_id",
+        select: "bike_name model number_plate bike_owner area_id",
+        populate: { path: "area_id", select: "name city" },
+      })
+      .populate({
+        path: "cluster_id",
+        select: "name area_id",
+        populate: { path: "area_id", select: "name city" },
+      });
+
+    const bObj = populated.toObject();
+    const finalTotalDue = (Number(bObj.total_amount) || 0) + (Number(bObj.extended_amount) || 0);
+    const finalPaid = Number(bObj.paid_amount) || 0;
+
+    res.json({
+      message: "Payment recorded successfully",
+      booking: {
+        ...bObj,
+        customers: populated.customer_id,
+        bikes: populated.bike_id,
+        totalDue: finalTotalDue,
+        paid_amount: finalPaid,
+        pending_amount: Math.max(0, finalTotalDue - finalPaid),
+        supports_partial_payments: true,
+      },
+    });
+  } catch (err) {
+    console.error("Record Booking Payment Error:", err);
+    res.status(500).json({ message: err.message || "Failed to record payment" });
   }
 };

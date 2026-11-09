@@ -261,15 +261,35 @@ const bookingSchema = new mongoose.Schema(
   // PAYMENT
   payment_method: {
     type: String,
-    enum: ["online", "cash"],
+    enum: ["online", "cash", "upi", "card", "bank_transfer"],
     default: "online",
   },
 
   payment_status: {
     type: String,
-    enum: ["pending", "paid", "failed"],
+    enum: ["pending", "partial", "paid", "failed"],
     default: "pending",
   },
+
+  paid_amount: {
+    type: Number,
+    default: 0,
+  },
+
+  supports_partial_payments: {
+    type: Boolean,
+    default: false,
+  },
+
+  payments: [
+    {
+      amount: { type: Number, required: true },
+      payment_method: { type: String, default: "cash" },
+      paid_at: { type: Date, default: Date.now },
+      notes: { type: String, default: "" },
+      recorded_by: { type: String, default: "" }
+    }
+  ],
 
   payment_order_id: String,
 

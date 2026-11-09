@@ -30,6 +30,7 @@ import {
   useUpdateBooking,
   useAdminCreateBooking,
   useAssignBike,
+  useRecordPayment,
 } from "../../hooks/useBooking";
 import { useBikes } from "../../hooks/useBikes";
 import {
@@ -172,6 +173,7 @@ const emptyFormData = {
   source_name: "",
   rental_type: "daily",
   total_amount: "",
+  paid_amount: "",
   deposit_amount: "",
   reference_partner_share: "",
   provider_partner_share: "",
@@ -276,6 +278,30 @@ const roundToHour = (dateTimeStr) => {
   const f = (type) => parts.find((p) => p.type === type).value;
 
   return `${f("year")}-${f("month")}-${f("day")}T${f("hour")}:${f("minute")}`;
+};
+
+
+// 🎯 Helper to determine if booking was created under the new partial/split payments flow
+export const isBookingNewFlow = (b) => {
+  if (!b) return false;
+  if (b.supports_partial_payments === true) return true;
+  if (Array.isArray(b.payments) && b.payments.length > 0) return true;
+  if (b.createdAt && new Date(b.createdAt) >= new Date("2026-11-09T12:50:00.000Z")) return true;
+  return false;
+};
+
+// 🎯 Authoritative calculation of due, paid, and pending balances
+export const getBookingFinancials = (b) => {
+  if (!b) return { totalDue: 0, paidAmount: 0, pendingAmount: 0, isNew: false };
+  const totalDue = (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0);
+  const isNew = isBookingNewFlow(b);
+  const paidAmount = isNew
+    ? (Number(b.paid_amount) || 0)
+    : (b.payment_status === "paid" ? totalDue : 0);
+  const pendingAmount = isNew
+    ? Math.max(0, totalDue - paidAmount)
+    : 0;
+  return { totalDue, paidAmount, pendingAmount, isNew };
 };
 
 export default function Bookings() {
@@ -516,6 +542,17 @@ export default function Bookings() {
   const createCustomerMutation = useCreateCustomer();
   const adminCreateBookingMutation = useAdminCreateBooking();
   const updateCustomerMutation = useUpdateCustomer();
+  const recordPaymentMutation = useRecordPayment();
+
+  // 🎯 Payment Filter State: all | pending_due | partial | paid
+  const [paymentFilter, setPaymentFilter] = useState("all");
+
+  // 🎯 Collect Payment Modal State
+  const [collectPaymentBooking, setCollectPaymentBooking] = useState(null);
+  const [paymentAmountInput, setPaymentAmountInput] = useState("");
+  const [paymentMethodInput, setPaymentMethodInput] = useState("cash");
+  const [paymentNotesInput, setPaymentNotesInput] = useState("");
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
 
 
   const [downloadingBooking, setDownloadingBooking] = useState(null);
@@ -1500,6 +1537,18 @@ export default function Bookings() {
           return booking.status === activeTab;
         })
         ?.filter((booking) => {
+          if (paymentFilter === "all") return true;
+          const { pendingAmount, paidAmount, isNew } = getBookingFinancials(booking);
+          if (!isNew) {
+            if (paymentFilter === "paid") return booking.payment_status === "paid";
+            return false;
+          }
+          if (paymentFilter === "pending_due") return pendingAmount > 0 && booking.status !== "cancelled";
+          if (paymentFilter === "partial") return booking.payment_status === "partial" || (paidAmount > 0 && pendingAmount > 0);
+          if (paymentFilter === "paid") return booking.payment_status === "paid" || (pendingAmount === 0 && paidAmount > 0);
+          return true;
+        })
+        ?.filter((booking) => {
           if (!debouncedSearch) return true;
 
           const query = debouncedSearch.toLowerCase().trim();
@@ -1515,7 +1564,15 @@ export default function Bookings() {
           );
         }) || []
     );
-  }, [bookings, activeTab, debouncedSearch]);
+  }, [bookings, activeTab, debouncedSearch, paymentFilter]);
+
+  // 🎯 Pending dues count for badge indicator (only for new flow bookings)
+  const pendingDuesCount = useMemo(() => {
+    return (bookings || []).filter((b) => {
+      const { pendingAmount, isNew } = getBookingFinancials(b);
+      return isNew && pendingAmount > 0 && b.status !== "cancelled";
+    }).length;
+  }, [bookings]);
 
   const totalPages = Math.ceil((filteredBookings?.length || 0) / BOOKINGS_PER_PAGE) || 1;
   const paginatedBookings = useMemo(() => {
@@ -2014,7 +2071,13 @@ export default function Bookings() {
       bookingData.append("source_name", formData.source_name || "Direct");
       bookingData.append("deposit_amount", formData.deposit_amount || 0);
       bookingData.append("total_amount", formData.total_amount || 0);
-      bookingData.append("payment_method", "cash");
+      bookingData.append(
+        "paid_amount",
+        formData.paid_amount !== undefined && formData.paid_amount !== ""
+          ? formData.paid_amount
+          : (formData.total_amount || 0)
+      );
+      bookingData.append("payment_method", formData.payment_method || "cash");
       bookingData.append(
         "provider_partner_share",
         formData.provider_partner_share || 0,
@@ -2934,6 +2997,53 @@ export default function Bookings() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Paid Amount (₹)</Label>
+          <Input
+            type="number"
+            min="0"
+            placeholder={data.total_amount ? `Default: ₹${data.total_amount}` : "0"}
+            value={data.paid_amount ?? ""}
+            onChange={(e) => setData({ ...data, paid_amount: e.target.value })}
+          />
+          {data.total_amount && (
+            <div className="text-[11px] text-muted-foreground flex items-center justify-between">
+              <span>
+                Remaining Due:{" "}
+                <span className={Number(data.total_amount || 0) - Number(data.paid_amount !== undefined && data.paid_amount !== "" ? data.paid_amount : data.total_amount || 0) > 0 ? "font-bold text-amber-500" : "font-bold text-emerald-500"}>
+                  ₹{Math.max(0, Number(data.total_amount || 0) - Number(data.paid_amount !== undefined && data.paid_amount !== "" ? data.paid_amount : data.total_amount || 0)).toLocaleString()}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="text-[11px] text-primary hover:underline font-semibold cursor-pointer"
+                onClick={() => setData({ ...data, paid_amount: data.total_amount })}
+              >
+                Mark Full
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label>Payment Mode</Label>
+          <Select
+            value={data.payment_method || "cash"}
+            onValueChange={(v) => setData({ ...data, payment_method: v })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cash">Cash</SelectItem>
+              <SelectItem value="upi">UPI / Online</SelectItem>
+              <SelectItem value="card">Card</SelectItem>
+              <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
           Lead Source
@@ -3690,6 +3800,181 @@ export default function Bookings() {
       </Dialog>
 
 
+      {/* 💳 COLLECT PAYMENT DIALOG */}
+      <Dialog
+        open={!!collectPaymentBooking}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCollectPaymentBooking(null);
+            setPaymentAmountInput("");
+            setPaymentMethodInput("cash");
+            setPaymentNotesInput("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md w-full bg-card border-border shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
+              <CreditCard className="w-5 h-5 text-primary" />
+              Collect Payment
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Record an installment for booking #{collectPaymentBooking?._id?.slice(-6).toUpperCase()} (
+              {collectPaymentBooking?.customer_name || collectPaymentBooking?.customers?.name || "Customer"})
+            </DialogDescription>
+          </DialogHeader>
+
+          {collectPaymentBooking && (() => {
+            const { totalDue, paidAmount, pendingAmount } = getBookingFinancials(collectPaymentBooking);
+            return (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const amt = Number(paymentAmountInput);
+                  if (!amt || amt <= 0) {
+                    toast.error("Please enter a valid payment amount greater than 0");
+                    return;
+                  }
+                  if (amt > pendingAmount) {
+                    toast.error(`Amount cannot exceed remaining pending balance of ₹${pendingAmount}`);
+                    return;
+                  }
+                  try {
+                    setIsSubmittingPayment(true);
+                    await recordPaymentMutation.mutateAsync({
+                      bookingId: collectPaymentBooking._id,
+                      paymentData: {
+                        amount: amt,
+                        payment_method: paymentMethodInput,
+                        notes: paymentNotesInput,
+                      },
+                    });
+                    setCollectPaymentBooking(null);
+                    setPaymentAmountInput("");
+                    setPaymentNotesInput("");
+                  } catch (err) {
+                    // handled by hook
+                  } finally {
+                    setIsSubmittingPayment(false);
+                  }
+                }}
+                className="space-y-4 pt-2"
+              >
+                {/* Financial Summary Strip */}
+                <div className="grid grid-cols-3 gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/80">
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase font-semibold text-muted-foreground">Total</p>
+                    <p className="text-sm font-bold text-foreground mt-0.5">₹{totalDue.toLocaleString()}</p>
+                  </div>
+                  <div className="text-center border-x border-border/60">
+                    <p className="text-[10px] uppercase font-semibold text-emerald-500">Paid</p>
+                    <p className="text-sm font-bold text-emerald-500 mt-0.5">₹{paidAmount.toLocaleString()}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase font-semibold text-amber-500">Due</p>
+                    <p className="text-sm font-bold text-amber-500 mt-0.5">₹{pendingAmount.toLocaleString()}</p>
+                  </div>
+                </div>
+
+                {/* Amount Input & Shortcut Button */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">Payment Amount (₹) *</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setPaymentAmountInput(String(pendingAmount))}
+                      className="h-6 px-2 text-[11px] font-semibold text-primary hover:bg-primary/10 cursor-pointer"
+                    >
+                      Pay Full Remaining (₹{pendingAmount.toLocaleString()})
+                    </Button>
+                  </div>
+                  <Input
+                    type="number"
+                    min="1"
+                    max={pendingAmount}
+                    step="any"
+                    placeholder={`Enter amount up to ₹${pendingAmount}`}
+                    value={paymentAmountInput}
+                    onChange={(e) => setPaymentAmountInput(e.target.value)}
+                    required
+                    className="h-10 text-sm font-medium"
+                  />
+                  {paymentAmountInput && Number(paymentAmountInput) > 0 && (
+                    <p className="text-[11px] text-muted-foreground flex items-center justify-between">
+                      <span>
+                        Balance After Payment:{" "}
+                        <span className="font-semibold text-foreground">
+                          ₹{Math.max(0, pendingAmount - Number(paymentAmountInput)).toLocaleString()}
+                        </span>
+                      </span>
+                      <span className={pendingAmount - Number(paymentAmountInput) <= 0 ? "text-emerald-500 font-bold" : "text-amber-500 font-medium"}>
+                        {pendingAmount - Number(paymentAmountInput) <= 0 ? "✓ Full Settlement" : "Partial Installment"}
+                      </span>
+                    </p>
+                  )}
+                </div>
+
+                {/* Payment Method Selector */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Payment Method</Label>
+                  <Select value={paymentMethodInput} onValueChange={setPaymentMethodInput}>
+                    <SelectTrigger className="h-10 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="upi">UPI / Online</SelectItem>
+                      <SelectItem value="card">Debit / Credit Card</SelectItem>
+                      <SelectItem value="bank_transfer">Bank Transfer / IMPS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Notes Input */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Notes / Transaction Ref (Optional)</Label>
+                  <Input
+                    placeholder="e.g. GPay ref #1234, cash collected at hub..."
+                    value={paymentNotesInput}
+                    onChange={(e) => setPaymentNotesInput(e.target.value)}
+                    className="h-9 text-xs"
+                  />
+                </div>
+
+                <DialogFooter className="pt-2 gap-2 sm:gap-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCollectPaymentBooking(null)}
+                    disabled={isSubmittingPayment}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={isSubmittingPayment || !paymentAmountInput || Number(paymentAmountInput) <= 0}
+                    className="gradient-sunset text-white font-semibold"
+                  >
+                    {isSubmittingPayment ? (
+                      <>
+                        <span className="animate-spin mr-1.5 inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full" />
+                        Recording...
+                      </>
+                    ) : (
+                      `Collect ₹${Number(paymentAmountInput || 0).toLocaleString()}`
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
       <Dialog
         open={!!assignDialog}
         onOpenChange={(open) => !open && setAssignDialog(null)}
@@ -3765,14 +4050,48 @@ export default function Bookings() {
           />
         </div> */}
 
-        <div className="relative w-full max-w-md touch-action-manipulation">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          <Input
-            placeholder="Search by customer, bike, plate..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pointer-events-auto"
-          />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative w-full max-w-md touch-action-manipulation">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search by customer, bike, plate..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pointer-events-auto"
+            />
+          </div>
+
+          {/* 🎯 Payment Filter Dropdown & Pending Due Quick Toggle Badge */}
+          <div className="flex items-center gap-2 self-start sm:self-auto overflow-x-auto">
+            {pendingDuesCount > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPaymentFilter(paymentFilter === "pending_due" ? "all" : "pending_due")}
+                className={`h-9 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                  paymentFilter === "pending_due"
+                    ? "bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-500/30 font-bold"
+                    : "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
+                }`}
+              >
+                <span>⚠️ {pendingDuesCount} Due</span>
+              </Button>
+            )}
+
+            <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+              <SelectTrigger className="h-9 w-38 sm:w-44 text-xs font-medium bg-card border-border shrink-0">
+                <CreditCard className="w-3.5 h-3.5 mr-1 text-muted-foreground" />
+                <SelectValue placeholder="Payment Filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Payments</SelectItem>
+                <SelectItem value="pending_due">Pending Due ({pendingDuesCount})</SelectItem>
+                <SelectItem value="partial">Partially Paid</SelectItem>
+                <SelectItem value="paid">Fully Paid</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <Tabs
           value={activeTab}
@@ -3890,16 +4209,48 @@ export default function Bookings() {
                           </Badge>
                         )}
 
-                        <Badge
-                          className={`${paymentStatusColors[booking.payment_status || "pending"]} border text-[11px] gap-1`}
-                        >
-                          <CreditCard className="w-3 h-3" />
-                          {booking.payment_status === "paid"
-                            ? "Paid"
-                            : booking.payment_status === "failed"
-                              ? "Failed"
-                              : "Pending"}
-                        </Badge>
+                        {(() => {
+                          const { isNew, pendingAmount, paidAmount } = getBookingFinancials(booking);
+                          if (!isNew) {
+                            return (
+                              <Badge
+                                className={`${paymentStatusColors[booking.payment_status || "pending"]} border text-[11px] gap-1`}
+                              >
+                                <CreditCard className="w-3 h-3" />
+                                {booking.payment_status === "paid"
+                                  ? "Paid"
+                                  : booking.payment_status === "failed"
+                                    ? "Failed"
+                                    : "Pending"}
+                              </Badge>
+                            );
+                          }
+
+                          if (pendingAmount > 0) {
+                            return (
+                              <Badge
+                                className="bg-amber-500/15 text-amber-400 border-amber-500/40 text-[11px] gap-1 font-semibold"
+                              >
+                                <CreditCard className="w-3 h-3" />
+                                <span className="hidden sm:inline">
+                                  {paidAmount > 0 ? "Partial · " : "Pending · "}₹{pendingAmount.toLocaleString()} Due
+                                </span>
+                                <span className="inline sm:hidden">
+                                  ₹{pendingAmount.toLocaleString()} Due
+                                </span>
+                              </Badge>
+                            );
+                          }
+
+                          return (
+                            <Badge
+                              className="bg-emerald-500/15 text-emerald-400 border-emerald-500/40 text-[11px] gap-1 font-semibold"
+                            >
+                              <CreditCard className="w-3 h-3" />
+                              Paid
+                            </Badge>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -4043,175 +4394,234 @@ export default function Bookings() {
                             <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                               Amount
                             </p>
-                            {/* <p className="text-lg font-bold text-foreground flex items-center gap-1">
-                              <IndianRupee className="w-4 h-4" />
-                              {booking.total_amount?.toLocaleString() || 0}
-                            </p> */}
-                            <p className="text-lg font-bold">
-                              ₹ {booking.total_amount}
-                            </p>
+                            {(() => {
+                              const { isNew, totalDue, paidAmount, pendingAmount } = getBookingFinancials(booking);
+                              if (!isNew) {
+                                return (
+                                  <>
+                                    <p className="text-lg font-bold">
+                                      ₹ {booking.total_amount}
+                                    </p>
+                                    {booking.extended_amount > 0 && (
+                                      <p className="text-sm text-blue-400">
+                                        +₹ {booking.extended_amount} Extended
+                                      </p>
+                                    )}
+                                    {(booking.deposit_amount ?? 0) > 0 && (
+                                      <p className="text-xs text-muted-foreground">
+                                        Dep: ₹{booking.deposit_amount?.toLocaleString()}
+                                      </p>
+                                    )}
+                                  </>
+                                );
+                              }
 
-                            {booking.extended_amount > 0 && (
-                              <p className="text-sm text-blue-400">
-                                +₹ {booking.extended_amount} Extended
-                              </p>
-                            )}
-                            {(booking.deposit_amount ?? 0) > 0 && (
-                              <p className="text-xs text-muted-foreground">
-                                Dep: ₹{booking.deposit_amount?.toLocaleString()}
-                              </p>
-                            )}
+                              return (
+                                <>
+                                  <p className="text-lg font-bold">
+                                    ₹ {totalDue || booking.total_amount}
+                                  </p>
+                                  {pendingAmount > 0 ? (
+                                    <div className="space-y-0.5">
+                                      <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                        ⚠️ Due: ₹{pendingAmount.toLocaleString()}
+                                      </span>
+                                      <p className="text-[11px] text-muted-foreground">
+                                        Paid: ₹{paidAmount.toLocaleString()}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs font-semibold text-emerald-400">
+                                      ✓ Fully Paid
+                                    </p>
+                                  )}
+                                  {booking.extended_amount > 0 && (
+                                    <p className="text-[11px] text-blue-400">
+                                      +₹ {booking.extended_amount} Ext.
+                                    </p>
+                                  )}
+                                  {(booking.deposit_amount ?? 0) > 0 && (
+                                    <p className="text-[11px] text-muted-foreground">
+                                      Dep: ₹{booking.deposit_amount?.toLocaleString()}
+                                    </p>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
 
-                        {/* <div className="flex flex-row lg:flex-col items-center lg:items-end gap-2 shrink-0"> */}
-                        <div className="flex flex-wrap lg:flex-col items-center lg:items-end gap-2 shrink-0 w-full lg:w-auto justify-start sm:justify-end">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() =>
-                              setExpandedBookingId(
-                                isExpanded ? null : booking._id,
-                              )
-                            }
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            {isExpanded ? (
-                              <ChevronUp className="w-4 h-4 mr-1" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4 mr-1" />
-                            )}
-                            {isExpanded ? "Collapse" : "View"}
-                          </Button>
+                        {(() => {
+                          const { isNew, pendingAmount } = getBookingFinancials(booking);
+                          const canCollectPayment = isNew && pendingAmount > 0 && booking.status !== "cancelled";
+                          const canMarkPaidOld = !isNew && booking.payment_status !== "paid" && booking.status !== "cancelled";
 
-                          {/* ================= ✅ DIRECT EXPORT LINK INITIATION BUTTON ================= */}
-
-                          {/* ========================================================================= */}
-
-                          {/* <Button
-    size="sm"
-    variant="outline"
-    disabled={isGeneratingBill} // Disables clicking while downloading
-    onClick={() => setDownloadingBooking(booking)}
-    className="text-emerald-600 hover:bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:hover:bg-emerald-950/30 dark:border-emerald-800"
-  >
-    {isGeneratingBill && downloadingBooking?._id === booking._id ? (
-      <>
-        <span className="animate-spin mr-1 inline-block w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full dark:border-emerald-400"></span>
-        Saving...
-      </>
-    ) : (
-      <>
-        <Download className="w-4 h-4 mr-1" />
-        Bill
-      </>
-    )}
-  </Button> */}
-
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={isGeneratingBill} // Disables clicking while downloading
-                            onClick={() => handleBillClick(booking)}
-                            className="text-emerald-600 hover:bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:hover:bg-emerald-950/30 dark:border-emerald-800"
-                          >
-                            {isGeneratingBill &&
-                              fetchingBillId === booking._id ? ( // 👈 Updated comparison check
-                              <>
-                                <span className="animate-spin mr-1 inline-block w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full dark:border-emerald-400"></span>
-                                Saving...
-                              </>
-                            ) : (
-                              <>
-                                <Download className="w-4 h-4 mr-1" />
-                                Bill
-                              </>
-                            )}
-                          </Button>
-
-                          {(booking.status === "active" ||
-                            booking.status === "confirmed" ||
-                            booking.status === "pending") && (
+                          const utilityButtons = (
+                            <>
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleEditBooking(booking)}
-                                className="text-blue-600 hover:bg-blue-50 border-blue-200 dark:hover:bg-blue-500/10"
+                                disabled={isGeneratingBill}
+                                onClick={() => handleBillClick(booking)}
+                                className="text-emerald-600 hover:bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:hover:bg-emerald-950/30 dark:border-emerald-800"
                               >
-                                <Edit className="w-4 h-4 mr-1" /> Edit
+                                {isGeneratingBill && fetchingBillId === booking._id ? (
+                                  <>
+                                    <span className="animate-spin mr-1 inline-block w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full dark:border-emerald-400"></span>
+                                    Saving...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Download className="w-4 h-4 mr-1" />
+                                    Bill
+                                  </>
+                                )}
                               </Button>
-                            )}
 
-                          {(booking.status === "active" ||
-                            booking.status === "confirmed" ||
-                            booking.status === "pending") && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-blue-500 text-blue-500 hover:bg-blue-500/10"
-                                onClick={() => handleOpenExtend(booking)}
-                              >
-                                <Clock className="w-4 h-4 mr-1" /> Extend
-                              </Button>
-                            )}
+                              {(booking.status === "active" ||
+                                booking.status === "confirmed" ||
+                                booking.status === "pending") && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditBooking(booking)}
+                                  className="text-blue-600 hover:bg-blue-50 border-blue-200 dark:hover:bg-blue-500/10"
+                                >
+                                  <Edit className="w-4 h-4 mr-1" /> Edit
+                                </Button>
+                              )}
 
+                              {(booking.status === "active" ||
+                                booking.status === "confirmed" ||
+                                booking.status === "pending") && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-blue-500 text-blue-500 hover:bg-blue-500/10"
+                                  onClick={() => handleOpenExtend(booking)}
+                                >
+                                  <Clock className="w-4 h-4 mr-1" /> Extend
+                                </Button>
+                              )}
 
-
-                          {booking.payment_status !== "paid" &&
-                            booking.status !== "cancelled" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleMarkPaid(booking._id)}
-                                className="text-green-600 hover:bg-green-50 border-green-200 dark:hover:bg-green-500/10"
-                              >
-                                {/* <CreditCard className="w-4 h-4 mr-1" /> Paid */}
-                                <CreditCard className="w-4 h-4" />
-                                <span className="ml-1 hidden sm:inline">
+                              {canMarkPaidOld && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleMarkPaid(booking._id)}
+                                  className="text-green-600 hover:bg-green-50 border-green-200 dark:hover:bg-green-500/10"
+                                >
+                                  <CreditCard className="w-4 h-4 mr-1" />
                                   Paid
-                                </span>
-                              </Button>
-                            )}
+                                </Button>
+                              )}
 
-                          {!booking.bike_id && booking.cluster_id && (
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => setAssignDialog(booking)}
-                              className="gradient-sunset text-primary-foreground font-semibold"
-                            >
-                              <Bike className="w-4 h-4 mr-1" />
-                              <span className="hidden sm:inline">
-                                Assign Bike
-                              </span>
-                            </Button>
-                          )}
+                              {statusActions[booking.status]
+                                ?.filter((a) => a.next === "cancelled")
+                                .map((action) => (
+                                  <Button
+                                    key={action.next}
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleStatusUpdate(booking._id, action.next)}
+                                    className="text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
+                                  >
+                                    {action.icon}
+                                    <span className="ml-1 hidden sm:inline">{action.label}</span>
+                                  </Button>
+                                ))}
+                            </>
+                          );
 
-                          {statusActions[booking.status]?.map((action) => (
-                            <Button
-                              key={action.next}
-                              size="sm"
-                              variant={
-                                action.next === "cancelled"
-                                  ? "outline"
-                                  : "default"
-                              }
-                              onClick={() =>
-                                handleStatusUpdate(booking._id, action.next)
-                              }
-                              className={
-                                action.next === "cancelled"
-                                  ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
-                                  : "gradient-sunset"
-                              }
-                            >
-                              {action.icon}
-                              <span className="ml-1 hidden sm:inline">
-                                {action.label}
-                              </span>
-                            </Button>
-                          ))}
-                        </div>
+                          const primaryButtons = (
+                            <>
+                              {canCollectPayment && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setCollectPaymentBooking(booking);
+                                    setPaymentAmountInput(String(pendingAmount));
+                                  }}
+                                  className="bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border-amber-500/40 font-semibold"
+                                >
+                                  <CreditCard className="w-4 h-4 mr-1 text-amber-400" />
+                                  <span>Collect ₹{pendingAmount.toLocaleString()}</span>
+                                </Button>
+                              )}
+
+                              {!booking.bike_id && booking.cluster_id && (
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => setAssignDialog(booking)}
+                                  className="gradient-sunset text-primary-foreground font-semibold"
+                                >
+                                  <Bike className="w-4 h-4 mr-1" />
+                                  <span>Assign Bike</span>
+                                </Button>
+                              )}
+
+                              {statusActions[booking.status]
+                                ?.filter((a) => a.next !== "cancelled")
+                                .map((action) => (
+                                  <Button
+                                    key={action.next}
+                                    size="sm"
+                                    variant="default"
+                                    onClick={() => handleStatusUpdate(booking._id, action.next)}
+                                    className="gradient-sunset text-primary-foreground font-semibold"
+                                  >
+                                    {action.icon}
+                                    <span className="ml-1">{action.label}</span>
+                                  </Button>
+                                ))}
+                            </>
+                          );
+
+                          return (
+                            <div className="w-full lg:w-auto shrink-0 space-y-2">
+                              {/* 💻 Desktop: Single cohesive horizontal bar */}
+                              <div className="hidden sm:flex items-center justify-end gap-2 flex-wrap">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setExpandedBookingId(isExpanded ? null : booking._id)}
+                                  className="text-muted-foreground hover:text-foreground"
+                                >
+                                  {isExpanded ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}
+                                  {isExpanded ? "Collapse" : "View"}
+                                </Button>
+                                {utilityButtons}
+                                {primaryButtons}
+                              </div>
+
+                              {/* 📱 Mobile: 2-Tier Layout */}
+                              <div className="flex sm:hidden flex-col w-full gap-2 pt-2 border-t border-border/40">
+                                {/* Tier 1: Utility & View toggle */}
+                                <div className="flex items-center justify-between gap-1 w-full overflow-x-auto">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setExpandedBookingId(isExpanded ? null : booking._id)}
+                                    className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                  >
+                                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5 mr-1" /> : <ChevronDown className="w-3.5 h-3.5 mr-1" />}
+                                    {isExpanded ? "Collapse" : "View"}
+                                  </Button>
+                                  <div className="flex items-center gap-1.5">{utilityButtons}</div>
+                                </div>
+
+                                {/* Tier 2: Primary CTAs as large touch targets */}
+                                {(canCollectPayment || (!booking.bike_id && booking.cluster_id) || statusActions[booking.status]?.some((a) => a.next !== "cancelled")) && (
+                                  <div className="flex items-center gap-2 w-full pt-1">
+                                    {primaryButtons}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       <AnimatePresence>
@@ -4224,21 +4634,21 @@ export default function Bookings() {
                             className="overflow-hidden"
                           >
                             <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 text-sm">
-                              <div>
+                              <div className="col-span-2 sm:col-span-1 min-w-0">
                                 <span className="text-xs text-muted-foreground uppercase">
                                   Email
                                 </span>
-                                <p className="font-medium">
+                                <p className="font-medium text-xs sm:text-sm break-all">
                                   {booking.customer_email ||
                                     booking.customers?.email ||
                                     "—"}
                                 </p>
                               </div>
-                              <div>
+                              <div className="col-span-2 sm:col-span-2 lg:col-span-3 min-w-0">
                                 <span className="text-xs text-muted-foreground uppercase">
                                   Location
                                 </span>
-                                <p className="font-medium">
+                                <p className="font-medium text-xs sm:text-sm break-words leading-relaxed">
                                   {booking.customer_location || "—"}
                                 </p>
                               </div>
@@ -4404,6 +4814,62 @@ export default function Bookings() {
                                     💬 {booking.remarks}
                                   </p>
                                 )}
+                              </div>
+                            )}
+
+                            {/* 💳 Payment Installments History for new flow bookings */}
+                            {Array.isArray(booking.payments) && booking.payments.length > 0 && (
+                              <div className="mt-4 pt-3 border-t border-border/60 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                    <CreditCard className="w-3.5 h-3.5 text-primary" />
+                                    Payment Installments History ({booking.payments.length})
+                                  </span>
+                                  {getBookingFinancials(booking).pendingAmount > 0 && booking.status !== "cancelled" && (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => {
+                                        setCollectPaymentBooking(booking);
+                                        setPaymentAmountInput(String(getBookingFinancials(booking).pendingAmount));
+                                      }}
+                                      className="h-6 px-2 text-[11px] text-primary hover:bg-primary/10 font-semibold cursor-pointer"
+                                    >
+                                      + Collect Due (₹{getBookingFinancials(booking).pendingAmount.toLocaleString()})
+                                    </Button>
+                                  )}
+                                </div>
+                                <div className="rounded-xl border border-border/70 overflow-hidden bg-card/60">
+                                  <div className="divide-y divide-border/60">
+                                    {booking.payments.map((p, idx) => (
+                                      <div key={idx} className="p-2.5 sm:px-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                                        <div className="flex items-center gap-2.5">
+                                          <span className="w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center text-[10px] font-bold">
+                                            {idx + 1}
+                                          </span>
+                                          <div>
+                                            <div className="flex items-center gap-2">
+                                              <span className="font-bold text-emerald-400 text-sm">₹{Number(p.amount || 0).toLocaleString()}</span>
+                                              <Badge variant="outline" className="text-[10px] uppercase font-semibold py-0 px-1.5">
+                                                {p.payment_method || "cash"}
+                                              </Badge>
+                                            </div>
+                                            {p.notes && (
+                                              <p className="text-[11px] text-muted-foreground italic mt-0.5">{p.notes}</p>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="text-right text-[11px] text-muted-foreground flex sm:flex-col justify-between sm:justify-center items-center sm:items-end">
+                                          <span>{p.paid_at ? format(new Date(p.paid_at), "dd MMM yyyy, hh:mm a") : "—"}</span>
+                                          {p.recorded_by && (
+                                            <span className="text-[10px] text-muted-foreground/80">by {p.recorded_by}</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
                               </div>
                             )}
                           </motion.div>

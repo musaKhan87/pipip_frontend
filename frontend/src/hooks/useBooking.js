@@ -203,3 +203,23 @@ export const useAssignBike = () => {
     },
   });
 };
+/* =========================
+   RECORD BOOKING PAYMENT (SPLIT / INSTALLMENT)
+========================= */
+export const useRecordPayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ bookingId, paymentData }) => {
+      const { data } = await axios.post(`${API_URL}/${bookingId}/payment`, paymentData);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings-paginated"] });
+      toast.success("Payment recorded successfully 🎉");
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to record payment");
+    }
+  });
+};
