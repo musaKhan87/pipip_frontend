@@ -118,20 +118,6 @@
 // }
 
 // export default function Customers() {
-  const { areas, selectedAreaIds } = useAdminArea();
-
-  const getCustomerAreaName = (cust) => {
-    if (!cust) return null;
-    if (cust.area_id?.name) return cust.area_id.name;
-    const aId = typeof cust.area_id === "object" ? cust.area_id?._id : cust.area_id;
-    if (aId && areas && areas.length > 0) {
-      const match = areas.find((a) => a._id === aId || String(a._id) === String(aId));
-      if (match?.name) return match.name;
-    }
-    if (cust.area_name) return cust.area_name;
-    if (cust.address && cust.address.trim() !== "") return cust.address;
-    return null;
-  };
 //   const [isAddOpen, setIsAddOpen] = useState(false);
 //   const [viewingCustomer, setViewingCustomer] = useState(null);
 //   const [formData, setFormData] = useState(initialFormData);
@@ -582,6 +568,20 @@ function DocumentImageViewer({ url, label }) {
 
 export default function Customers() {
   const { user } = useAuth();
+  const { areas, selectedAreaIds } = useAdminArea();
+
+  const getCustomerAreaName = (cust) => {
+    if (!cust) return null;
+    if (cust.area_id?.name) return cust.area_id.name;
+    const aId = typeof cust.area_id === "object" ? cust.area_id?._id : cust.area_id;
+    if (aId && areas && areas.length > 0) {
+      const match = areas.find((a) => a._id === aId || String(a._id) === String(aId));
+      if (match?.name) return match.name;
+    }
+    if (cust.area_name) return cust.area_name;
+    if (cust.address && cust.address.trim() !== "") return cust.address;
+    return null;
+  };
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [viewingCustomer, setViewingCustomer] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
