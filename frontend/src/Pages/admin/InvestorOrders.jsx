@@ -50,8 +50,7 @@ export default function InvestorOrders() {
     const totalRevenue = bookings.reduce((sum, b) => {
       if (b.status === "cancelled") return sum;
       const mainAmount = Number(b.total_amount || 0);
-      const extAmount = Number(b.extended_amount || 0);
-      return sum + mainAmount + extAmount;
+      return sum + mainAmount;
     }, 0);
     return { totalBikes, totalOrders, activeOrders, totalRevenue };
   }, [bookings, bikes]);
@@ -212,8 +211,7 @@ export default function InvestorOrders() {
             const bikeName = bikeObj.bike_name || bikeObj.model || booking.vehicle_make_model || "Bike";
             const numberPlate = bikeObj.number_plate || "—";
             const StatusIcon = statusIcons[booking.status] || Clock;
-            const revenueAmount =
-              Number(booking.total_amount || 0) + Number(booking.extended_amount || 0);
+            const revenueAmount = Number(booking.total_amount || 0);
             return (
               <motion.div
                 key={booking._id}

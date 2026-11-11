@@ -702,26 +702,40 @@ export default function BookBike() {
 
         const customer = await createCustomer.mutateAsync(formData);
 
-        // Create Booking (Set status to 'confirmed' immediately since we know they paid)
+        const tokenPaid = 200;
+        const totalRental = calculatePrice(false);
+        const isPaidInFull = tokenPaid >= totalRental;
+
+        // Create Booking (Set status to 'confirmed' immediately since token was paid)
         const booking = await createBooking.mutateAsync({
-          // bike_id: bike._id,
           bike_id: isCluster ? null : bike._id,
           cluster_id: isCluster ? bike._id : null,
           vehicle_make_model: bike?.name || bike?.model || "Bike",
-          // cluster_id: isCluster ? bike._id : null,
           customer_id: customer._id,
           customer_name: customerData.name,
           contact_number: customerData.phone,
           customer_email: customerData.email || undefined,
           start_datetime: new Date(startDate).toISOString(),
           end_datetime: new Date(endDate).toISOString(),
-          total_amount: calculatePrice(false),
+          total_amount: totalRental,
+          paid_amount: tokenPaid,
           deposit_amount: SECURITY_DEPOSIT,
           notes: notes || undefined,
           booking_source: "online",
-          status: "confirmed", // Mark as confirmed immediately
-          payment_status: "paid",
+          status: "confirmed",
+          payment_status: isPaidInFull ? "paid" : "partial",
           payment_order_id: paymentOrder.orderId,
+          supports_partial_payments: true,
+          payments: [
+            {
+              amount: tokenPaid,
+              payment_method: "online",
+              transaction_id: paymentOrder.orderId,
+              paid_at: new Date().toISOString(),
+              notes: "Online token advance payment via Cashfree",
+              recorded_by: "Customer (Online)",
+            },
+          ],
           turnstile_token: turnstileToken,
         });
 

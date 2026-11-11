@@ -385,6 +385,10 @@ exports.createBooking = async (req, res) => {
       }
     } catch (e) {}
 
+    const tokenPaid = Number(req.body.paid_amount) || (finalPaymentStatus === "paid" ? serverCalculatedAmount : 0);
+    const isFullPaid = tokenPaid >= serverCalculatedAmount;
+    finalPaymentStatus = isFullPaid ? "paid" : (tokenPaid > 0 ? "partial" : "pending");
+
     const bookingData = {
       customer_id,
       customer_name: customerName,
@@ -401,15 +405,16 @@ exports.createBooking = async (req, res) => {
       booking_source: "online",
       status: finalStatus,
       payment_status: finalPaymentStatus,
-      paid_amount: finalPaymentStatus === "paid" ? serverCalculatedAmount : 0,
+      paid_amount: tokenPaid,
       supports_partial_payments: true,
-      payments: finalPaymentStatus === "paid" ? [
+      payments: tokenPaid > 0 ? [
         {
-          amount: serverCalculatedAmount,
+          amount: tokenPaid,
           payment_method: "online",
+          transaction_id: payment_order_id,
           paid_at: new Date(),
-          notes: "Online Payment verified via Cashfree",
-          recorded_by: "System",
+          notes: "Online token payment via Cashfree",
+          recorded_by: "Customer (Online)",
         }
       ] : [],
       payment_order_id: payment_order_id || null,
@@ -1135,25 +1140,17 @@ exports.getAllBookings = async (req, res) => {
         customers: isInvestor ? null : b.customer_id,
         bikes: b.bike_id,
         ...(() => {
-          const isOldBooking = b.createdAt && new Date(b.createdAt) < new Date("2026-11-09T16:00:00.000Z");
-          const isNewFlow = Boolean(
-            !isOldBooking && b.supports_partial_payments === true ||
-            (!isOldBooking && Array.isArray(b.payments) && b.payments.length > 0)
-          );
-          const totalDue = isNewFlow
-            ? (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)
-            : (Number(b.total_amount) || 0);
-          const paid_amount = isNewFlow
-            ? (Number(b.paid_amount) || 0)
-            : (b.payment_status === "paid" ? totalDue : 0);
-          const pending_amount = isNewFlow
-            ? Math.max(0, totalDue - paid_amount)
-            : 0;
+          const totalDue = Number(b.total_amount) || 0;
+          let paid_amount = Number(b.paid_amount) || 0;
+          if (b.payment_status === "paid") {
+            paid_amount = totalDue;
+          }
+          const pending_amount = b.payment_status === "paid" ? 0 : Math.max(0, totalDue - paid_amount);
           return {
             totalDue,
             paid_amount,
             pending_amount,
-            supports_partial_payments: isNewFlow,
+            supports_partial_payments: Boolean(b.supports_partial_payments || (Array.isArray(b.payments) && b.payments.length > 0) || b.payment_status === "partial"),
           };
         })(),
         // Format for display: "21/04/2026, 7:00:00 pm"
@@ -1223,20 +1220,12 @@ exports.getBookingById = async (req, res) => {
     }
 
     const bObj = booking.toObject();
-    const isOldBooking = booking.createdAt && new Date(booking.createdAt) < new Date("2026-11-09T16:00:00.000Z");
-    const isNewFlow = !isOldBooking && Boolean(
-      bObj.supports_partial_payments === true ||
-      (Array.isArray(bObj.payments) && bObj.payments.length > 0)
-    );
-    const totalDue = isNewFlow
-      ? (Number(bObj.total_amount) || 0) + (Number(bObj.extended_amount) || 0)
-      : (Number(bObj.total_amount) || 0);
-    const paidAmount = isNewFlow
-      ? (Number(bObj.paid_amount) || 0)
-      : (bObj.payment_status === "paid" ? totalDue : 0);
-    const pendingAmount = isNewFlow
-      ? Math.max(0, totalDue - paidAmount)
-      : 0;
+    const totalDue = Number(bObj.total_amount) || 0;
+    let paidAmount = Number(bObj.paid_amount) || 0;
+    if (bObj.payment_status === "paid") {
+      paidAmount = totalDue;
+    }
+    const pendingAmount = bObj.payment_status === "paid" ? 0 : Math.max(0, totalDue - paidAmount);
 
     if (bObj.vehicle_make_model) {
       bObj.vehicle_make_model = bObj.vehicle_make_model.replace(/^undefined\s*/i, "").trim();
@@ -1653,69 +1642,24 @@ exports.extendBooking = async (req, res) => {
       });
     }
 
-    // Check if booking belongs to the new partial/split payments system
-    const isOldBooking = booking.createdAt && new Date(booking.createdAt) < new Date("2026-11-09T16:00:00.000Z");
-    const isNewFlow = !isOldBooking && Boolean(
-      booking.supports_partial_payments === true ||
-      (Array.isArray(booking.payments) && booking.payments.length > 0)
-    );
-
     booking.end_datetime = newEnd;
 
-    if (!isNewFlow) {
-      // 🛡️ OLD BOOKING FLOW:
-      // In the legacy system, total_amount already accumulates extensions.
-      // We do NOT alter payment_status or convert it to partial/dues mode.
-      booking.total_amount = (Number(booking.total_amount) || 0) + extraNum;
-      booking.extended_amount = (Number(booking.extended_amount) || 0) + extraNum;
-      booking.is_extended = true;
-
-      await booking.save();
-
-      await logAudit({
-        action: "EXTEND_BOOKING",
-        severity: "info",
-        performed_by: req.user?._id || req.user?.id,
-        user_email: req.user?.email,
-        ip_address: getClientIp(req),
-        target_id: booking._id,
-        target_name: booking.customer_name,
-        details: {
-          previous_end_datetime: oldEnd,
-          new_end_datetime: newEnd,
-          extra_amount: extraNum,
-          extended_amount: booking.extended_amount,
-          total_amount: booking.total_amount,
-          total_due: Number(booking.total_amount) || 0,
-          payment_status: booking.payment_status,
-        },
-      });
-
-      return res.json({
-        message: "Booking extended successfully",
-        booking: {
-          ...booking.toObject(),
-          totalDue: Number(booking.total_amount) || 0,
-        },
-      });
-    }
-
-    // 🚀 NEW BOOKING FLOW:
     // Preserving customer's prior paid balance if booking was marked 'paid' previously
+    const oldTotal = Number(booking.total_amount) || 0;
     let currentPaid = Number(booking.paid_amount || 0);
-    const prevTotalDue = (Number(booking.total_amount) || 0) + (Number(booking.extended_amount) || 0);
-    if (booking.payment_status === "paid" && (currentPaid === 0 || currentPaid < prevTotalDue)) {
-      currentPaid = prevTotalDue;
+    if (booking.payment_status === "paid" && (currentPaid === 0 || currentPaid < oldTotal)) {
+      currentPaid = oldTotal;
       booking.paid_amount = currentPaid;
     }
 
-    // For new flow, only add extraNum to extended_amount (totalDue = total_amount + extended_amount)
+    // Always increment total_amount and extended_amount by extraNum
+    booking.total_amount = oldTotal + extraNum;
     booking.extended_amount = (Number(booking.extended_amount) || 0) + extraNum;
     booking.is_extended = true;
     booking.supports_partial_payments = true;
 
-    // Re-evaluate payment_status based on updated totalDue and currentPaid
-    const newTotalDue = (Number(booking.total_amount) || 0) + (Number(booking.extended_amount) || 0);
+    // Re-evaluate payment_status based on updated total_amount and currentPaid
+    const newTotalDue = Number(booking.total_amount) || 0;
     if (extraNum > 0) {
       if (currentPaid >= newTotalDue) {
         booking.payment_status = "paid";
@@ -1845,14 +1789,7 @@ exports.recordBookingPayment = async (req, res) => {
       }
     }
 
-    const isOldBooking = booking.createdAt && new Date(booking.createdAt) < new Date("2026-11-09T16:00:00.000Z");
-    const isNewFlow = !isOldBooking && Boolean(
-      booking.supports_partial_payments === true ||
-      (Array.isArray(booking.payments) && booking.payments.length > 0)
-    );
-    const totalDue = isNewFlow
-      ? (Number(booking.total_amount) || 0) + (Number(booking.extended_amount) || 0)
-      : (Number(booking.total_amount) || 0);
+    const totalDue = Number(booking.total_amount) || 0;
     const currentPaid = Number(booking.paid_amount) || 0;
     const remainingDue = Math.max(0, totalDue - currentPaid);
 
@@ -1923,7 +1860,7 @@ exports.recordBookingPayment = async (req, res) => {
       });
 
     const bObj = populated.toObject();
-    const finalTotalDue = (Number(bObj.total_amount) || 0) + (Number(bObj.extended_amount) || 0);
+    const finalTotalDue = Number(bObj.total_amount) || 0;
     const finalPaid = Number(bObj.paid_amount) || 0;
 
     res.json({
