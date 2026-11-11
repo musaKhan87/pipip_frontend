@@ -531,9 +531,9 @@ export default function BookBike() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            // amount: calculatePrice(),
-            // amount: 200,
-            amount: 1,
+            amount: calculatePrice(),
+            amount: 200,
+            // amount: 1,
             customerName: customerData.name,
             customerEmail: customerData.email || "customer@pipip.com",
             customerPhone: customerData.phone,
