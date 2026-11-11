@@ -1,5 +1,5 @@
 import { Turnstile } from "@marsidev/react-turnstile";
-import { useState, useEffect , useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, differenceInHours } from "date-fns";
@@ -43,7 +43,7 @@ import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import useSEO from "../hooks/useSEO";
-import {useCluster} from "../hooks/useClusters"
+import { useCluster } from "../hooks/useClusters"
 
 const initialCustomerData = {
   name: "",
@@ -122,7 +122,7 @@ export default function BookBike() {
   const bike = isCluster ? clusterData : bikeData;
   const activeLoading = isCluster ? clusterLoading : bikeLoading;
 
-const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const clusterImages = useMemo(() => {
     if (!isCluster || !bike || !bike.bikes) return [];
     const imgs = [];
@@ -231,7 +231,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
         return;
       }
 
-      const result = await checkAvailability(bikeId, start, end , isCluster);
+      const result = await checkAvailability(bikeId, start, end, isCluster);
 
       if (!result.isAvailable) {
         const fromDate = new Date(result.bookedFrom).toLocaleDateString(
@@ -532,8 +532,8 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             // amount: calculatePrice(),
-            // amount: 200,
-            amount: 1,
+            amount: 200,
+            // amount: 1,
             customerName: customerData.name,
             customerEmail: customerData.email || "customer@pipip.com",
             customerPhone: customerData.phone,
@@ -649,8 +649,8 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             // amount: calculatePrice(true),
-            amount:200,
-            // amount: 1,
+            // amount:200,
+            amount: 1,
             customerName: customerData.name,
             customerEmail: customerData.email || "customer@pipip.com",
             customerPhone: customerData.phone,
@@ -694,7 +694,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
           bike_id: isCluster ? null : bike._id,
           cluster_id: isCluster ? bike._id : null,
           vehicle_make_model: bike?.name || bike?.model || "Bike",
-        // cluster_id: isCluster ? bike._id : null,
+          // cluster_id: isCluster ? bike._id : null,
           customer_id: customer._id,
           start_datetime: new Date(startDate).toISOString(),
           end_datetime: new Date(endDate).toISOString(),
@@ -823,7 +823,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
   // };
 
   // if (bikeLoading) {
-  if(activeLoading) {
+  if (activeLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -1475,21 +1475,21 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
                 {/* Amount Box */}
 
-               {/* <div className="bg-primary/5 p-8 rounded-[2rem] border border-primary/10 print:bg-white print:border-2 print:border-black print:rounded-none">
+                {/* <div className="bg-primary/5 p-8 rounded-[2rem] border border-primary/10 print:bg-white print:border-2 print:border-black print:rounded-none">
                   <div className="flex justify-between items-end"> */}
 
-                  <div className="bg-primary/5 p-6 rounded-[2rem] border border-primary/10 print:bg-white print:border-2 print:border-black print:rounded-none space-y-4">
+                <div className="bg-primary/5 p-6 rounded-[2rem] border border-primary/10 print:bg-white print:border-2 print:border-black print:rounded-none space-y-4">
                   <div className="flex justify-between items-center pb-2 border-b border-dashed border-primary/20">
                     <div>
                       {/* <span className="text-[10px] font-black uppercase text-primary print:text-black tracking-widest">
                         Total Amount Paid */}
 
-                        <span className="text-[10px] font-black uppercase text-muted-foreground print:text-black tracking-widest">
+                      <span className="text-[10px] font-black uppercase text-muted-foreground print:text-black tracking-widest">
                         Total Bill
                       </span>
                       {/* <p className="text-5xl font-display font-black text-foreground print:text-black">
                         ₹{calculatePrice(true)} */}
-                        <p className="text-2xl font-display font-black text-foreground print:text-black">
+                      <p className="text-2xl font-display font-black text-foreground print:text-black">
                         ₹{calculatePrice(false) + SECURITY_DEPOSIT}
                       </p>
                     </div>
@@ -1584,7 +1584,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
                   {bike.image_url ? (
                   {(isCluster ? bike?.bikes?.[0]?.image_url : bike?.image_url) ? ( */}
 
-                  <div className="aspect-video relative overflow-hidden rounded-t-lg bg-muted">
+                <div className="aspect-video relative overflow-hidden rounded-t-lg bg-muted">
                   {isCluster && clusterImages.length > 0 ? (
                     <div className="relative w-full h-full">
                       <AnimatePresence mode="wait">
@@ -1622,9 +1622,8 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
                           {clusterImages.map((_, idx) => (
                             <span
                               key={idx}
-                              className={`h-1.5 rounded-full transition-all duration-300 ${
-                                idx === currentImgIndex ? "w-3 bg-primary" : "w-1.5 bg-white/60"
-                              }`}
+                              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentImgIndex ? "w-3 bg-primary" : "w-1.5 bg-white/60"
+                                }`}
                             />
                           ))}
                         </div>
@@ -1638,7 +1637,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
                       // src={isCluster ? bike?.bikes?.[0]?.image_url : bike?.image_url}
                       // alt={bike?.name || bike?.model}
                       loading="lazy"
-                          decoding="async"
+                      decoding="async"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -2172,13 +2171,13 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
                           {/* <div className="flex justify-between items-center">
                             <span className="font-bold text-foreground">
                               Total Amount */}
-                              <div className="flex justify-between items-center text-sm font-semibold">
+                          <div className="flex justify-between items-center text-sm font-semibold">
                             <span className="text-foreground">
                               Total Bill
                             </span>
                             {/* <span className="text-primary text-xl font-black">
                               ₹{calculatePrice(true)} */}
-                              <span className="text-foreground">
+                            <span className="text-foreground">
                               ₹{calculatePrice(false) + SECURITY_DEPOSIT}
                             </span>
                           </div>
@@ -2309,7 +2308,7 @@ const [currentImgIndex, setCurrentImgIndex] = useState(0);
                             </div>
                           ) : (
                             // `Pay ₹${calculatePrice(true)}`
-                             "Pay ₹200"
+                            "Pay ₹200"
                           )}
                         </Button>
                       </div>
