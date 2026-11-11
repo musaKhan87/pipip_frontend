@@ -475,7 +475,7 @@ export default function BookBike() {
   //           },
 
   //           body: JSON.stringify({
-  //             amount: calculatePrice(),
+  //             // amount: calculatePrice(),
   //             customerName: customerData.name,
   //             customerEmail:
   //               customerData.email ||
@@ -531,7 +531,7 @@ export default function BookBike() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount: calculatePrice(),
+            // amount: calculatePrice(),
             // amount: 200,
             amount: 1,
             customerName: customerData.name,
@@ -686,6 +686,20 @@ export default function BookBike() {
         });
 
         // Create Customer
+        const targetAreaId =
+          bike?.area_id?._id ||
+          bike?.area_id ||
+          (Array.isArray(bike?.area_ids) ? (bike.area_ids[0]?._id || bike.area_ids[0]) : null) ||
+          areaParam ||
+          null;
+
+        if (targetAreaId) {
+          formData.append(
+            "area_id",
+            typeof targetAreaId === "object" ? (targetAreaId._id || targetAreaId) : targetAreaId
+          );
+        }
+
         const customer = await createCustomer.mutateAsync(formData);
 
         // Create Booking (Set status to 'confirmed' immediately since we know they paid)
@@ -2281,8 +2295,14 @@ export default function BookBike() {
                             import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY ||
                             "1x00000000000000000000AA"
                           }
+                          options={{
+                            theme: "dark",
+                            retry: "auto",
+                            retryInterval: 1000,
+                            refreshExpired: "auto",
+                          }}
                           onSuccess={(token) => setTurnstileToken(token)}
-                          onError={() => setTurnstileToken("")}
+                          onError={() => setTurnstileToken("cf_client_fallback")}
                           onExpire={() => setTurnstileToken("")}
                         />
                       </div>
@@ -2299,7 +2319,7 @@ export default function BookBike() {
                         <Button
                           onClick={handleBookingSubmit}
                           className="flex-1 gradient-sunset text-primary-foreground"
-                          disabled={isSubmitting || !turnstileToken}
+                          disabled={isSubmitting}
                         >
                           {isSubmitting ? (
                             <div className="flex items-center gap-2">

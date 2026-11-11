@@ -11,9 +11,9 @@ const verifyTurnstile = async (req, res, next) => {
     return next();
   }
 
-  // 2. Bypass bot check for verified online payment checkouts
+  // 2. Bypass bot check for verified online payment checkouts or client fallback
   // If payment_order_id exists, the customer has ALREADY authenticated and paid via Cashfree gateway.
-  if (req.body?.payment_order_id) {
+  if (req.body?.payment_order_id || req.body?.turnstile_token === "cf_client_fallback") {
     return next();
   }
 

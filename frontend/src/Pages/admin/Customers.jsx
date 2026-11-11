@@ -579,7 +579,6 @@ export default function Customers() {
       if (match?.name) return match.name;
     }
     if (cust.area_name) return cust.area_name;
-    if (cust.address && cust.address.trim() !== "") return cust.address;
     return null;
   };
   const [isAddOpen, setIsAddOpen] = useState(false);
