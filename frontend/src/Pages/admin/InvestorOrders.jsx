@@ -20,6 +20,7 @@ import { Badge } from "../../components/ui/badge";
 import { useBookings } from "../../hooks/useBooking";
 import { useBikes } from "../../hooks/useBikes";
 import { useAuth } from "../../lib/AuthProvider";
+import { getBookingFinancials } from "../../lib/bookingFinancials";
 const statusBadges = {
   active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
   confirmed: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -46,11 +47,10 @@ export default function InvestorOrders() {
     const totalOrders = bookings.length;
     const activeOrders = bookings.filter((b) => b.status === "active").length;
     
-    // Revenue calculated from confirmed, active, completed bookings
+    // Revenue calculated from confirmed, active, completed bookings using unified financials
     const totalRevenue = bookings.reduce((sum, b) => {
       if (b.status === "cancelled") return sum;
-      const mainAmount = Number(b.total_amount || 0);
-      return sum + mainAmount;
+      return sum + getBookingFinancials(b).totalDue;
     }, 0);
     return { totalBikes, totalOrders, activeOrders, totalRevenue };
   }, [bookings, bikes]);
@@ -211,7 +211,7 @@ export default function InvestorOrders() {
             const bikeName = bikeObj.bike_name || bikeObj.model || booking.vehicle_make_model || "Bike";
             const numberPlate = bikeObj.number_plate || "—";
             const StatusIcon = statusIcons[booking.status] || Clock;
-            const revenueAmount = Number(booking.total_amount || 0);
+            const revenueAmount = getBookingFinancials(booking).totalDue;
             return (
               <motion.div
                 key={booking._id}

@@ -223,6 +223,11 @@ const Customer = require("../models/Customer");
 const { sendOrderAlerts } = require("./notificationController");
 const { getUserAreaIds, getAreaScope } = require("../middleware/auth");
 const { logAudit, getClientIp } = require("../utils/auditLogger");
+const {
+  NEW_FLOW_CUTOFF,
+  isNewFlowBooking,
+  getBookingFinancials,
+} = require("../utils/bookingFinancials");
 
 // Helper to check if a booking belongs to a staff/manager's assigned areas
 const checkBookingAreaAccess = async (booking, user) => {
@@ -1140,17 +1145,12 @@ exports.getAllBookings = async (req, res) => {
         customers: isInvestor ? null : b.customer_id,
         bikes: b.bike_id,
         ...(() => {
-          const totalDue = Number(b.total_amount) || 0;
-          let paid_amount = Number(b.paid_amount) || 0;
-          if (b.payment_status === "paid") {
-            paid_amount = totalDue;
-          }
-          const pending_amount = b.payment_status === "paid" ? 0 : Math.max(0, totalDue - paid_amount);
+          const fin = getBookingFinancials(b);
           return {
-            totalDue,
-            paid_amount,
-            pending_amount,
-            supports_partial_payments: Boolean(b.supports_partial_payments || (Array.isArray(b.payments) && b.payments.length > 0) || b.payment_status === "partial"),
+            totalDue: fin.totalDue,
+            paid_amount: fin.paidAmount,
+            pending_amount: fin.pendingAmount,
+            supports_partial_payments: fin.isNew,
           };
         })(),
         // Format for display: "21/04/2026, 7:00:00 pm"
@@ -1220,12 +1220,7 @@ exports.getBookingById = async (req, res) => {
     }
 
     const bObj = booking.toObject();
-    const totalDue = Number(bObj.total_amount) || 0;
-    let paidAmount = Number(bObj.paid_amount) || 0;
-    if (bObj.payment_status === "paid") {
-      paidAmount = totalDue;
-    }
-    const pendingAmount = bObj.payment_status === "paid" ? 0 : Math.max(0, totalDue - paidAmount);
+    const fin = getBookingFinancials(bObj);
 
     if (bObj.vehicle_make_model) {
       bObj.vehicle_make_model = bObj.vehicle_make_model.replace(/^undefined\s*/i, "").trim();
@@ -1234,10 +1229,10 @@ exports.getBookingById = async (req, res) => {
       ...bObj,
       customers: booking.customer_id,
       bikes: booking.bike_id,
-      totalDue,
-      paid_amount: paidAmount,
-      pending_amount: pendingAmount,
-      supports_partial_payments: isNewFlow,
+      totalDue: fin.totalDue,
+      paid_amount: fin.paidAmount,
+      pending_amount: fin.pendingAmount,
+      supports_partial_payments: fin.isNew,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -1644,29 +1639,40 @@ exports.extendBooking = async (req, res) => {
 
     booking.end_datetime = newEnd;
 
-    // Preserving customer's prior paid balance if booking was marked 'paid' previously
-    const oldTotal = Number(booking.total_amount) || 0;
-    let currentPaid = Number(booking.paid_amount || 0);
-    if (booking.payment_status === "paid" && (currentPaid === 0 || currentPaid < oldTotal)) {
-      currentPaid = oldTotal;
-      booking.paid_amount = currentPaid;
-    }
+    const isNew = isNewFlowBooking(booking);
 
-    // Always increment total_amount and extended_amount by extraNum
-    booking.total_amount = oldTotal + extraNum;
-    booking.extended_amount = (Number(booking.extended_amount) || 0) + extraNum;
-    booking.is_extended = true;
-    booking.supports_partial_payments = true;
+    if (!isNew) {
+      // Old booking logic:
+      // total_amount already includes extensions in legacy system.
+      // Increment both total_amount and extended_amount.
+      // Preserve legacy payment workflow without partial payments.
+      const oldTotal = Number(booking.total_amount) || 0;
+      booking.total_amount = oldTotal + extraNum;
+      booking.extended_amount = (Number(booking.extended_amount) || 0) + extraNum;
+      booking.is_extended = true;
+      // Do not touch payment_status or supports_partial_payments for old bookings
+    } else {
+      // New booking logic (>= Nov 9, 2026):
+      // total_amount stores original rental amount; extended_amount stores extensions separately.
+      booking.extended_amount = (Number(booking.extended_amount) || 0) + extraNum;
+      booking.is_extended = true;
+      booking.supports_partial_payments = true;
 
-    // Re-evaluate payment_status based on updated total_amount and currentPaid
-    const newTotalDue = Number(booking.total_amount) || 0;
-    if (extraNum > 0) {
-      if (currentPaid >= newTotalDue) {
-        booking.payment_status = "paid";
-      } else if (currentPaid > 0) {
-        booking.payment_status = "partial";
-      } else {
-        booking.payment_status = "pending";
+      const newTotalDue = (Number(booking.total_amount) || 0) + booking.extended_amount;
+      let currentPaid = Number(booking.paid_amount || 0);
+      if (booking.payment_status === "paid" && (currentPaid === 0 || currentPaid < (Number(booking.total_amount) || 0))) {
+        currentPaid = Number(booking.total_amount) || 0;
+        booking.paid_amount = currentPaid;
+      }
+
+      if (extraNum > 0) {
+        if (currentPaid >= newTotalDue) {
+          booking.payment_status = "paid";
+        } else if (currentPaid > 0) {
+          booking.payment_status = "partial";
+        } else {
+          booking.payment_status = "pending";
+        }
       }
     }
 
@@ -1692,13 +1698,15 @@ exports.extendBooking = async (req, res) => {
       },
     });
 
+    const fin = getBookingFinancials(booking);
     res.json({
       message: "Booking extended successfully",
       booking: {
         ...booking.toObject(),
-        totalDue: newTotalDue,
-        paid_amount: booking.paid_amount,
-        pending_amount: Math.max(0, newTotalDue - (Number(booking.paid_amount) || 0)),
+        totalDue: fin.totalDue,
+        paid_amount: fin.paidAmount,
+        pending_amount: fin.pendingAmount,
+        supports_partial_payments: fin.isNew,
       },
     });
   } catch (error) {
@@ -1789,7 +1797,14 @@ exports.recordBookingPayment = async (req, res) => {
       }
     }
 
-    const totalDue = Number(booking.total_amount) || 0;
+    const fin = getBookingFinancials(booking);
+    if (!fin.isNew) {
+      return res.status(400).json({
+        message: "Partial payment recording is only supported for bookings created after Nov 9, 2026. For older bookings, please update the booking directly.",
+      });
+    }
+
+    const totalDue = fin.totalDue;
     const currentPaid = Number(booking.paid_amount) || 0;
     const remainingDue = Math.max(0, totalDue - currentPaid);
 

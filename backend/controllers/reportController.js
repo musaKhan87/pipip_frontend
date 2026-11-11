@@ -1,3 +1,4 @@
+const { NEW_FLOW_CUTOFF } = require("../utils/bookingFinancials");
 const Booking = require("../models/Booking");
 const Bike = require("../models/Bike");
 const Cluster = require("../models/Cluster");
@@ -84,7 +85,7 @@ exports.getBookingStats = async (req, res) => {
     }
 
     const bookings = await Booking.find(query)
-      .select("status total_amount bike_id cluster_id")
+      .select("status total_amount extended_amount createdAt bike_id cluster_id")
       .lean();
 
     const totalBikesCount = await Bike.countDocuments(bikeFilter);
@@ -103,7 +104,10 @@ exports.getBookingStats = async (req, res) => {
       cancelled_bookings: bookings.filter((b) => b.status === "cancelled").length,
       total_revenue: bookings
         .filter((b) => b.status === "completed")
-        .reduce((sum, b) => sum + (b.total_amount || 0), 0),
+        .reduce((sum, b) => {
+          const isNew = b.createdAt && new Date(b.createdAt) >= NEW_FLOW_CUTOFF;
+          return sum + (b.total_amount || 0) + (isNew ? (b.extended_amount || 0) : 0);
+        }, 0),
       total_bikes: totalBikesCount,
       available_bikes: availableBikesCount,
       total_expenses: totalExpensesAmount,
@@ -212,7 +216,15 @@ exports.getBikeRevenueReport = async (req, res) => {
           number_plate: { $first: "$bike_info.number_plate" },
           bike_owner: { $first: "$bike_info.bike_owner" },
           total_bookings: { $sum: 1 },
-          total_revenue: { $sum: "$total_amount" },
+          total_revenue: {
+            $sum: {
+              $cond: [
+                { $gte: ["$createdAt", NEW_FLOW_CUTOFF] },
+                { $add: [{ $ifNull: ["$total_amount", 0] }, { $ifNull: ["$extended_amount", 0] }] },
+                { $ifNull: ["$total_amount", 0] }
+              ]
+            }
+          },
           total_hours: {
             $sum: {
               $divide: [
@@ -282,7 +294,15 @@ exports.getDailyRevenueReport = async (req, res) => {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
           bookings_count: { $sum: 1 },
-          revenue: { $sum: "$total_amount" },
+          revenue: {
+            $sum: {
+              $cond: [
+                { $gte: ["$createdAt", NEW_FLOW_CUTOFF] },
+                { $add: [{ $ifNull: ["$total_amount", 0] }, { $ifNull: ["$extended_amount", 0] }] },
+                { $ifNull: ["$total_amount", 0] }
+              ]
+            }
+          },
         },
       },
       { $sort: { _id: 1 } },

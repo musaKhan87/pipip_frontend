@@ -2,6 +2,7 @@ const DailyReport = require("../models/DailyReport");
 const SystemSettings = require("../models/SystemSettings");
 const Expense = require("../models/Expense");
 const Booking = require("../models/Booking");
+const { NEW_FLOW_CUTOFF } = require("../utils/bookingFinancials");
 const cron = require("node-cron");
 
 let activeCronJob = null;
@@ -29,7 +30,8 @@ exports.calculateReportData = async (dateVal) => {
   });
 
   const totalAmountReceived = bookingsPaid.reduce((sum, b) => {
-    const rent = b.total_amount || 0;
+    const isNew = b.createdAt && new Date(b.createdAt) >= NEW_FLOW_CUTOFF;
+    const rent = (b.total_amount || 0) + (isNew ? (b.extended_amount || 0) : 0);
     const penalty = b.penalty_amount || 0;
     const challan = b.challan_amount || 0;
     const damage = b.damage_cost || 0;

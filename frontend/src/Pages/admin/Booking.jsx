@@ -282,32 +282,18 @@ const roundToHour = (dateTimeStr) => {
 };
 
 
-// 🎯 Helper to determine if booking was created under the new partial/split payments flow
-export const isBookingNewFlow = (b) => {
-  if (!b) return false;
-  if (b.supports_partial_payments === true) return true;
-  if (Array.isArray(b.payments) && b.payments.length > 0) return true;
-  return false;
-};
-
-// 🎯 Authoritative calculation of due, paid, and pending balances
-export const getBookingFinancials = (b) => {
-  if (!b) return { totalDue: 0, paidAmount: 0, pendingAmount: 0, isNew: false };
-  const isNew = isBookingNewFlow(b);
-  const totalDue = isNew
-    ? (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)
-    : (Number(b.total_amount) || 0);
-  let paidAmount = isNew
-    ? (Number(b.paid_amount) || 0)
-    : (b.payment_status === "paid" ? totalDue : 0);
-  if (paidAmount === 0 && b.payment_status === "paid" && totalDue > 0) {
-    paidAmount = totalDue;
-  }
-  const pendingAmount = isNew
-    ? Math.max(0, totalDue - paidAmount)
-    : (b.payment_status === "paid" ? 0 : totalDue);
-  return { totalDue, paidAmount, pendingAmount, isNew };
-};
+// 🎯 Centralized unified financial calculations from lib
+export {
+  NEW_FLOW_CUTOFF,
+  isBookingNewFlow,
+  isNewFlowBooking,
+  getBookingFinancials,
+} from "../../lib/bookingFinancials";
+import {
+  NEW_FLOW_CUTOFF,
+  isBookingNewFlow,
+  getBookingFinancials,
+} from "../../lib/bookingFinancials";
 
 export default function Bookings() {
   const { areas, selectedAreaIds } = useAdminArea();
@@ -585,7 +571,7 @@ export default function Bookings() {
       },
       startDate: booking.start_datetime,
       endDate: booking.end_datetime,
-      amount: booking.total_amount,
+      amount: getBookingFinancials(booking).totalDue,
       deposit: booking.deposit_amount || 0,
       paymentMethod: booking.payment_method || "cash",
       status: booking.status
@@ -2629,7 +2615,11 @@ export default function Bookings() {
 
       if (!extendData.extra_amount) {
         toast.error("Enter extra amount");
+        return;
+      }
 
+      if (Number(extendData.extra_amount) < 0) {
+        toast.error("Extra amount cannot be negative");
         return;
       }
 
@@ -4897,6 +4887,7 @@ export default function Bookings() {
 
               <Input
                 type="number"
+                min="0"
                 placeholder="Enter extra amount"
                 value={extendData.extra_amount}
                 onChange={(e) =>
@@ -4906,6 +4897,30 @@ export default function Bookings() {
                   })
                 }
               />
+
+              {/* Live Calculation Preview */}
+              {extendDialog && (
+                <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-700/60 space-y-1.5 text-xs mt-2">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Current Total Due:</span>
+                    <span className="font-semibold text-slate-200">
+                      ₹{getBookingFinancials(extendDialog).totalDue.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>+ Extra Extension Amount:</span>
+                    <span className="font-semibold text-amber-400">
+                      ₹{Math.max(0, Number(extendData.extra_amount || 0)).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="border-t border-slate-700/60 pt-1.5 flex justify-between text-sm font-bold">
+                    <span className="text-white">New Total Due:</span>
+                    <span className="text-emerald-400">
+                      ₹{(getBookingFinancials(extendDialog).totalDue + Math.max(0, Number(extendData.extra_amount || 0))).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {extendMessage && (
                 <div
