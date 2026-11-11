@@ -283,15 +283,8 @@ const roundToHour = (dateTimeStr) => {
 
 
 // 🎯 Helper to determine if booking was created under the new partial/split payments flow
-// 🎯 Launch Cutoff for the new partial payments & split extensions flow
-const NEW_PAYMENTS_CUTOFF = new Date("2026-11-09T16:00:00.000Z");
-
 export const isBookingNewFlow = (b) => {
   if (!b) return false;
-  // Old bookings created before the new system launch always use legacy accounting
-  if (b.createdAt && new Date(b.createdAt) < NEW_PAYMENTS_CUTOFF) {
-    return false;
-  }
   if (b.supports_partial_payments === true) return true;
   if (Array.isArray(b.payments) && b.payments.length > 0) return true;
   return false;
