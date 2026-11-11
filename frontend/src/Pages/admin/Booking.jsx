@@ -287,20 +287,25 @@ export const isBookingNewFlow = (b) => {
   if (!b) return false;
   if (b.supports_partial_payments === true) return true;
   if (Array.isArray(b.payments) && b.payments.length > 0) return true;
-  if (b.payment_status === "partial") return true;
   return false;
 };
 
 // 🎯 Authoritative calculation of due, paid, and pending balances
 export const getBookingFinancials = (b) => {
   if (!b) return { totalDue: 0, paidAmount: 0, pendingAmount: 0, isNew: false };
-  const totalDue = Number(b.total_amount) || 0;
   const isNew = isBookingNewFlow(b);
-  let paidAmount = Number(b.paid_amount) || 0;
-  if (b.payment_status === "paid") {
+  const totalDue = isNew
+    ? (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)
+    : (Number(b.total_amount) || 0);
+  let paidAmount = isNew
+    ? (Number(b.paid_amount) || 0)
+    : (b.payment_status === "paid" ? totalDue : 0);
+  if (paidAmount === 0 && b.payment_status === "paid" && totalDue > 0) {
     paidAmount = totalDue;
   }
-  const pendingAmount = b.payment_status === "paid" ? 0 : Math.max(0, totalDue - paidAmount);
+  const pendingAmount = isNew
+    ? Math.max(0, totalDue - paidAmount)
+    : (b.payment_status === "paid" ? 0 : totalDue);
   return { totalDue, paidAmount, pendingAmount, isNew };
 };
 
@@ -4344,11 +4349,6 @@ export default function Bookings() {
                                 <p className="text-lg sm:text-xl font-bold text-foreground">
                                   ₹ {totalDue || booking.total_amount}
                                 </p>
-                                {booking.extended_amount > 0 && (
-                                  <p className="text-xs text-blue-400 font-medium">
-                                    +₹ {booking.extended_amount} Extended
-                                  </p>
-                                )}
                                 {pendingAmount > 0 ? (
                                   <div className="pt-0.5">
                                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#261c0d] text-[#facc15] border border-[#facc15]/40 shadow-sm">
