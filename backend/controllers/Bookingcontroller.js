@@ -1135,9 +1135,10 @@ exports.getAllBookings = async (req, res) => {
         customers: isInvestor ? null : b.customer_id,
         bikes: b.bike_id,
         ...(() => {
+          const isOldBooking = b.createdAt && new Date(b.createdAt) < new Date("2026-11-09T16:00:00.000Z");
           const isNewFlow = Boolean(
-            b.supports_partial_payments === true ||
-            (Array.isArray(b.payments) && b.payments.length > 0)
+            !isOldBooking && b.supports_partial_payments === true ||
+            (!isOldBooking && Array.isArray(b.payments) && b.payments.length > 0)
           );
           const totalDue = isNewFlow
             ? (Number(b.total_amount) || 0) + (Number(b.extended_amount) || 0)
@@ -1222,11 +1223,14 @@ exports.getBookingById = async (req, res) => {
     }
 
     const bObj = booking.toObject();
-    const totalDue = (Number(bObj.total_amount) || 0) + (Number(bObj.extended_amount) || 0);
-    const isNewFlow = Boolean(
+    const isOldBooking = booking.createdAt && new Date(booking.createdAt) < new Date("2026-11-09T16:00:00.000Z");
+    const isNewFlow = !isOldBooking && Boolean(
       bObj.supports_partial_payments === true ||
       (Array.isArray(bObj.payments) && bObj.payments.length > 0)
     );
+    const totalDue = isNewFlow
+      ? (Number(bObj.total_amount) || 0) + (Number(bObj.extended_amount) || 0)
+      : (Number(bObj.total_amount) || 0);
     const paidAmount = isNewFlow
       ? (Number(bObj.paid_amount) || 0)
       : (bObj.payment_status === "paid" ? totalDue : 0);
@@ -1650,7 +1654,8 @@ exports.extendBooking = async (req, res) => {
     }
 
     // Check if booking belongs to the new partial/split payments system
-    const isNewFlow = Boolean(
+    const isOldBooking = booking.createdAt && new Date(booking.createdAt) < new Date("2026-11-09T16:00:00.000Z");
+    const isNewFlow = !isOldBooking && Boolean(
       booking.supports_partial_payments === true ||
       (Array.isArray(booking.payments) && booking.payments.length > 0)
     );
@@ -1840,7 +1845,14 @@ exports.recordBookingPayment = async (req, res) => {
       }
     }
 
-    const totalDue = (Number(booking.total_amount) || 0) + (Number(booking.extended_amount) || 0);
+    const isOldBooking = booking.createdAt && new Date(booking.createdAt) < new Date("2026-11-09T16:00:00.000Z");
+    const isNewFlow = !isOldBooking && Boolean(
+      booking.supports_partial_payments === true ||
+      (Array.isArray(booking.payments) && booking.payments.length > 0)
+    );
+    const totalDue = isNewFlow
+      ? (Number(booking.total_amount) || 0) + (Number(booking.extended_amount) || 0)
+      : (Number(booking.total_amount) || 0);
     const currentPaid = Number(booking.paid_amount) || 0;
     const remainingDue = Math.max(0, totalDue - currentPaid);
 
