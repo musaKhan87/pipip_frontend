@@ -415,26 +415,35 @@ exports.createBooking = async (req, res) => {
       payment_order_id: payment_order_id || null,
     };
 
+    // Idempotency: Return existing booking if payment order was already recorded
+    if (payment_order_id) {
+      const existing = await Booking.findOne({ payment_order_id });
+      if (existing) {
+        return res.status(200).json(existing);
+      }
+    }
+
     const booking = await Booking.create(bookingData);
 
     // Ensure customer has vehicle's operating hub area_id linked
-    if (customer_id && item?.area_id) {
-      try {
-        const targetAreaId = typeof item.area_id === "object" ? item.area_id._id : item.area_id;
+    try {
+      if (customer_id && targetVehicle?.area_id) {
+        const targetAreaId = typeof targetVehicle.area_id === "object" ? targetVehicle.area_id._id : targetVehicle.area_id;
         if (targetAreaId) {
           await Customer.findByIdAndUpdate(customer_id, {
             $set: { area_id: targetAreaId },
           });
         }
-      } catch (custAreaErr) {
-        console.warn("Failed to set customer area_id:", custAreaErr.message);
       }
+    } catch (custAreaErr) {
+      console.warn("Failed to set customer area_id:", custAreaErr.message);
     }
 
     // 7. Broadcast notification alert if payment was confirmed
     try {
       if (finalStatus === "confirmed" && finalPaymentStatus === "paid") {
-        sendOrderAlerts(booking, req.app.get("io"));
+        const io = req.app?.get ? req.app.get("io") : null;
+        sendOrderAlerts(booking, io);
       }
     } catch (alertErr) {
       console.warn("Failed to broadcast order alert:", alertErr.message);
