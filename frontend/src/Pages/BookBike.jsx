@@ -532,8 +532,8 @@ export default function BookBike() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             // amount: calculatePrice(),
-            // amount: 200,
-            amount: 1,
+            amount: 200,
+            // amount: 1,
             customerName: customerData.name,
             customerEmail: customerData.email || "customer@pipip.com",
             customerPhone: customerData.phone,
@@ -649,8 +649,8 @@ export default function BookBike() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             // amount: calculatePrice(true),
-            // amount:200,
-            amount: 1,
+            amount: 200,
+            // amount: 1,
             customerName: customerData.name,
             customerEmail: customerData.email || "customer@pipip.com",
             customerPhone: customerData.phone,
