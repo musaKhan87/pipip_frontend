@@ -65,6 +65,18 @@ import {
   CheckCircle2,
   AlertCircle,
   Bike,
+  Sparkles,
+  Check,
+  X,
+  FileText,
+  UserPlus,
+  Users,
+  Filter,
+  Eye,
+  TrendingUp,
+  Activity,
+  Layers,
+  ArrowRight,
 } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
 
@@ -1565,6 +1577,30 @@ export default function Bookings() {
     }).length;
   }, [bookings]);
 
+  // 📊 Live Booking Summary Counts for Metric Cards & Tab Badges
+  const bookingCounts = useMemo(() => {
+    const counts = { all: 0, pending: 0, confirmed: 0, active: 0, completed: 0, cancelled: 0 };
+    if (!bookings) return counts;
+    counts.all = bookings.length;
+    bookings.forEach((b) => {
+      if (counts[b.status] !== undefined) {
+        counts[b.status]++;
+      }
+    });
+    return counts;
+  }, [bookings]);
+
+  const totalOutstandingDues = useMemo(() => {
+    if (!bookings) return 0;
+    return bookings.reduce((sum, b) => {
+      const { isNew, pendingAmount } = getBookingFinancials(b);
+      if (isNew && pendingAmount > 0 && b.status !== "cancelled") {
+        return sum + pendingAmount;
+      }
+      return sum;
+    }, 0);
+  }, [bookings]);
+
   const totalPages = Math.ceil((filteredBookings?.length || 0) / BOOKINGS_PER_PAGE) || 1;
   const paginatedBookings = useMemo(() => {
     const start = (currentPage - 1) * BOOKINGS_PER_PAGE;
@@ -2760,94 +2796,43 @@ export default function Bookings() {
 
   // Render form fields (shared between create & edit)
   const renderFormFields = (data, setData, isEdit = false) => (
-    <>
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Vehicle & Rental
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* <div className="space-y-2">
-            <Label>Select Bike *</Label>
-            <Select
-              value={data.bike_id}
-              onValueChange={(v) => {
-                setData({ ...data, bike_id: v });
-                setHasEditedFields(true);
-              }}
-            >
-              <SelectTrigger className="h-11">
-                <SelectValue placeholder={bikeSearch ? `Matching (${filteredBikes.length}) bikes` : "Choose a bike"} />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                <div
-                  className="p-2 sticky top-0 bg-popover z-20 border-b border-border"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      type="text"
-                      placeholder="Search bike by model or number..."
-                      value={bikeSearch}
-                      onChange={(e) => setBikeSearch(e.target.value)}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onTouchStart={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className="pl-8 pr-8 h-9 text-sm bg-background border-border"
-                    />
-                    {bikeSearch && (
-                      <button
-                        type="button"
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setBikeSearch("");
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <ScrollArea className="h-[200px]">
-                  {filteredBikes.length > 0 ? (
-                    filteredBikes.map((bike) => (
-                      <SelectItem key={bike._id} value={bike._id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{bike.model}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {bike.number_plate} {bike.bike_name ? `(${bike.bike_name})` : ""}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="py-6 text-center text-sm text-muted-foreground">
-                      No bikes found matching "{bikeSearch}"
-                    </div>
-                  )}
-                </ScrollArea>
-              </SelectContent>
-            </Select>
-          </div> */}
-          <div className="space-y-2">
-            <Label>Select Bike *</Label>
+    <div className="space-y-5">
+      {/* 🛵 1. Vehicle & Schedule */}
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-4 sm:p-5 shadow-2xs space-y-4">
+        <div className="flex items-center gap-2.5 pb-3 border-b border-border/60">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Bike className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Vehicle & Rental Schedule</h3>
+            <p className="text-xs text-muted-foreground">Select two-wheeler and booking duration</p>
+          </div>
+        </div>
 
-            {/* Search outside Select */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5 sm:col-span-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold">Select Bike *</Label>
+              {bikeSearch && (
+                <button
+                  type="button"
+                  onClick={() => setBikeSearch("")}
+                  className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
+                >
+                  <X className="w-3 h-3" /> Clear filter
+                </button>
+              )}
+            </div>
+
+            {/* Search bike filter */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-
               <Input
                 type="text"
-                placeholder="Search bike by model or number..."
+                placeholder="Search bike by model, plate, or nickname..."
                 value={bikeSearch}
                 onChange={(e) => setBikeSearch(e.target.value)}
-                className="pl-9 h-11"
+                className="pl-9 h-10 text-xs rounded-xl"
                 autoComplete="off"
               />
             </div>
@@ -2859,70 +2844,68 @@ export default function Bookings() {
                   ...data,
                   bike_id: value,
                 });
-
                 setHasEditedFields(true);
               }}
             >
-              <SelectTrigger className="h-11">
-                <SelectValue placeholder="Choose a bike" />
+              <SelectTrigger className="h-11 rounded-xl text-xs font-medium">
+                <SelectValue placeholder={bikeSearch ? `Matching (${filteredBikes.length}) bikes` : "Choose a bike from fleet"} />
               </SelectTrigger>
 
-              <SelectContent className="max-h-[300px]">
+              <SelectContent className="max-h-[300px] rounded-xl">
                 {filteredBikes.length > 0 ? (
                   filteredBikes.map((bike) => (
-                    <SelectItem
-                      key={bike._id}
-                      value={bike._id}
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-medium">
+                    <SelectItem key={bike._id} value={bike._id}>
+                      <div className="flex items-center justify-between gap-3 w-full py-0.5">
+                        <span className="font-semibold text-foreground text-xs sm:text-sm">
                           {bike.model}
                         </span>
-
-                        <span className="text-xs text-muted-foreground">
-                          {bike.number_plate}
-                          {bike.bike_name
-                            ? ` (${bike.bike_name})`
-                            : ""}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-[11px] font-semibold px-1.5 py-0.5 rounded bg-muted border border-border/60">
+                            {bike.number_plate}
+                          </span>
+                          {bike.bike_name && (
+                            <span className="text-[11px] text-muted-foreground">
+                              ({bike.bike_name})
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </SelectItem>
                   ))
                 ) : (
-                  <div className="py-6 text-center text-sm text-muted-foreground">
-                    No bikes found
+                  <div className="py-6 text-center text-xs text-muted-foreground">
+                    No available bikes found matching "{bikeSearch}"
                   </div>
                 )}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Rental Type *</Label>
+
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label className="text-xs font-semibold">Rental Type *</Label>
             <Select
               value={data.rental_type}
               onValueChange={(v) => setData({ ...data, rental_type: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-10 rounded-xl text-xs">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hourly">Hourly</SelectItem>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="hourly">Hourly Rental</SelectItem>
+                <SelectItem value="daily">Daily (24h Cap)</SelectItem>
+                <SelectItem value="weekly">Weekly Plan</SelectItem>
+                <SelectItem value="monthly">Monthly Subscription</SelectItem>
               </SelectContent>
             </Select>
           </div>
-        </div>
-      </div>
 
-      <div className="space-y-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Start Date/Time *</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-primary" /> Start Date / Time *
+            </Label>
             <Input
               type="datetime-local"
-              className="[color-scheme:dark]"
+              className="h-10 text-xs rounded-xl [color-scheme:dark]"
               value={data.start_datetime}
               onChange={(e) => {
                 setData({
@@ -2933,11 +2916,14 @@ export default function Bookings() {
               }}
             />
           </div>
-          <div className="space-y-2">
-            <Label>End Date/Time *</Label>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-primary" /> End Date / Time *
+            </Label>
             <Input
               type="datetime-local"
-              className="[color-scheme:dark]"
+              className="h-10 text-xs rounded-xl [color-scheme:dark]"
               value={data.end_datetime}
               onChange={(e) => {
                 setData({
@@ -2952,303 +2938,302 @@ export default function Bookings() {
 
         {availabilityMessage && (
           <div
-            className={`p-4 rounded-xl flex items-center gap-3 text-sm mt-2 border ${isAvailable
-              ? "bg-green-500/10 text-green-500 border-green-500/20"
-              : "bg-red-500/10 text-red-500 border-red-500/20"
-              }`}
+            className={`p-3 rounded-xl flex items-center gap-2.5 text-xs font-semibold border transition-all ${
+              isAvailable
+                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
+                : "bg-rose-500/10 text-rose-500 border-rose-500/30"
+            }`}
           >
             {isAvailable ? (
-              <CheckCircle2 className="w-5 h-5" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
             ) : (
-              <AlertCircle className="w-5 h-5" />
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
             )}
-            <span className="font-medium">{availabilityMessage}</span>
+            <span className="flex-1">{availabilityMessage}</span>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Rental Amount (₹) *</Label>
-          <Input
-            type="number"
-            min="0"
-            placeholder="Enter rental amount"
-            value={data.total_amount}
-            onChange={(e) => setData({ ...data, total_amount: e.target.value })}
-          />
+      {/* 💰 2. Tariff & Payment Breakdown */}
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-4 sm:p-5 shadow-2xs space-y-4">
+        <div className="flex items-center gap-2.5 pb-3 border-b border-border/60">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+            <IndianRupee className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Tariff & Payment Terms</h3>
+            <p className="text-xs text-muted-foreground">Define rent, security deposit, and payment collected</p>
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label>Deposit Amount (₹)</Label>
-          <Input
-            type="number"
-            min="0"
-            placeholder="0"
-            value={data.deposit_amount}
-            onChange={(e) =>
-              setData({ ...data, deposit_amount: e.target.value })
-            }
-          />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Rental Amount (₹) *</Label>
+            <Input
+              type="number"
+              min="0"
+              placeholder="e.g. 700"
+              value={data.total_amount}
+              onChange={(e) => setData({ ...data, total_amount: e.target.value })}
+              className="h-10 text-xs rounded-xl font-bold"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Deposit Amount (₹)</Label>
+            <Input
+              type="number"
+              min="0"
+              placeholder="Default: 2000 (Refundable)"
+              value={data.deposit_amount}
+              onChange={(e) =>
+                setData({ ...data, deposit_amount: e.target.value })
+              }
+              className="h-10 text-xs rounded-xl font-medium"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold">Advance Paid Amount (₹)</Label>
+              {data.total_amount && (
+                <button
+                  type="button"
+                  className="text-[11px] text-primary hover:underline font-semibold cursor-pointer"
+                  onClick={() => setData({ ...data, paid_amount: data.total_amount })}
+                >
+                  Pay Full (₹{Number(data.total_amount).toLocaleString()})
+                </button>
+              )}
+            </div>
+            <Input
+              type="number"
+              min="0"
+              placeholder={data.total_amount ? `Default: ₹${data.total_amount}` : "0"}
+              value={data.paid_amount ?? ""}
+              onChange={(e) => setData({ ...data, paid_amount: e.target.value })}
+              className="h-10 text-xs rounded-xl font-medium"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Payment Mode</Label>
+            <Select
+              value={data.payment_method || "cash"}
+              onValueChange={(v) => setData({ ...data, payment_method: v })}
+            >
+              <SelectTrigger className="h-10 rounded-xl text-xs">
+                <SelectValue placeholder="Select Payment Mode" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="cash">Cash at Hub</SelectItem>
+                <SelectItem value="upi">UPI / Online QR</SelectItem>
+                <SelectItem value="online">Website Payment Gateway</SelectItem>
+                <SelectItem value="card">Debit / Credit Card</SelectItem>
+                <SelectItem value="bank_transfer">Bank Transfer / IMPS</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        {/* Live Calculation Strip */}
+        {data.total_amount && (
+          <div className="p-3 rounded-xl bg-muted/40 border border-border/70 flex items-center justify-between text-xs">
+            <div>
+              <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+                Balance Due at Pickup
+              </span>
+              <span className={`text-sm font-black ${
+                Number(data.total_amount || 0) - Number(data.paid_amount !== undefined && data.paid_amount !== "" ? data.paid_amount : data.total_amount || 0) > 0
+                  ? "text-amber-500"
+                  : "text-emerald-500"
+              }`}>
+                ₹{Math.max(0, Number(data.total_amount || 0) - Number(data.paid_amount !== undefined && data.paid_amount !== "" ? data.paid_amount : data.total_amount || 0)).toLocaleString()}
+              </span>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] uppercase font-semibold text-muted-foreground block">
+                Settlement Status
+              </span>
+              <span className={`text-xs font-bold ${
+                Number(data.total_amount || 0) - Number(data.paid_amount !== undefined && data.paid_amount !== "" ? data.paid_amount : data.total_amount || 0) <= 0
+                  ? "text-emerald-500"
+                  : "text-amber-500"
+              }`}>
+                {Number(data.total_amount || 0) - Number(data.paid_amount !== undefined && data.paid_amount !== "" ? data.paid_amount : data.total_amount || 0) <= 0
+                  ? "✓ Fully Settled"
+                  : "⚠️ Partial / Pending"}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Paid Amount (₹)</Label>
-          <Input
-            type="number"
-            min="0"
-            placeholder={data.total_amount ? `Default: ₹${data.total_amount}` : "0"}
-            value={data.paid_amount ?? ""}
-            onChange={(e) => setData({ ...data, paid_amount: e.target.value })}
-          />
-          {data.total_amount && (
-            <div className="text-[11px] text-muted-foreground flex items-center justify-between">
-              <span>
-                Remaining Due:{" "}
-                <span className={Number(data.total_amount || 0) - Number(data.paid_amount !== undefined && data.paid_amount !== "" ? data.paid_amount : data.total_amount || 0) > 0 ? "font-bold text-amber-500" : "font-bold text-emerald-500"}>
-                  ₹{Math.max(0, Number(data.total_amount || 0) - Number(data.paid_amount !== undefined && data.paid_amount !== "" ? data.paid_amount : data.total_amount || 0)).toLocaleString()}
-                </span>
-              </span>
+      {/* 👤 3. Customer Details */}
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-4 sm:p-5 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border/60">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+              <User className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-foreground">Customer Information</h3>
+              <p className="text-xs text-muted-foreground">Select returning customer or register new rider</p>
+            </div>
+          </div>
+
+          {!isEdit && (
+            <div className="flex items-center p-1 bg-muted rounded-xl border border-border/60 self-start sm:self-auto">
               <button
                 type="button"
-                className="text-[11px] text-primary hover:underline font-semibold cursor-pointer"
-                onClick={() => setData({ ...data, paid_amount: data.total_amount })}
+                onClick={() => setData({ ...data, is_new_customer: false })}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  !data.is_new_customer ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                }`}
               >
-                Mark Full
+                Existing
+              </button>
+              <button
+                type="button"
+                onClick={() => setData({ ...data, is_new_customer: true, customer_id: "" })}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  data.is_new_customer ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                + New Customer
               </button>
             </div>
           )}
         </div>
-        <div className="space-y-2">
-          <Label>Payment Mode</Label>
-          <Select
-            value={data.payment_method || "cash"}
-            onValueChange={(v) => setData({ ...data, payment_method: v })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Payment Mode" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="cash">Cash</SelectItem>
-              <SelectItem value="upi">UPI / Online</SelectItem>
-              <SelectItem value="online">Online / Web</SelectItem>
-              <SelectItem value="card">Card</SelectItem>
-              <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Lead Source
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {!isEdit && !data.is_new_customer ? (
           <div className="space-y-2">
-            <Label>Lead Source *</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search registered customer by name, phone or email..."
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                className="pl-9 h-10 text-xs rounded-xl"
+              />
+            </div>
             <Select
-              value={data.lead_source}
-              onValueChange={(v) => setData({ ...data, lead_source: v })}
+              value={data.customer_id}
+              onValueChange={(v) => setData({ ...data, customer_id: v })}
             >
-              <SelectTrigger>
-                <SelectValue />
+              <SelectTrigger className="h-11 rounded-xl text-xs font-medium">
+                <SelectValue placeholder="Select existing customer" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hotel">Hotel</SelectItem>
-                <SelectItem value="social_media">Social Media</SelectItem>
-                <SelectItem value="personal_reference">
-                  Personal Reference
-                </SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+              <SelectContent className="rounded-xl">
+                <ScrollArea className="h-[220px]">
+                  {filteredCustomers.map((customer) => (
+                    <SelectItem key={customer._id} value={customer._id}>
+                      <div className="flex items-center justify-between gap-3 w-full py-0.5">
+                        <span className="font-semibold text-foreground text-xs">{customer.name}</span>
+                        <span className="text-xs font-mono text-muted-foreground">{customer.phone}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                  {filteredCustomers.length === 0 && (
+                    <div className="px-3 py-4 text-center text-xs text-muted-foreground">
+                      No matching registered customers found
+                    </div>
+                  )}
+                </ScrollArea>
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Source Name</Label>
-            <Input
-              placeholder="e.g. Hotel Taj, Instagram"
-              value={data.source_name}
-              onChange={(e) =>
-                setData({ ...data, source_name: e.target.value })
-              }
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label>Partner / Referral Name</Label>
-          <Input
-            placeholder="Enter partner or referral name"
-            value={data.partner_name}
-            onChange={(e) => setData({ ...data, partner_name: e.target.value })}
-          />
-        </div>
-      </div>
-
-      {!isEdit && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Customer Details
-            </h3>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                className="w-4 h-4 rounded border-border"
-                checked={data.is_new_customer}
-                onChange={(e) =>
-                  setData({
-                    ...data,
-                    is_new_customer: e.target.checked,
-                    customer_id: "",
-                  })
-                }
-              />
-              New Customer
-            </label>
-          </div>
-
-          {data.is_new_customer ? (
-            <div className="space-y-4 p-4 bg-muted/50 rounded-xl border border-border/50">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        ) : (
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Customer Full Name *</Label>
                 <Input
-                  placeholder="Customer Name *"
+                  placeholder="e.g. Rahul Sharma"
                   value={data.customer_name}
                   onChange={(e) =>
                     setData({ ...data, customer_name: e.target.value })
                   }
+                  className="h-10 text-xs rounded-xl font-medium"
                 />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Phone Number *</Label>
                 <Input
-                  placeholder="Phone Number *"
+                  placeholder="e.g. 9876543210"
                   value={data.customer_phone}
                   onChange={(e) =>
                     setData({ ...data, customer_phone: e.target.value })
                   }
+                  className="h-10 text-xs rounded-xl font-medium"
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Email Address (Optional)</Label>
                 <Input
                   type="email"
-                  placeholder="Email (optional)"
+                  placeholder="e.g. rahul@example.com"
                   value={data.customer_email}
                   onChange={(e) =>
                     setData({ ...data, customer_email: e.target.value })
                   }
+                  className="h-10 text-xs rounded-xl"
                 />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Location / Address</Label>
                 <Input
-                  placeholder="Location"
+                  placeholder="e.g. Andheri West, Mumbai"
                   value={data.customer_location}
                   onChange={(e) =>
                     setData({ ...data, customer_location: e.target.value })
                   }
+                  className="h-10 text-xs rounded-xl"
                 />
               </div>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <Input
-                placeholder="Search customer by name or phone..."
-                value={customerSearch}
-                onChange={(e) => setCustomerSearch(e.target.value)}
-                className="mb-2"
-              />
-              <Select
-                value={data.customer_id}
-                onValueChange={(v) => setData({ ...data, customer_id: v })}
-              >
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Select existing customer" />
-                </SelectTrigger>
-                <SelectContent>
-                  <ScrollArea className="h-[200px]">
-                    {filteredCustomers.map((customer) => (
-                      <SelectItem key={customer._id} value={customer._id}>
-                        {customer.name} - {customer.phone}
-                      </SelectItem>
-                    ))}
-                    {filteredCustomers.length === 0 && (
-                      <div className="px-3 py-2 text-sm text-muted-foreground">
-                        No customers found
-                      </div>
-                    )}
-                  </ScrollArea>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
-      )}
-
-      {isEdit && (
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Customer Info
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              placeholder="Customer Name"
-              value={data.customer_name}
-              onChange={(e) =>
-                setData({ ...data, customer_name: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Phone Number"
-              value={data.customer_phone}
-              onChange={(e) =>
-                setData({ ...data, customer_phone: e.target.value })
-              }
-            />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              type="email"
-              placeholder="Email"
-              value={data.customer_email}
-              onChange={(e) =>
-                setData({ ...data, customer_email: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Location"
-              value={data.customer_location}
-              onChange={(e) =>
-                setData({ ...data, customer_location: e.target.value })
-              }
-            />
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
+      {/* 📄 4. Documents & KYC (for new customer) */}
       {!isEdit && data.is_new_customer && (
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Documents
-          </h3>
+        <div className="rounded-2xl border border-border/80 bg-card/60 p-4 sm:p-5 shadow-2xs space-y-4">
+          <div className="flex items-center gap-2.5 pb-3 border-b border-border/60">
+            <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+              <FileText className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-foreground">KYC & Verification Documents</h3>
+              <p className="text-xs text-muted-foreground">Upload Aadhaar, driving license, and secondary IDs</p>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Aadhaar Card Photo</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Aadhaar Card Photo</Label>
               <div
                 onClick={() => aadhaarInputRef.current?.click()}
-                className="border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary/50 transition-colors min-h-[100px] flex items-center justify-center"
+                className="border-2 border-dashed border-border/80 hover:border-primary/60 bg-muted/20 hover:bg-muted/40 rounded-2xl p-4 text-center cursor-pointer transition-all min-h-[110px] flex items-center justify-center"
               >
                 {aadhaarPreview ? (
                   <div>
                     <img
                       src={aadhaarPreview}
                       alt="Aadhaar"
-                      className="max-h-20 mx-auto rounded-lg"
+                      className="max-h-24 mx-auto rounded-xl border border-border/60 shadow-xs"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Click to change
+                    <p className="text-[11px] font-semibold text-primary mt-1.5">
+                      ✓ Aadhaar attached • Click to replace
                     </p>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-center gap-1.5 py-1">
                     <Upload className="w-6 h-6 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">
-                      Upload Aadhaar
-                    </p>
+                    <p className="text-xs font-semibold text-foreground">Upload Aadhaar</p>
+                    <p className="text-[10px] text-muted-foreground">PNG, JPG up to 10MB</p>
                   </div>
                 )}
                 <input
@@ -3260,29 +3245,29 @@ export default function Bookings() {
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>License Photo</Label>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Driving License Photo</Label>
               <div
                 onClick={() => licenseInputRef.current?.click()}
-                className="border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary/50 transition-colors min-h-[100px] flex items-center justify-center"
+                className="border-2 border-dashed border-border/80 hover:border-primary/60 bg-muted/20 hover:bg-muted/40 rounded-2xl p-4 text-center cursor-pointer transition-all min-h-[110px] flex items-center justify-center"
               >
                 {licensePreview ? (
                   <div>
                     <img
                       src={licensePreview}
                       alt="License"
-                      className="max-h-20 mx-auto rounded-lg"
+                      className="max-h-24 mx-auto rounded-xl border border-border/60 shadow-xs"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Click to change
+                    <p className="text-[11px] font-semibold text-primary mt-1.5">
+                      ✓ License attached • Click to replace
                     </p>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-center gap-1.5 py-1">
                     <Upload className="w-6 h-6 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">
-                      Upload License
-                    </p>
+                    <p className="text-xs font-semibold text-foreground">Upload License</p>
+                    <p className="text-[10px] text-muted-foreground">PNG, JPG up to 10MB</p>
                   </div>
                 )}
                 <input
@@ -3295,69 +3280,114 @@ export default function Bookings() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Additional Documents (Max 5)</Label>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="text-xs font-semibold">Additional Documents (Max 5)</Label>
               <Input
                 type="file"
                 multiple
                 accept="image/*"
                 onChange={handleExtraDocsChange}
-                className="cursor-pointer"
+                className="h-10 text-xs rounded-xl cursor-pointer"
               />
 
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {extraDocPreviews.map((src, index) => (
-                  <div
-                    key={index}
-                    className="relative group aspect-square rounded-md overflow-hidden border"
-                  >
-                    <img
-                      src={src}
-                      alt="doc"
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeExtraDoc(index)}
-                      className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              {extraDocPreviews.length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-2">
+                  {extraDocPreviews.map((src, index) => (
+                    <div
+                      key={index}
+                      className="relative group aspect-square rounded-xl overflow-hidden border border-border/70 shadow-2xs"
                     >
-                      <XCircle className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+                      <img
+                        src={src}
+                        alt="doc"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeExtraDoc(index)}
+                        className="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-1 shadow-xs hover:bg-rose-700 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Fuel & Operations
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Fuel Quantity (L)</Label>
+
+      {/* ⚙️ 5. Lead Source, Operations & Remarks */}
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-4 sm:p-5 shadow-2xs space-y-4">
+        <div className="flex items-center gap-2.5 pb-3 border-b border-border/60">
+          <div className="w-8 h-8 rounded-xl bg-slate-500/10 text-slate-500 flex items-center justify-center shrink-0">
+            <Fuel className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Operations, Referral & Remarks</h3>
+            <p className="text-xs text-muted-foreground">Lead channel, fuel out level, and internal operational notes</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Lead Source *</Label>
+            <Select
+              value={data.lead_source}
+              onValueChange={(v) => setData({ ...data, lead_source: v })}
+            >
+              <SelectTrigger className="h-10 rounded-xl text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="hotel">Hotel Desk</SelectItem>
+                <SelectItem value="social_media">Social Media (Insta / Ads)</SelectItem>
+                <SelectItem value="personal_reference">Personal Reference</SelectItem>
+                <SelectItem value="other">Other / Walk-in</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Source Name</Label>
+            <Input
+              placeholder="e.g. Hotel Taj, Instagram"
+              value={data.source_name}
+              onChange={(e) =>
+                setData({ ...data, source_name: e.target.value })
+              }
+              className="h-10 text-xs rounded-xl"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Partner / Referral Name</Label>
+            <Input
+              placeholder="Enter partner or referral name"
+              value={data.partner_name}
+              onChange={(e) => setData({ ...data, partner_name: e.target.value })}
+              className="h-10 text-xs rounded-xl"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Fuel Quantity (Liters)</Label>
             <Input
               type="number"
               min="0"
               step="0.5"
-              placeholder="0"
+              placeholder="e.g. 3.0"
               value={data.fuel_quantity}
               onChange={(e) =>
                 setData({ ...data, fuel_quantity: e.target.value })
               }
+              className="h-10 text-xs rounded-xl"
             />
           </div>
-        </div>
-      </div>
 
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Partner Shares
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Reference Partner Share (₹)</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Reference Partner Share (₹)</Label>
             <Input
               type="number"
               min="0"
@@ -3366,10 +3396,12 @@ export default function Bookings() {
               onChange={(e) =>
                 setData({ ...data, reference_partner_share: e.target.value })
               }
+              className="h-10 text-xs rounded-xl"
             />
           </div>
-          <div className="space-y-2">
-            <Label>Provider Partner Share (₹)</Label>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Provider Partner Share (₹)</Label>
             <Input
               type="number"
               min="0"
@@ -3378,54 +3410,53 @@ export default function Bookings() {
               onChange={(e) =>
                 setData({ ...data, provider_partner_share: e.target.value })
               }
+              className="h-10 text-xs rounded-xl"
             />
           </div>
-        </div>
-      </div>
 
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Additional Info
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Account Manager</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Account Manager</Label>
             <Input
-              placeholder="Manager name"
+              placeholder="Assigned staff manager"
               value={data.account_manager}
               onChange={(e) =>
                 setData({ ...data, account_manager: e.target.value })
               }
+              className="h-10 text-xs rounded-xl"
             />
           </div>
-          <div className="space-y-2">
-            <Label>Notes</Label>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Internal Quick Note</Label>
             <Input
-              placeholder="Quick note..."
+              placeholder="e.g. Helmet issued #3, customer requested extension..."
               value={data.notes}
               onChange={(e) => setData({ ...data, notes: e.target.value })}
+              className="h-10 text-xs rounded-xl"
+            />
+          </div>
+
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label className="text-xs font-semibold">Detailed Remarks</Label>
+            <Textarea
+              placeholder="Additional operational or vehicle notes..."
+              value={data.remarks}
+              onChange={(e) => setData({ ...data, remarks: e.target.value })}
+              rows={2}
+              className="rounded-xl text-xs"
             />
           </div>
         </div>
-        <div className="space-y-2">
-          <Label>Remarks</Label>
-          <Textarea
-            placeholder="Detailed remarks..."
-            value={data.remarks}
-            onChange={(e) => setData({ ...data, remarks: e.target.value })}
-            rows={2}
-          />
-        </div>
       </div>
-    </>
+    </div>
   );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Bookings</h1>
-          <p className="text-muted-foreground">Manage rental bookings</p>
+          <h1 className="text-2xl font-bold font-display text-foreground tracking-tight">Bookings & Dispatch</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage reservations, verify deposits, and process vehicle handovers</p>
         </div>
         <Dialog
           open={isOpen}
@@ -3440,49 +3471,59 @@ export default function Bookings() {
             </Button>
           </DialogTrigger> */}
 
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="w-4 h-4 mr-2" />
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} className="h-9">
+              <Download className="w-4 h-4 mr-1.5" />
               Export
             </Button>
 
             <DialogTrigger asChild>
-              <Button className="gradient-sunset text-primary-foreground">
-                <Plus className="w-4 h-4 mr-2" /> New Booking
+              <Button variant="hero" size="sm" className="h-9">
+                <Plus className="w-4 h-4 mr-1.5" /> New Booking
               </Button>
             </DialogTrigger>
           </div>
 
-          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden p-0">
-            <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-border">
-              <DialogTitle className="text-xl">
-                Create Manual Booking
+          <DialogContent className="max-w-2xl w-[96vw] sm:w-full max-h-[94vh] sm:max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl sm:rounded-3xl border border-border/80 shadow-2xl bg-card">
+            <DialogHeader className="flex-shrink-0 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border/70 bg-muted/20">
+              <DialogTitle className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
+                <Plus className="w-4 h-4 text-primary" /> Create Manual Booking
               </DialogTitle>
             </DialogHeader>
-            <ScrollArea className="flex-1 overflow-auto">
-              <form onSubmit={handleCreateBooking} className="space-y-6 p-6">
+            <form onSubmit={handleCreateBooking} className="flex flex-col flex-1 overflow-hidden">
+              <ScrollArea className="flex-1 overflow-y-auto px-3.5 sm:px-6 py-4">
                 {renderFormFields(formData, setFormData, false)}
-                <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsOpen(false);
-                      resetForm();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="gradient-sunset"
-                    disabled={uploading || isAvailable === false}
-                  >
-                    {uploading ? "Creating..." : "Create Booking"}
-                  </Button>
-                </div>
-              </form>
-            </ScrollArea>
+              </ScrollArea>
+              <div className="flex items-center justify-end gap-2.5 px-4 sm:px-6 py-3 border-t border-border/70 bg-muted/20 shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-10 px-4 rounded-xl text-xs font-semibold cursor-pointer"
+                  onClick={() => {
+                    setIsOpen(false);
+                    resetForm();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="h-10 px-5 rounded-xl text-xs font-bold gradient-sunset text-white cursor-pointer shadow-xs"
+                  disabled={uploading || isAvailable === false}
+                >
+                  {uploading ? (
+                    <>
+                      <span className="animate-spin mr-1.5 inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Booking"
+                  )}
+                </Button>
+              </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
@@ -3491,37 +3532,38 @@ export default function Bookings() {
         open={!!editingBooking}
         onOpenChange={(open) => !open && setEditingBooking(null)}
       >
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden p-0">
-          <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="text-xl">Edit Booking</DialogTitle>
+        <DialogContent className="max-w-2xl w-[96vw] sm:w-full max-h-[94vh] sm:max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl sm:rounded-3xl border border-border/80 shadow-2xl bg-card">
+          <DialogHeader className="flex-shrink-0 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border/70 bg-muted/20">
+            <DialogTitle className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
+              <Edit className="w-4 h-4 text-primary" /> Edit Booking #{editingBooking?._id?.slice(-6).toUpperCase()}
+            </DialogTitle>
           </DialogHeader>
-          <ScrollArea className="flex-1 overflow-auto">
-            <div className="space-y-6 p-6">
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <ScrollArea className="flex-1 overflow-y-auto px-3.5 sm:px-6 py-4">
               {renderFormFields(editFormData, setEditFormData, true)}
-              <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <Button
-                  variant="outline"
-                  // onClick={() => setEditingBooking(null)}
-                  onClick={() => {
-                    setEditingBooking(null);
-                    setBikeSearch("");
-                  }}
-                >
-                  Cancel
-                </Button>
-                {/* <Button onClick={handleSaveEdit} className="gradient-sunset">
-                  Save Changes
-                </Button> */}
-
-                <Button
-                  onClick={handleSaveEdit}
-                  disabled={isAvailable === false}
-                >
-                  Save Changes
-                </Button>
-              </div>
+            </ScrollArea>
+            <div className="flex items-center justify-end gap-2.5 px-4 sm:px-6 py-3 border-t border-border/70 bg-muted/20 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 px-4 rounded-xl text-xs font-semibold cursor-pointer"
+                onClick={() => {
+                  setEditingBooking(null);
+                  setBikeSearch("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                size="sm"
+                className="h-10 px-5 rounded-xl text-xs font-bold gradient-sunset text-white cursor-pointer shadow-xs"
+                disabled={isAvailable === false}
+              >
+                Save Changes
+              </Button>
             </div>
-          </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -4021,51 +4063,53 @@ export default function Bookings() {
 
 
 
-      <div className="flex flex-col gap-4">
-        {/* <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by customer, bike, plate..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div> */}
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="relative w-full max-w-md touch-action-manipulation">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+      {/* 🔍 Search & Filter Bar */}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          {/* Search Box with Clear Button */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
-              placeholder="Search by customer, bike, plate..."
+              placeholder="Search by rider, bike, plate, ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pointer-events-auto"
+              className="pl-10 pr-9 h-10 text-xs sm:text-sm rounded-xl bg-card border-border shadow-2xs"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          {/* 🎯 Payment Filter Dropdown & Pending Due Quick Toggle Badge */}
-          <div className="flex items-center gap-2 self-start sm:self-auto overflow-x-auto">
+          {/* Quick Due Pill & Payment Filter Dropdown */}
+          <div className="flex items-center gap-2">
             {pendingDuesCount > 0 && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setPaymentFilter(paymentFilter === "pending_due" ? "all" : "pending_due")}
-                className={`h-9 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${paymentFilter === "pending_due"
-                    ? "bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-500/30 font-bold"
-                    : "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
-                  }`}
+                className={`h-10 px-3 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                  paymentFilter === "pending_due"
+                    ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                    : "bg-amber-500/10 text-amber-500 border-amber-500/30 hover:bg-amber-500/20"
+                }`}
               >
                 <span>⚠️ {pendingDuesCount} Due</span>
               </Button>
             )}
 
             <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-              <SelectTrigger className="h-9 w-38 sm:w-44 text-xs font-medium bg-card border-border shrink-0">
-                <CreditCard className="w-3.5 h-3.5 mr-1 text-muted-foreground" />
-                <SelectValue placeholder="Payment Filter" />
+              <SelectTrigger className="h-10 w-full sm:w-44 text-xs font-semibold bg-card border-border rounded-xl shadow-2xs shrink-0">
+                <CreditCard className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue placeholder="All Payments" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="all">All Payments</SelectItem>
                 <SelectItem value="pending_due">Pending Due ({pendingDuesCount})</SelectItem>
                 <SelectItem value="partial">Partially Paid</SelectItem>
@@ -4074,34 +4118,42 @@ export default function Bookings() {
             </Select>
           </div>
         </div>
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => setActiveTab(v)}
-          className="w-full"
-        >
-          <div className="relative w-full overflow-x-auto pb-1 -mb-1">
-            <TabsList className="inline-flex w-max sm:w-full sm:flex bg-muted p-1">
-              <TabsTrigger value="all" className="flex-1">
-                All
-              </TabsTrigger>
-              <TabsTrigger value="pending" className="flex-1">
-                Pending
-              </TabsTrigger>
-              <TabsTrigger value="confirmed" className="flex-1">
-                Confirmed
-              </TabsTrigger>
-              <TabsTrigger value="active" className="flex-1">
-                Active
-              </TabsTrigger>
-              <TabsTrigger value="completed" className="flex-1">
-                Completed
-              </TabsTrigger>
-              <TabsTrigger value="cancelled" className="flex-1">
-                Cancelled
-              </TabsTrigger>
-            </TabsList>
+
+        {/* Clean Segmented Tab Pills with smooth scroll */}
+        <div className="w-full overflow-x-auto pb-1 scrollbar-none">
+          <div className="inline-flex gap-1.5 p-1 bg-muted/60 rounded-xl border border-border/60 min-w-full sm:min-w-0">
+            {[
+              { value: "all", label: "All", count: bookingCounts.all },
+              { value: "pending", label: "Pending", count: bookingCounts.pending },
+              { value: "confirmed", label: "Confirmed", count: bookingCounts.confirmed },
+              { value: "active", label: "Active", count: bookingCounts.active },
+              { value: "completed", label: "Completed", count: bookingCounts.completed },
+              { value: "cancelled", label: "Cancelled", count: bookingCounts.cancelled },
+            ].map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => setActiveTab(tab.value)}
+                className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs transition-all whitespace-nowrap cursor-pointer ${
+                  activeTab === tab.value
+                    ? "bg-background text-foreground font-bold shadow-xs border border-border/40"
+                    : "text-muted-foreground hover:text-foreground font-medium"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    activeTab === tab.value
+                      ? "bg-primary/10 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
           </div>
-        </Tabs>
+        </div>
       </div>
 
       {isLoading ? (
@@ -4131,16 +4183,23 @@ export default function Bookings() {
                 transition={{ delay: Math.min(index, 6) * 0.02, duration: 0.2 }}
               >
                 <Card
-                  className={`group overflow-hidden border transition-all duration-200 hover:shadow-lg ${isOnline
-                    ? "border-l-4 border-l-blue-500 border-border"
-                    : isPartner
-                      ? "border-l-4 border-l-purple-500 border-border"
-                      : "border-l-4 border-l-orange-500 border-border"
-                    }`}
+                  className={`group overflow-hidden rounded-2xl sm:rounded-3xl border transition-all duration-200 hover:shadow-lg bg-card ${
+                    isOnline
+                      ? "border-l-4 border-l-blue-500 border-border/80 hover:border-border"
+                      : isPartner
+                        ? "border-l-4 border-l-purple-500 border-border/80 hover:border-border"
+                        : "border-l-4 border-l-orange-500 border-border/80 hover:border-border"
+                  }`}
                 >
                   <CardContent className="p-0">
-                    <div className="flex items-center justify-between px-4 py-2 bg-muted/30 border-b border-border/50">
-                      <div className="flex items-center gap-2 flex-wrap">
+                    {/* 🏷️ Top Header Bar: Clean & Minimal (NO bike here - bike is inside the card!) */}
+                    <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-muted/30 border-b border-border/50 gap-2">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
+                        {/* Reference Badge */}
+                        <span className="font-mono text-[11px] font-bold text-foreground bg-background px-2 py-0.5 rounded-md border border-border/70 shadow-2xs shrink-0">
+                          #{booking._id?.slice(-6).toUpperCase()}
+                        </span>
+
                         {/* Area / Hub Badge with Dynamic Multi-Area Highlight */}
                         {(() => {
                           const areaName = getBookingAreaName(booking);
@@ -4149,122 +4208,101 @@ export default function Bookings() {
                           return (
                             <Badge
                               variant="outline"
-                              className={`text-[11px] font-semibold gap-1 px-2.5 py-0.5 rounded-full shadow-sm transition-all ${isMultiArea
-                                  ? "bg-amber-500/25 text-amber-300 border-amber-500/70 ring-2 ring-amber-500/40 font-bold"
-                                  : "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                                }`}
+                              className={`text-[11px] font-semibold gap-1 px-2.5 py-0.5 rounded-full shadow-2xs transition-all truncate max-w-[130px] sm:max-w-none ${
+                                isMultiArea
+                                  ? "bg-amber-500/20 text-amber-500 border-amber-500/60 font-bold"
+                                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                              }`}
                             >
-                              <MapPin className="w-3 h-3 text-amber-400 shrink-0" />
-                              <span>{areaName}</span>
+                              <MapPin className="w-3 h-3 text-amber-500 shrink-0" />
+                              <span className="truncate">{areaName}</span>
                             </Badge>
                           );
                         })()}
 
+                        {/* Booking Source Badge */}
                         <Badge
-                          className={`${sourceColors[booking.booking_source] || "bg-muted text-muted-foreground"} border text-[11px] gap-1`}
+                          className={`${sourceColors[booking.booking_source] || "bg-muted text-muted-foreground"} border text-[11px] gap-1 font-medium shadow-2xs shrink-0`}
                         >
                           {sourceIcons[booking.booking_source]}
                           {getSourceLabel(booking.booking_source)}
                         </Badge>
-                        {booking.lead_source &&
-                          booking.lead_source !== "other" && (
-                            <span className="text-[11px] text-muted-foreground capitalize hidden sm:inline">
-                              via {booking.lead_source.replace("_", " ")}
-                              {booking.source_name
-                                ? ` · ${booking.source_name}`
-                                : ""}
-                            </span>
-                          )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className={`${statusColors[booking.status]} border text-[11px]`}
-                        >
-                          {booking.status}
-                        </Badge>
 
-                        {booking.is_extended && (
-                          <Badge className="bg-blue-500 text-white">
-                            Extended
+                        {booking.lead_source && booking.lead_source !== "other" && (
+                          <span className="text-[11px] text-muted-foreground capitalize hidden md:inline truncate max-w-[150px]">
+                            via {booking.lead_source.replace("_", " ")}
+                            {booking.source_name ? ` · ${booking.source_name}` : ""}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Status Badge + Overdue & Extended Pills */}
+                      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                        {booking.status === "active" && booking.end_datetime && new Date() > new Date(booking.end_datetime) && (
+                          <Badge className="bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30 text-[10px] font-bold animate-pulse gap-1 px-2 py-0.5">
+                            <AlertTriangle className="w-3 h-3 text-red-500" />
+                            <span>Overdue</span>
                           </Badge>
                         )}
 
-                        {(() => {
-                          const { isNew, pendingAmount, paidAmount } = getBookingFinancials(booking);
-                          if (!isNew) {
-                            return (
-                              <Badge
-                                className={`${paymentStatusColors[booking.payment_status || "pending"]} border text-[11px] gap-1`}
-                              >
-                                <CreditCard className="w-3 h-3" />
-                                {booking.payment_status === "paid"
-                                  ? "Paid"
-                                  : booking.payment_status === "failed"
-                                    ? "Failed"
-                                    : "Pending"}
-                              </Badge>
-                            );
-                          }
+                        <Badge
+                          className={`${statusColors[booking.status]} border text-[11px] font-bold capitalize flex items-center gap-1 shadow-2xs px-2.5 py-0.5`}
+                        >
+                          {booking.status === "active" && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          )}
+                          {booking.status === "pending" && (
+                            <Clock className="w-3 h-3 text-amber-500" />
+                          )}
+                          {booking.status === "confirmed" && (
+                            <CheckCircle2 className="w-3 h-3 text-blue-500" />
+                          )}
+                          <span>{booking.status}</span>
+                        </Badge>
 
-                          if (pendingAmount > 0) {
-                            return (
-                              <Badge
-                                className="bg-amber-500/15 text-amber-400 border-amber-500/40 text-[11px] gap-1 font-semibold"
-                              >
-                                <CreditCard className="w-3 h-3" />
-                                <span className="hidden sm:inline">
-                                  {paidAmount > 0 ? "Partial · " : "Pending · "}₹{pendingAmount.toLocaleString()} Due
-                                </span>
-                                <span className="inline sm:hidden">
-                                  ₹{pendingAmount.toLocaleString()} Due
-                                </span>
-                              </Badge>
-                            );
-                          }
-
-                          return (
-                            <Badge
-                              className="bg-emerald-500/15 text-emerald-400 border-emerald-500/40 text-[11px] gap-1 font-semibold"
-                            >
-                              <CreditCard className="w-3 h-3" />
-                              Paid
-                            </Badge>
-                          );
-                        })()}
+                        {booking.is_extended && (
+                          <Badge className="bg-blue-600 text-white text-[10px] font-bold py-0.5 px-2">
+                            Extended
+                          </Badge>
+                        )}
                       </div>
                     </div>
-
-                    <div className="p-4">
-                      {/* 🎯 Row 1: The 4 Data Columns across full card width (2x2 on mobile, 4 columns on laptop/desktop) */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-4 sm:gap-6">
+                    {/* 📋 Card Body: 4 Core Columns (2x2 on mobile for compact height, 4 columns on desktop) */}
+                    <div className="p-3.5 sm:p-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-y-3.5 gap-x-4 sm:gap-6">
                         {/* 1. CUSTOMER */}
-                        <div className="space-y-0.5">
-                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                            Customer
+                        <div className="space-y-0.5 min-w-0">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            Rider
                           </p>
-                          <p className="font-bold text-foreground text-sm sm:text-base truncate">
-                            {booking.customer_name ||
-                              booking.customers?.name ||
-                              "—"}
+                          <p className="font-bold text-foreground text-xs sm:text-sm truncate">
+                            {booking.customer_name || booking.customers?.name || "—"}
                           </p>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                            <Phone className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">
-                              {booking.contact_number ||
-                                booking.customers?.phone ||
-                                "—"}
-                            </span>
-                          </div>
+                          {booking.contact_number || booking.customers?.phone ? (
+                            <a
+                              href={`tel:${booking.contact_number || booking.customers?.phone}`}
+                              className="text-xs text-muted-foreground hover:text-emerald-500 flex items-center gap-1 mt-0.5 font-medium truncate cursor-pointer"
+                              title="Call Rider"
+                            >
+                              <Phone className="w-3 h-3 text-emerald-500 shrink-0" />
+                              <span className="truncate">
+                                {booking.contact_number || booking.customers?.phone}
+                              </span>
+                            </a>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
                         </div>
 
-                        {/* 2. BIKE */}
-                        <div className="space-y-0.5">
-                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        {/* 2. BIKE (In card!) */}
+                        <div className="space-y-0.5 min-w-0">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                             Bike
                           </p>
-                          <p className="font-bold text-foreground text-sm sm:text-base truncate">
+                          <p className="font-bold text-foreground text-xs sm:text-sm truncate">
                             {(() => {
-                              const raw = booking.vehicle_make_model ||
+                              const raw =
+                                booking.vehicle_make_model ||
                                 booking.bikes?.model ||
                                 booking.bikes?.bike_name ||
                                 (booking.cluster_id ? booking.cluster_id.name : "—");
@@ -4272,87 +4310,64 @@ export default function Bookings() {
                               return cleaned || (booking.cluster_id ? booking.cluster_id.name : "Bike");
                             })()}
                           </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {booking.bikes?.number_plate ||
-                              (booking.cluster_id ? "Not Assigned" : "—")}
+                          <p className="text-xs text-muted-foreground truncate font-mono font-bold">
+                            {booking.bikes?.number_plate || (booking.cluster_id ? "Unassigned" : "—")}
                           </p>
-                          {(() => {
-                            const areaName = getBookingAreaName(booking);
-                            if (!areaName) return null;
-                            return (
-                              <p className="text-[11px] text-amber-400 flex items-center gap-1 font-medium mt-0.5">
-                                <MapPin className="w-2.5 h-2.5 shrink-0 text-amber-400" />
-                                <span className="truncate">{areaName}</span>
-                              </p>
-                            );
-                          })()}
                         </div>
 
                         {/* 3. DURATION */}
-                        <div className="space-y-0.5">
-                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        <div className="space-y-0.5 min-w-0">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                             Duration
                           </p>
-                          <div className="flex items-center gap-1.5 text-xs text-foreground mt-0.5">
-                            <Calendar className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-                            <span className="font-medium">
-                              {format(new Date(booking.start_datetime), "dd MMM, h:mm a")}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                            <Clock className="w-3.5 h-3.5 shrink-0" />
+                          <p className="text-xs font-bold text-foreground truncate">
+                            {(() => {
+                              try {
+                                return format(new Date(booking.start_datetime), "dd MMM, h:mm a");
+                              } catch {
+                                return "—";
+                              }
+                            })()}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
                             <span>
-                              to {format(new Date(booking.end_datetime), "dd MMM, h:mm a")}
+                              to{" "}
+                              {(() => {
+                                try {
+                                  return format(new Date(booking.end_datetime), "dd MMM, h:mm a");
+                                } catch {
+                                  return "—";
+                                }
+                              })()}
                             </span>
-                          </div>
+                          </p>
                         </div>
 
-                        {/* 4. AMOUNT */}
-                        <div className="space-y-0.5">
-                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                            Amount
+                        {/* 4. TARIFF & BALANCE */}
+                        <div className="space-y-0.5 min-w-0">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            Tariff & Balance
                           </p>
                           {(() => {
                             const { isNew, totalDue, pendingAmount } = getBookingFinancials(booking);
-                            if (!isNew) {
-                              return (
-                                <>
-                                  <p className="text-lg sm:text-xl font-bold text-foreground">
-                                    ₹ {booking.total_amount}
-                                  </p>
-                                  {booking.extended_amount > 0 && (
-                                    <p className="text-xs text-blue-400 font-medium">
-                                      +₹ {booking.extended_amount} Extended
-                                    </p>
-                                  )}
-                                  {(booking.deposit_amount ?? 0) > 0 && (
-                                    <p className="text-xs text-muted-foreground">
-                                      Dep: ₹{booking.deposit_amount?.toLocaleString()}
-                                    </p>
-                                  )}
-                                </>
-                              );
-                            }
-
                             return (
                               <>
-                                <p className="text-lg sm:text-xl font-bold text-foreground">
-                                  ₹ {totalDue || booking.total_amount}
+                                <p className="text-sm sm:text-base font-black text-foreground leading-tight">
+                                  ₹{Number(totalDue || booking.total_amount || 0).toLocaleString()}
                                 </p>
                                 {pendingAmount > 0 ? (
-                                  <div className="pt-0.5">
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#261c0d] text-[#facc15] border border-[#facc15]/40 shadow-sm">
-                                      <IndianRupee className="w-3 h-3 text-[#facc15]" /> Due: ₹{pendingAmount.toLocaleString()}
-                                    </span>
-                                  </div>
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-500">
+                                    ⚠️ Due: ₹{pendingAmount.toLocaleString()}
+                                  </span>
                                 ) : (
-                                  <p className="text-xs font-semibold text-emerald-400 pt-0.5">
-                                    ✓ Fully Paid
-                                  </p>
+                                  <span className="text-[11px] font-bold text-emerald-500 block">
+                                    ✓ Fully Settled
+                                  </span>
                                 )}
                                 {(booking.deposit_amount ?? 0) > 0 && (
-                                  <p className="text-xs text-muted-foreground mt-0.5">
-                                    Dep: ₹{booking.deposit_amount?.toLocaleString()}
+                                  <p className="text-[10px] text-muted-foreground">
+                                    + ₹{booking.deposit_amount?.toLocaleString()} Dep.
                                   </p>
                                 )}
                               </>
@@ -4361,11 +4376,14 @@ export default function Bookings() {
                         </div>
                       </div>
 
-                      {/* 🎯 Row 2: Bottom Actions Bar (Separate lower row across full width) */}
+                      {/* 🎯 Row 2: Bottom Actions Bar (Mobile 2-Tier + Desktop Horizontal) */}
                       {(() => {
                         const { isNew, pendingAmount } = getBookingFinancials(booking);
                         const canCollectPayment = isNew && pendingAmount > 0 && booking.status !== "cancelled";
                         const canMarkPaidOld = !isNew && booking.payment_status !== "paid" && booking.status !== "cancelled";
+                        const canAssignBike = !booking.bike_id && booking.cluster_id;
+                        const statusNextActions = statusActions[booking.status]?.filter((a) => a.next !== "cancelled") || [];
+                        const hasPrimaryAction = canCollectPayment || canAssignBike || statusNextActions.length > 0;
 
                         const utilityButtons = (
                           <>
@@ -4374,19 +4392,15 @@ export default function Bookings() {
                               variant="outline"
                               disabled={isGeneratingBill}
                               onClick={() => handleBillClick(booking)}
-                              className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl text-xs font-medium border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/50 gap-1.5 cursor-pointer"
+                              className="h-8 w-8 sm:h-9 sm:w-auto p-0 sm:px-3 rounded-lg sm:rounded-xl text-xs font-medium border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/50 gap-1.5 cursor-pointer shrink-0"
+                              title="Download Invoice"
                             >
                               {isGeneratingBill && fetchingBillId === booking._id ? (
-                                <>
-                                  <span className="animate-spin mr-1 inline-block w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full" />
-                                  Saving...
-                                </>
+                                <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full" />
                               ) : (
-                                <>
-                                  <Download className="w-3.5 h-3.5" />
-                                  <span>Bill</span>
-                                </>
+                                <Download className="w-3.5 h-3.5" />
                               )}
+                              <span className="hidden sm:inline">Bill</span>
                             </Button>
 
                             {(booking.status === "active" ||
@@ -4396,10 +4410,11 @@ export default function Bookings() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleEditBooking(booking)}
-                                className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl text-xs font-medium border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/50 gap-1.5 cursor-pointer"
+                                className="h-8 w-8 sm:h-9 sm:w-auto p-0 sm:px-3 rounded-lg sm:rounded-xl text-xs font-medium border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/50 gap-1.5 cursor-pointer shrink-0"
+                                title="Edit Booking"
                               >
                                 <Edit className="w-3.5 h-3.5" />
-                                <span>Edit</span>
+                                <span className="hidden sm:inline">Edit</span>
                               </Button>
                             )}
 
@@ -4409,11 +4424,12 @@ export default function Bookings() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl text-xs font-medium border-blue-500/40 text-blue-400 bg-blue-500/5 hover:bg-blue-500/15 gap-1.5 cursor-pointer"
+                                className="h-8 w-8 sm:h-9 sm:w-auto p-0 sm:px-3 rounded-lg sm:rounded-xl text-xs font-medium border-blue-500/40 text-blue-500 bg-blue-500/5 hover:bg-blue-500/15 gap-1.5 cursor-pointer shrink-0"
                                 onClick={() => handleOpenExtend(booking)}
+                                title="Extend Rental"
                               >
-                                <Clock className="w-3.5 h-3.5 text-blue-400" />
-                                <span>Extend</span>
+                                <Clock className="w-3.5 h-3.5 text-blue-500" />
+                                <span className="hidden sm:inline">Extend</span>
                               </Button>
                             )}
 
@@ -4422,28 +4438,26 @@ export default function Bookings() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleMarkPaid(booking._id)}
-                                className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-xl text-xs font-medium border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 gap-1.5 cursor-pointer"
+                                className="h-8 sm:h-9 px-2 sm:px-3 rounded-lg sm:rounded-xl text-xs font-medium border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 gap-1.5 cursor-pointer shrink-0"
                               >
                                 <CreditCard className="w-3.5 h-3.5" />
                                 <span>Paid</span>
                               </Button>
                             )}
 
-                            {statusActions[booking.status]
-                              ?.filter((a) => a.next === "cancelled")
-                              .map((action) => (
-                                <Button
-                                  key={action.next}
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleStatusUpdate(booking._id, action.next)}
-                                  className="h-8 sm:h-9 px-2 sm:px-3.5 rounded-full sm:rounded-xl text-xs font-medium border-red-500/40 text-red-400 bg-red-500/5 hover:bg-red-500/15 gap-1.5 cursor-pointer"
-                                  title="Cancel Booking"
-                                >
-                                  <XCircle className="w-3.5 h-3.5 text-red-400" />
-                                  <span className="hidden sm:inline">Cancel</span>
-                                </Button>
-                              ))}
+                            {statusActions[booking.status]?.filter((a) => a.next === "cancelled").map((action) => (
+                              <Button
+                                key={action.next}
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleStatusUpdate(booking._id, action.next)}
+                                className="h-8 w-8 sm:h-9 sm:w-auto p-0 sm:px-3 rounded-lg sm:rounded-xl text-xs font-medium border-red-500/40 text-red-500 bg-red-500/5 hover:bg-red-500/15 gap-1.5 cursor-pointer shrink-0"
+                                title="Cancel Booking"
+                              >
+                                <XCircle className="w-3.5 h-3.5 text-red-500" />
+                                <span className="hidden sm:inline">Cancel</span>
+                              </Button>
+                            ))}
                           </>
                         );
 
@@ -4456,69 +4470,48 @@ export default function Bookings() {
                                   setCollectPaymentBooking(booking);
                                   setPaymentAmountInput(String(pendingAmount));
                                 }}
-                                className="h-9 sm:h-9 px-4 rounded-xl text-xs font-bold bg-[#261c0d] hover:bg-[#332512] text-[#facc15] border border-[#facc15]/40 hover:border-[#facc15]/70 flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer flex-1 sm:flex-initial"
+                                className="h-9 px-3.5 rounded-xl text-xs font-bold bg-[#261c0d] hover:bg-[#332512] text-[#facc15] border border-[#facc15]/40 hover:border-[#facc15]/70 flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer flex-1 sm:flex-initial"
                               >
                                 <IndianRupee className="w-3.5 h-3.5 text-[#facc15]" />
                                 <span>Collect ₹{pendingAmount.toLocaleString()}</span>
                               </Button>
                             )}
 
-                            {!booking.bike_id && booking.cluster_id && (
+                            {canAssignBike && (
                               <Button
                                 size="sm"
                                 onClick={() => setAssignDialog(booking)}
-                                className="h-9 sm:h-9 px-4 rounded-xl text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/25 transition-all cursor-pointer flex-1 sm:flex-initial"
+                                className="h-9 px-3.5 rounded-xl text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/25 transition-all cursor-pointer flex-1 sm:flex-initial"
                               >
                                 <Bike className="w-3.5 h-3.5" />
                                 <span>Assign Bike</span>
                               </Button>
                             )}
 
-                            {statusActions[booking.status]
-                              ?.filter((a) => a.next !== "cancelled")
-                              .map((action) => (
-                                <Button
-                                  key={action.next}
-                                  size="sm"
-                                  onClick={() => handleStatusUpdate(booking._id, action.next)}
-                                  className="h-9 sm:h-9 px-4 rounded-xl text-xs font-bold gradient-sunset text-primary-foreground flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer flex-1 sm:flex-initial"
-                                >
-                                  {action.next === "active" ? (
-                                    <Play className="w-3.5 h-3.5 fill-current" />
-                                  ) : action.next === "completed" ? (
-                                    <CheckCircle className="w-3.5 h-3.5" />
-                                  ) : (
-                                    action.icon
-                                  )}
-                                  <span>{action.label}</span>
-                                </Button>
-                              ))}
+                            {statusNextActions.map((action) => (
+                              <Button
+                                key={action.next}
+                                size="sm"
+                                onClick={() => handleStatusUpdate(booking._id, action.next)}
+                                className="h-9 px-3.5 rounded-xl text-xs font-bold gradient-sunset text-primary-foreground flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer flex-1 sm:flex-initial"
+                              >
+                                {action.next === "active" ? (
+                                  <Play className="w-3.5 h-3.5 fill-current" />
+                                ) : action.next === "completed" ? (
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                ) : (
+                                  action.icon
+                                )}
+                                <span>{action.label}</span>
+                              </Button>
+                            ))}
                           </>
                         );
 
                         return (
-                          <div className="w-full pt-3.5 mt-3 border-t border-border/40">
-                            {/* 💻 Laptop / Desktop Layout: Lower row with [View ⌵] on left and buttons on right */}
-                            <div className="hidden sm:flex items-center justify-between w-full gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setExpandedBookingId(isExpanded ? null : booking._id)}
-                                className="text-muted-foreground hover:text-foreground text-xs font-semibold gap-1.5 px-2 h-9 cursor-pointer"
-                              >
-                                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                                <span>{isExpanded ? "Collapse" : "View"}</span>
-                              </Button>
-
-                              <div className="flex items-center gap-2 flex-wrap">
-                                {utilityButtons}
-                                {primaryButtons}
-                              </div>
-                            </div>
-
-                            {/* 📱 Mobile Layout: 2-Tier Layout */}
-                            <div className="flex sm:hidden flex-col w-full gap-2.5">
-                              {/* Tier 1: View toggle on left, compact utility buttons on right */}
+                          <div className="pt-2.5 sm:pt-3 mt-2.5 sm:mt-3 border-t border-border/50">
+                            {/* 📱 Mobile Layout: 2 Tiers (Row 1: View toggle + Utility icons, Row 2: Full-width Primary CTA) */}
+                            <div className="flex sm:hidden flex-col gap-2 w-full">
                               <div className="flex items-center justify-between gap-1 w-full">
                                 <Button
                                   size="sm"
@@ -4528,198 +4521,166 @@ export default function Bookings() {
                                 >
                                   {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                                   <span>{isExpanded ? "Collapse" : "View"}</span>
+                                  {(booking.fuel_out_liters != null || booking.fuel_quantity) && (
+                                    <span className="text-[10px] text-amber-500 font-bold ml-0.5">
+                                      ⛽ {booking.fuel_out_liters != null ? `${booking.fuel_out_liters}L` : `${booking.fuel_quantity}L`}
+                                    </span>
+                                  )}
                                 </Button>
-                                <div className="flex items-center gap-1.5">{utilityButtons}</div>
+
+                                {/* Compact Icon Buttons Bar */}
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {utilityButtons}
+                                </div>
                               </div>
 
-                              {/* Tier 2: Large primary CTAs side-by-side */}
-                              {(canCollectPayment || (!booking.bike_id && booking.cluster_id) || statusActions[booking.status]?.some((a) => a.next !== "cancelled")) && (
-                                <div className="flex items-center gap-2.5 w-full pt-0.5">
+                              {/* Primary Action Button as prominent full-width CTA on mobile */}
+                              {hasPrimaryAction && (
+                                <div className="flex items-center gap-2 w-full pt-0.5">
                                   {primaryButtons}
                                 </div>
                               )}
                             </div>
+
+                            {/* 💻 Desktop Layout: Single row with View toggle on left, Utilities & Primary CTA on right */}
+                            <div className="hidden sm:flex items-center justify-between w-full gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setExpandedBookingId(isExpanded ? null : booking._id)}
+                                className="h-9 px-2 text-xs font-semibold text-muted-foreground hover:text-foreground gap-1 cursor-pointer"
+                              >
+                                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                <span>{isExpanded ? "Collapse" : "View Details"}</span>
+                                {(booking.fuel_out_liters != null || booking.fuel_quantity) && (
+                                  <span className="text-[10px] text-amber-500 font-bold ml-1">
+                                    ⛽ {booking.fuel_out_liters != null ? `${booking.fuel_out_liters}L` : `${booking.fuel_quantity}L`}
+                                  </span>
+                                )}
+                              </Button>
+
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {utilityButtons}
+                                {primaryButtons}
+                              </div>
+                            </div>
                           </div>
                         );
                       })()}
-                    <AnimatePresence>
+                      <AnimatePresence>
                         {isExpanded && (
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
+                            transition={{ duration: 0.25 }}
                             className="overflow-hidden"
                           >
                             <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 text-sm">
                               <div className="col-span-2 sm:col-span-1 min-w-0">
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Email
-                                </span>
+                                <span className="text-xs text-muted-foreground uppercase">Email</span>
                                 <p className="font-medium text-xs sm:text-sm break-all">
-                                  {booking.customer_email ||
-                                    booking.customers?.email ||
-                                    "—"}
+                                  {booking.customer_email || booking.customers?.email || "—"}
                                 </p>
                               </div>
                               <div className="col-span-2 sm:col-span-2 lg:col-span-3 min-w-0">
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Location
-                                </span>
+                                <span className="text-xs text-muted-foreground uppercase">Location</span>
                                 <p className="font-medium text-xs sm:text-sm break-words leading-relaxed">
                                   {booking.customer_location || "—"}
                                 </p>
                               </div>
                               <div>
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Rental Type
-                                </span>
+                                <span className="text-xs text-muted-foreground uppercase">Rental Type</span>
+                                <p className="font-medium capitalize">{booking.rental_type || "—"}</p>
+                              </div>
+                              <div>
+                                <span className="text-xs text-muted-foreground uppercase">Payment</span>
                                 <p className="font-medium capitalize">
-                                  {booking.rental_type || "—"}
+                                  {booking.payment_method || "—"} · {booking.payment_status || "pending"}
                                 </p>
                               </div>
                               <div>
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Payment
-                                </span>
-                                <p className="font-medium capitalize">
-                                  {booking.payment_method || "—"} ·{" "}
-                                  {booking.payment_status || "pending"}
-                                </p>
+                                <span className="text-xs text-muted-foreground uppercase">Lead Source</span>
+                                <p className="font-medium capitalize">{booking.lead_source?.replace("_", " ") || "—"}</p>
                               </div>
                               <div>
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Lead Source
-                                </span>
-                                <p className="font-medium capitalize">
-                                  {booking.lead_source?.replace("_", " ") ||
-                                    "—"}
-                                </p>
+                                <span className="text-xs text-muted-foreground uppercase">Source Name</span>
+                                <p className="font-medium">{booking.source_name || "—"}</p>
                               </div>
                               <div>
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Source Name
-                                </span>
-                                <p className="font-medium">
-                                  {booking.source_name || "—"}
-                                </p>
+                                <span className="text-xs text-muted-foreground uppercase">Account Manager</span>
+                                <p className="font-medium">{booking.account_manager || "—"}</p>
                               </div>
                               <div>
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Account Manager
-                                </span>
-                                <p className="font-medium">
-                                  {booking.account_manager || "—"}
-                                </p>
+                                <span className="text-xs text-muted-foreground uppercase">Deposit</span>
+                                <p className="font-medium">₹{booking.deposit_amount?.toLocaleString() || 0}</p>
                               </div>
                               <div>
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Deposit
-                                </span>
-                                <p className="font-medium">
-                                  ₹
-                                  {booking.deposit_amount?.toLocaleString() ||
-                                    0}
-                                </p>
+                                <span className="text-xs text-muted-foreground uppercase">Fuel Qty (Booked)</span>
+                                <p className="font-medium">{booking.fuel_quantity ? `${booking.fuel_quantity} L` : "0 L"}</p>
                               </div>
-                              {/* {booking.fuel_quantity && ( */}
-                              <div>
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Fuel Qty
-                                </span>
-                                <p className="font-medium">
-                                  {booking.fuel_quantity} L
-                                </p>
-                              </div>
-                              {/* )} */}
-                              {booking.fuel_out_liters && (
+                              {booking.fuel_out_liters != null && (
                                 <div>
-                                  <span className="text-xs text-muted-foreground uppercase">
-                                    Fuel Out
-                                  </span>
+                                  <span className="text-xs text-muted-foreground uppercase">Fuel Out</span>
+                                  <p className="font-medium text-amber-500 font-bold">{booking.fuel_out_liters} L</p>
+                                </div>
+                              )}
+                              {booking.fuel_in_liters != null && (
+                                <div>
+                                  <span className="text-xs text-muted-foreground uppercase">Fuel In</span>
+                                  <p className="font-medium text-emerald-500 font-bold">{booking.fuel_in_liters} L</p>
+                                </div>
+                              )}
+                              {(booking.reference_partner_share ?? 0) > 0 && (
+                                <div>
+                                  <span className="text-xs text-muted-foreground uppercase">Ref Share</span>
                                   <p className="font-medium">
-                                    {booking.fuel_out_liters} L
+                                    ₹{booking.reference_partner_share} {booking.reference_partner_share_given ? "(Given)" : "(Pending)"}
                                   </p>
                                 </div>
                               )}
-                              {booking.fuel_in_liters && (
+                              {(booking.provider_partner_share ?? 0) > 0 && (
                                 <div>
-                                  <span className="text-xs text-muted-foreground uppercase">
-                                    Fuel In
-                                  </span>
+                                  <span className="text-xs text-muted-foreground uppercase">Provider Share</span>
                                   <p className="font-medium">
-                                    {booking.fuel_in_liters} L
+                                    ₹{booking.provider_partner_share} {booking.provider_partner_share_given ? "(Given)" : "(Pending)"}
                                   </p>
                                 </div>
                               )}
-                              {/* {booking.reference_partner_share && ( */}
-                              <div>
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Ref Share
-                                </span>
-                                <p className="font-medium">
-                                  ₹{booking.reference_partner_share}
-                                </p>
-                              </div>
-                              {/* )} */}
-                              {/* {booking.provider_partner_share && ( */}
-                              <div>
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Provider Share
-                                </span>
-                                <p className="font-medium">
-                                  ₹{booking.provider_partner_share}
-                                </p>
-                              </div>
-                              {/* )} */}
                               {(booking.penalty_amount ?? 0) > 0 && (
                                 <div>
-                                  <span className="text-xs text-muted-foreground uppercase">
-                                    Penalty
-                                  </span>
-                                  <p className="font-medium text-red-600">
-                                    ₹{booking.penalty_amount}
-                                  </p>
+                                  <span className="text-xs text-muted-foreground uppercase">Penalty</span>
+                                  <p className="font-medium text-red-600">₹{booking.penalty_amount}</p>
                                 </div>
                               )}
                               {(booking.challan_amount ?? 0) > 0 && (
                                 <div>
-                                  <span className="text-xs text-muted-foreground uppercase">
-                                    Challan
-                                  </span>
-                                  <p className="font-medium text-red-600">
-                                    ₹{booking.challan_amount}
-                                  </p>
+                                  <span className="text-xs text-muted-foreground uppercase">Challan</span>
+                                  <p className="font-medium text-red-600">₹{booking.challan_amount}</p>
                                 </div>
                               )}
                               {(booking.damage_cost ?? 0) > 0 && (
                                 <div>
-                                  <span className="text-xs text-muted-foreground uppercase">
-                                    Damage
-                                  </span>
-                                  <p className="font-medium text-red-600">
-                                    ₹{booking.damage_cost}
-                                  </p>
+                                  <span className="text-xs text-muted-foreground uppercase">Damage</span>
+                                  <p className="font-medium text-red-600">₹{booking.damage_cost}</p>
                                 </div>
                               )}
                             </div>
 
+                            {/* Payment Screenshot */}
                             {booking.payment_screenshot && (
-                              <div>
-                                <span className="text-xs text-muted-foreground uppercase">
-                                  Payment Proof
-                                </span>
-
+                              <div className="mt-3">
+                                <span className="text-xs text-muted-foreground uppercase">Payment Proof</span>
                                 <img
                                   src={booking.payment_screenshot}
                                   className="w-20 h-20 object-cover rounded mt-1 cursor-pointer hover:scale-105 transition"
-                                  onClick={() =>
-                                    setPreviewImage(booking.payment_screenshot)
-                                  }
+                                  onClick={() => setPreviewImage(booking.payment_screenshot)}
+                                  alt="Payment proof"
                                 />
                               </div>
                             )}
 
+                            {/* Notes & Remarks */}
                             {(booking.notes || booking.remarks) && (
                               <div className="mt-3 pt-3 border-t border-border/50 flex flex-wrap gap-3">
                                 {booking.notes && (
@@ -4735,7 +4696,7 @@ export default function Bookings() {
                               </div>
                             )}
 
-                            {/* 💳 Payment Installments History for new flow bookings */}
+                            {/* Payment Installments History */}
                             {Array.isArray(booking.payments) && booking.payments.length > 0 && (
                               <div className="mt-4 pt-3 border-t border-border/60 space-y-2">
                                 <div className="flex items-center justify-between">
@@ -4758,35 +4719,33 @@ export default function Bookings() {
                                     </Button>
                                   )}
                                 </div>
-                                <div className="rounded-xl border border-border/70 overflow-hidden bg-card/60">
-                                  <div className="divide-y divide-border/60">
-                                    {booking.payments.map((p, idx) => (
-                                      <div key={idx} className="p-2.5 sm:px-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                                        <div className="flex items-center gap-2.5">
-                                          <span className="w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center text-[10px] font-bold">
-                                            {idx + 1}
-                                          </span>
-                                          <div>
-                                            <div className="flex items-center gap-2">
-                                              <span className="font-bold text-emerald-400 text-sm">₹{Number(p.amount || 0).toLocaleString()}</span>
-                                              <Badge variant="outline" className="text-[10px] uppercase font-semibold py-0 px-1.5">
-                                                {p.payment_method || "cash"}
-                                              </Badge>
-                                            </div>
-                                            {p.notes && (
-                                              <p className="text-[11px] text-muted-foreground italic mt-0.5">{p.notes}</p>
-                                            )}
+                                <div className="rounded-xl border border-border/70 overflow-hidden bg-card/60 divide-y divide-border/60">
+                                  {booking.payments.map((p, idx) => (
+                                    <div key={idx} className="p-2.5 sm:px-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                                      <div className="flex items-center gap-2.5">
+                                        <span className="w-5 h-5 rounded-full bg-primary/15 text-primary flex items-center justify-center text-[10px] font-bold">
+                                          {idx + 1}
+                                        </span>
+                                        <div>
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-bold text-emerald-400 text-sm">₹{Number(p.amount || 0).toLocaleString()}</span>
+                                            <Badge variant="outline" className="text-[10px] uppercase font-semibold py-0 px-1.5">
+                                              {p.payment_method || "cash"}
+                                            </Badge>
                                           </div>
-                                        </div>
-                                        <div className="text-right text-[11px] text-muted-foreground flex sm:flex-col justify-between sm:justify-center items-center sm:items-end">
-                                          <span>{p.paid_at ? format(new Date(p.paid_at), "dd MMM yyyy, hh:mm a") : "—"}</span>
-                                          {p.recorded_by && (
-                                            <span className="text-[10px] text-muted-foreground/80">by {p.recorded_by}</span>
+                                          {p.notes && (
+                                            <p className="text-[11px] text-muted-foreground italic mt-0.5">{p.notes}</p>
                                           )}
                                         </div>
                                       </div>
-                                    ))}
-                                  </div>
+                                      <div className="text-right text-[11px] text-muted-foreground flex sm:flex-col justify-between sm:justify-center items-center sm:items-end">
+                                        <span>{p.paid_at ? format(new Date(p.paid_at), "dd MMM yyyy, hh:mm a") : "—"}</span>
+                                        {p.recorded_by && (
+                                          <span className="text-[10px] text-muted-foreground/80">by {p.recorded_by}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
                             )}

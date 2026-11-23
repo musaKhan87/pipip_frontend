@@ -77,14 +77,14 @@ export default function ConfirmationDialog({
   const getConfirmButtonClasses = () => {
     switch (type) {
       case "danger":
-        return "bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg shadow-destructive/20";
+        return "bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-sm";
       case "warning":
-        return "bg-amber-500 hover:bg-amber-600 text-black font-semibold shadow-lg shadow-amber-500/20";
+        return "bg-amber-600 hover:bg-amber-700 text-white font-medium shadow-sm";
       case "success":
-        return "bg-green-600 hover:bg-green-700 text-white font-semibold";
+        return "bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm";
       case "info":
       default:
-        return "bg-primary hover:bg-primary/90 text-primary-foreground";
+        return "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm";
     }
   };
 

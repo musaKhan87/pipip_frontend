@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { RotateCcw, UserX, Building2, ArrowDownToLine, ShieldCheck, AlertTriangle, Ban } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import MobileBottomNav from "../components/MobileBottomNav";
 import useSEO from "../hooks/useSEO";
 
 const sections = [
@@ -62,7 +63,7 @@ const RefundPolicy = () => {
     description: "Read the Pipip Refund and Cancellation Policy. Learn about security deposit returns, cancellation charges, and how we process refunds."
   });
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F8FAFC] pb-24 md:pb-0">
       <Header />
       <main className="pt-32 pb-16">
         <section className="container mx-auto px-4 mb-16">
@@ -124,6 +125,7 @@ const RefundPolicy = () => {
         </section>
       </main>
       <Footer />
+      <MobileBottomNav />
     </div>
   );
 };

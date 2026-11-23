@@ -28,7 +28,7 @@ const videoStories = [
     bike: "Suzuki Burgman 125",
     thumbnail:
       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-    quote: "Marine Drive sunset cruise. Clean helmets, smooth engine, no hidden charges. Absolute lifesaver!",
+    quote: "Marine Drive sunset cruise. Clean helmet, smooth engine, no hidden charges. Absolute lifesaver!",
     duration: "1:45 min",
   },
   {
@@ -48,7 +48,7 @@ const videoStories = [
     bike: "Royal Enfield Hunter 350",
     thumbnail:
       "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=800&q=80",
-    quote: "Worli Sea Face coastal cruise on Enfield. Tyres in mint condition, clean dual helmets.",
+    quote: "Worli Sea Face coastal cruise on Enfield. Tyres in mint condition, clean sanitized helmet.",
     duration: "2:05 min",
   },
   {
@@ -87,117 +87,127 @@ const videoStories = [
 const textReviewsRow1 = [
   {
     id: "rev-1",
-    author: "Aman Shaikh",
-    role: "Daily Commuter",
-    city: "Bandra West",
-    bike: "Honda Activa 6G",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80",
-    quote:
-      "Bhai, zero security deposit drama! Paid ₹200 token online, picked up Activa near Bandra station in 2 minutes. Dropped it after 3 days and deposit refund was on my GPay within 10 minutes.",
-    rating: 5,
+    author: "HIMANSHU YADAV",
+    initials: "HY",
+    avatarBg: "bg-lime-100 text-lime-900 border-lime-200",
+    hub: "Wadala East Hub",
+    date: "Jun 21, 2026",
+    rating: 5.0,
+    quote: "Best experience. The bike was in best condition didnt not expext it to be so perfect so yeah just loved it",
+    bike: "Meteor 350 Supernova",
+    days: "1 days",
   },
   {
     id: "rev-2",
-    author: "Rahul Kulkarni",
-    role: "Software Engineer",
-    city: "Powai",
-    bike: "TVS Jupiter 125",
-    avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=120&q=80",
-    quote:
-      "Pickup person at Kurla was super polite. Helmet was clean and smelling fresh, not like other rental places. Deposit already refunded. 10/10!",
-    rating: 5,
+    author: "DARSHAN FALDU",
+    initials: "DF",
+    avatarBg: "bg-emerald-100 text-emerald-900 border-emerald-200",
+    hub: "Andheri East Hub",
+    date: "Jun 24, 2026",
+    rating: 5.0,
+    quote: "Runs like a new bike. Well maintained and smooth on highway. Quick deposit refund via UPI right after physical inspection!",
+    bike: "Hunter 350 Tokyo Black",
+    days: "2 days",
   },
   {
     id: "rev-3",
-    author: "Vikram Malhotra",
-    role: "Senior Consultant",
-    city: "BKC Mumbai",
-    bike: "Suzuki Burgman 125",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80",
-    quote:
-      "Saved at least 2.5 hours of Mumbai local train rush every single day in BKC. Bike gave 52 kmpl mileage. Best commute decision ever.",
-    rating: 5,
+    author: "ANKIT SHARMA",
+    initials: "AS",
+    avatarBg: "bg-blue-100 text-blue-900 border-blue-200",
+    hub: "Bandra West Hub",
+    date: "Jun 27, 2026",
+    rating: 5.0,
+    quote: "Paid ₹200 token online and picked up Activa in 60 seconds. Helmet was sanitized and smelling fresh. Zero hidden charges.",
+    bike: "Activa 6G Deluxe",
+    days: "3 days",
   },
   {
     id: "rev-4",
-    author: "Tanvi Patil",
-    role: "Student, VJTI",
-    city: "Matunga",
-    bike: "Honda Dio 125",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80",
-    quote:
-      "Student friendly! Only ₹200 upfront token booking. As a college student at VJTI, this is the most affordable way to travel for college fests and internships.",
-    rating: 5,
+    author: "ROHIT KULKARNI",
+    initials: "RK",
+    avatarBg: "bg-amber-100 text-amber-900 border-amber-200",
+    hub: "Borivali West Hub",
+    date: "Jul 02, 2026",
+    rating: 5.0,
+    quote: "Saved at least 2.5 hours of Mumbai rush hour every day. Scooter gave 52 kmpl mileage. Highly recommended for daily work commute.",
+    bike: "Suzuki Access 125",
+    days: "4 days",
   },
   {
     id: "rev-5",
-    author: "Neha Kulkarni",
-    role: "Marketing Lead",
-    city: "Andheri East",
-    bike: "Honda Activa 125",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80",
-    quote:
-      "WhatsApp support responded in 30 seconds when I requested to extend my rental by 2 days. Truly impressive, seamless service.",
-    rating: 5,
+    author: "VIKRAMADITYA RAO",
+    initials: "VR",
+    avatarBg: "bg-purple-100 text-purple-900 border-purple-200",
+    hub: "Powai Hiranandani Hub",
+    date: "Jul 08, 2026",
+    rating: 5.0,
+    quote: "Pickup staff was polite and verified documents in a minute. No hassle of massive advance payments. Loved the ₹200 token reservation.",
+    bike: "Burgman Street 125",
+    days: "2 days",
   },
 ];
 
-// Text reviews Track 2 (Right to Left Horizontal Marquee - Fast)
+// Text reviews Track 2 (Left to Right Horizontal Marquee)
 const textReviewsRow2 = [
   {
     id: "rev-6",
-    author: "Farhan Qureshi",
-    role: "Architect",
-    city: "Dadar West",
-    bike: "Royal Enfield Classic 350",
-    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=120&q=80",
-    quote:
-      "Rented Royal Enfield for a weekend ride to Marine Drive and sea face. Paperwork took literally 60 seconds on phone. Butter smooth on the sea link!",
-    rating: 5,
+    author: "PRAJWAL NAIK",
+    initials: "PN",
+    avatarBg: "bg-lime-100 text-lime-900 border-lime-200",
+    hub: "Wadala East Hub",
+    date: "Jun 29, 2026",
+    rating: 5.0,
+    quote: "Saurabh is a very friendly and helpful guy. No doubt he have such good rating. The vehicle was completely clean and full tank ready.",
+    bike: "Activa 6G",
+    days: "2 days",
   },
   {
     id: "rev-7",
-    author: "Ananya Rao",
-    role: "Content Creator",
-    city: "Colaba",
-    bike: "Honda Dio",
-    avatar: "https://images.unsplash.com/photo-1548142813-c348350df52b?auto=format&fit=crop&w=120&q=80",
-    quote:
-      "Instant WhatsApp booking confirmation and ₹200 token booking is the gold standard for bike rentals in Mumbai. Will rent every week!",
-    rating: 5,
+    author: "NARENDRA KHATRI",
+    initials: "NK",
+    avatarBg: "bg-amber-100 text-amber-900 border-amber-200",
+    hub: "Worli Sea Face Hub",
+    date: "Jul 05, 2026",
+    rating: 5.0,
+    quote: "The bike is in superb condition and staff was polite and courteous. Butter smooth on the sea link for a weekend cruise.",
+    bike: "Classic 350 Reborn",
+    days: "3 days",
   },
   {
     id: "rev-8",
-    author: "Pooja Sharma",
-    role: "Product Designer",
-    city: "Powai Lake",
-    bike: "Honda Activa 6G",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80",
-    quote:
-      "Transparent pricing, zero hidden charges. Helmet was sanitized and scooter was delivered in top condition. Deposit was refunded immediately.",
-    rating: 5,
+    author: "TANVI PATIL",
+    initials: "TP",
+    avatarBg: "bg-pink-100 text-pink-900 border-pink-200",
+    hub: "Dadar West Hub",
+    date: "Jul 11, 2026",
+    rating: 5.0,
+    quote: "Student friendly! Only ₹200 upfront token booking. As a college student at VJTI, this is the most affordable way to travel for college fests.",
+    bike: "Honda Dio 125",
+    days: "1 days",
   },
   {
     id: "rev-9",
-    author: "Dmitri Woodhouse",
-    role: "Financial Analyst",
-    city: "Lower Parel",
-    bike: "Suzuki Burgman",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80",
-    quote:
-      "Rented for a week-long business visit. No hassle of buying or paying auto surges. Effortless commute through Mumbai traffic.",
-    rating: 5,
+    author: "KUNAL DESHMUKH",
+    initials: "KD",
+    avatarBg: "bg-cyan-100 text-cyan-900 border-cyan-200",
+    hub: "Kurla West Hub",
+    date: "Jul 15, 2026",
+    rating: 5.0,
+    quote: "Deposit was refunded to my UPI account within 10 minutes of drop-off. Cleanest bike rental service in Mumbai by far.",
+    bike: "Hunter 350 Dapper Ash",
+    days: "2 days",
   },
   {
     id: "rev-10",
-    author: "Aditya Verma",
-    role: "Tech Founder",
-    city: "Malad West",
-    bike: "Royal Enfield Hunter 350",
-    avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=120&q=80",
-    quote:
-      "Deposit refunded within 15 minutes of vehicle handover. Clean bikes and super polite staff. Pipip is miles ahead of others.",
-    rating: 5,
+    author: "SNEHA IYER",
+    initials: "SI",
+    avatarBg: "bg-indigo-100 text-indigo-900 border-indigo-200",
+    hub: "Thane Station Hub",
+    date: "Jul 19, 2026",
+    rating: 5.0,
+    quote: "WhatsApp support replied in 30 seconds when I requested to extend my rental. Super smooth, dependable, transparent pricing.",
+    bike: "TVS Jupiter 125",
+    days: "3 days",
   },
 ];
 
@@ -221,15 +231,14 @@ export default function CustomerReviews() {
   }, [selectedVideo, isPlaying]);
 
   return (
-    <section id="reviews" className="py-24 md:py-36 relative overflow-hidden bg-background">
-      {/* Ambient Lighting Gradients */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[550px] bg-gradient-to-tr from-amber-500/15 via-orange-500/10 to-transparent rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-1/3 right-1/4 translate-x-1/3 w-[650px] h-[500px] bg-gradient-to-bl from-teal-500/10 via-blue-500/10 to-transparent rounded-full blur-[150px] pointer-events-none" />
+    <section id="reviews" className="py-20 md:py-28 relative overflow-hidden bg-white border-t border-slate-200/80">
+      {/* Subtle Ambient Lighting */}
+      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[400px] bg-slate-100/60 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Grid Dot Overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-50" />
+      <div className="absolute inset-0 bg-[radial-gradient(#0f172a0a_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-40" />
 
-      <div className="container mx-auto px-4 relative z-10 space-y-24 md:space-y-36">
+      <div className="container mx-auto px-4 relative z-10 space-y-20 md:space-y-28">
 
         {/* PART 1: Vertical Upward Floating Marquee (PandaPay style) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -240,10 +249,10 @@ export default function CustomerReviews() {
               initial={{ opacity: 0, y: -10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/10 border border-primary/30 text-primary text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-orange-500/10"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 text-blue-800 border border-blue-300/40 text-xs font-black shadow-2xs mb-1"
             >
-              <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
-              <span>Real Rider Reels</span>
+              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+              <span>REAL RIDER EXPERIENCES</span>
             </motion.div>
 
             <motion.h2
@@ -251,9 +260,12 @@ export default function CustomerReviews() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-black text-foreground tracking-tight leading-[1.08] font-display"
+              className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.15] font-display"
             >
-              Caring is sharing.
+              Caring is{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500">
+                Sharing.
+              </span>
             </motion.h2>
 
             <motion.p
@@ -261,9 +273,9 @@ export default function CustomerReviews() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.1 }}
-              className="text-muted-foreground text-sm sm:text-base leading-relaxed"
+              className="text-slate-600 text-sm sm:text-base leading-relaxed"
             >
-              At Pipip, we believe you can't get too much of a good thing... like effortless, dependable riding across Mumbai. Don't take our word for it, see what our riders have captured on the road.
+              At Pipip, we believe effortless, dependable riding should be standard across Mumbai. Don't take our word for it — see what our riders have captured live on the road.
             </motion.p>
 
             <motion.div
@@ -290,7 +302,7 @@ export default function CustomerReviews() {
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-border text-emerald-500 shadow-sm">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  Zero Deposit Lock
+                  Refundable Security Deposit
                 </span>
               </div>
             </motion.div>
@@ -304,7 +316,7 @@ export default function CustomerReviews() {
             >
               <Link
                 to="/catalog"
-                className="gradient-sunset text-white font-bold text-sm px-7 py-3.5 rounded-2xl shadow-xl shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-2"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm px-7 py-3.5 rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 active:scale-95 transition-all inline-flex items-center gap-2"
               >
                 <span>Rent a Scooter Now</span>
                 <ArrowRight className="w-4 h-4" />
@@ -352,32 +364,34 @@ export default function CustomerReviews() {
         <div className="space-y-10">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="inline-flex items-center justify-center"
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 text-amber-900 border border-amber-300/40 text-xs font-black shadow-2xs"
             >
-              <span className="text-gradient-sunset font-display font-black text-4xl sm:text-6xl">
-                15,000+
-              </span>
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span>4.9 / 5.0 RATED • 2,500+ VERIFIED MUMBAI RIDERS</span>
             </motion.div>
 
             <motion.h3
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-2xl sm:text-4xl font-black text-foreground tracking-tight font-display"
+              className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight font-display leading-[1.15]"
             >
-              riders love renting with Pipip
+              Riders Love Pipip{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500">
+                Across Mumbai
+              </span>
             </motion.h3>
 
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-muted-foreground text-xs sm:text-sm"
+              className="text-slate-600 text-xs sm:text-sm max-w-lg mx-auto"
             >
-              Hover on any card to pause and read real Mumbai stories.
+              Real stories from daily office commuters, airport travelers, and weekend explorers.
             </motion.p>
           </div>
 
@@ -392,8 +406,8 @@ export default function CustomerReviews() {
               ))}
             </div>
 
-            {/* Track 2: Moving Right to Left (Faster) */}
-            <div className="flex gap-4 sm:gap-6 animate-marquee-left-fast pause-on-hover w-max">
+            {/* Track 2: Moving Left to Right */}
+            <div className="flex gap-4 sm:gap-6 animate-marquee-right pause-on-hover w-max">
               {[...textReviewsRow2, ...textReviewsRow2].map((review, idx) => (
                 <HorizontalReviewCard key={`track2-${idx}`} review={review} />
               ))}
@@ -507,7 +521,7 @@ export default function CustomerReviews() {
                   <Link
                     to="/catalog"
                     onClick={() => setSelectedVideo(null)}
-                    className="gradient-sunset text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-orange-500/20 hover:scale-105 transition-all inline-flex items-center gap-1.5"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm shadow-blue-500/20 transition-all inline-flex items-center gap-1.5"
                   >
                     <span>Book This Ride</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -527,36 +541,33 @@ function VerticalVideoCard({ story, onOpen }) {
   return (
     <div
       onClick={() => onOpen(story)}
-      className="relative rounded-2xl sm:rounded-3xl overflow-hidden aspect-[3/4] bg-card border border-border/80 hover:border-primary/80 transition-all duration-300 hover:scale-[1.02] cursor-pointer group shadow-lg shadow-black/20"
+      className="relative rounded-xl overflow-hidden aspect-[3/4] bg-card border border-border/80 hover:border-slate-400 transition-all duration-200 cursor-pointer group shadow-xs hover:shadow-md"
     >
       <img
         src={story.thumbnail}
         alt={story.author}
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10 group-hover:from-black/95 transition-colors" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/5 group-hover:from-black/90 transition-colors" />
 
       {/* Radar Play Button */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="relative flex items-center justify-center">
-          <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-blue-500 opacity-60" />
-          <div className="relative w-11 h-11 rounded-full bg-blue-600/90 text-white flex items-center justify-center shadow-lg shadow-blue-600/50 group-hover:scale-110 group-hover:bg-primary transition-all">
-            <Play className="w-4 h-4 fill-current ml-0.5" />
-          </div>
+        <div className="w-10 h-10 rounded-full bg-slate-900/80 backdrop-blur-xs text-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+          <Play className="w-4 h-4 fill-current ml-0.5" />
         </div>
       </div>
 
-      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-mono border border-white/10">
+      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white text-[10px] font-mono border border-white/10">
         {story.duration}
       </span>
 
-      <div className="absolute bottom-0 inset-x-0 p-3 sm:p-4 text-white">
-        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold text-amber-300 bg-black/50 backdrop-blur-md border border-white/10 mb-1">
+      <div className="absolute bottom-0 inset-x-0 p-3.5 text-white">
+        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium text-slate-200 bg-black/50 backdrop-blur-md border border-white/10 mb-1">
           {story.bike}
         </span>
-        <h4 className="font-bold text-xs sm:text-sm text-white line-clamp-1">{story.author}</h4>
+        <h4 className="font-semibold text-xs text-white line-clamp-1">{story.author}</h4>
         <p className="text-[11px] text-white/80 flex items-center gap-1 mt-0.5 truncate">
-          <MapPin className="w-3 h-3 text-primary shrink-0" />
+          <MapPin className="w-3 h-3 text-white/70 shrink-0" />
           {story.city}
         </p>
       </div>
@@ -564,48 +575,71 @@ function VerticalVideoCard({ story, onOpen }) {
   );
 }
 
-// Horizontal Review Card (Right-to-Left float)
+// Horizontal Review Card (Matches User Reference Design)
 function HorizontalReviewCard({ review }) {
   return (
-    <div className="w-[300px] sm:w-[360px] bg-card/90 dark:bg-card/85 backdrop-blur-md border border-border/80 hover:border-primary/60 rounded-2xl p-5 sm:p-6 transition-all duration-300 hover:scale-[1.03] hover:shadow-xl shadow-black/10 flex flex-col justify-between shrink-0 group">
+    <motion.div
+      whileHover={{ y: -6, scale: 1.01 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="w-[320px] sm:w-[380px] bg-white border border-slate-200/90 hover:border-slate-300 rounded-2xl p-5 sm:p-6 transition-all duration-300 shadow-[0_2px_12px_-3px_rgba(15,23,42,0.06)] hover:shadow-[0_14px_30px_-6px_rgba(15,23,42,0.12)] flex flex-col justify-between shrink-0 group select-none cursor-default"
+    >
       <div>
+        {/* Top Header: Watermark Quotation Icon & Date */}
+        <div className="flex items-start justify-between mb-3.5">
+          {/* Elegant Quotation Mark Watermark */}
+          <div className="text-slate-200 group-hover:text-emerald-500/30 transition-colors">
+            <svg className="w-8 h-8 fill-current" viewBox="0 0 24 24">
+              <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+            </svg>
+          </div>
+
+          <span className="text-xs text-slate-400 font-medium tracking-tight">
+            {review.date}
+          </span>
+        </div>
+
+        {/* Author Avatar, Name & Hub Location */}
         <div className="flex items-center gap-3 mb-3">
-          <img
-            src={review.avatar}
-            alt={review.author}
-            className="w-10 h-10 rounded-full object-cover border border-border shrink-0"
-          />
+          {/* Initials Avatar Badge */}
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-xs sm:text-sm shrink-0 border ${review.avatarBg}`}>
+            {review.initials}
+          </div>
+
           <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between">
-              <h5 className="font-bold text-xs sm:text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                {review.author}
-              </h5>
-              <div className="flex text-amber-500 shrink-0">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="w-3 h-3 fill-current" />
-                ))}
-              </div>
-            </div>
-            <p className="text-[11px] text-muted-foreground truncate">
-              {review.role} • {review.city}
+            <h5 className="font-black text-xs sm:text-sm text-slate-900 tracking-tight uppercase truncate">
+              {review.author}
+            </h5>
+            <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+              Booked from {review.hub}
             </p>
           </div>
         </div>
 
-        <p className="text-xs sm:text-[13px] text-foreground/90 leading-relaxed font-normal line-clamp-4">
-          "{review.quote}"
+        {/* 5 Solid Gold Stars + Numeric Score */}
+        <div className="flex items-center gap-1.5 mb-2.5">
+          <div className="flex text-amber-400 gap-0.5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            ))}
+          </div>
+          <span className="text-xs font-black text-slate-800 ml-1">
+            {review.rating.toFixed(1)}
+          </span>
+        </div>
+
+        {/* Review Quote Text */}
+        <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed font-normal line-clamp-3">
+          {review.quote}
         </p>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground">
-        <span className="flex items-center gap-1 font-semibold text-primary">
-          <Bike className="w-3 h-3" />
-          {review.bike}
-        </span>
-        <span className="text-emerald-500 font-medium flex items-center gap-1">
-          <CheckCircle2 className="w-3 h-3" /> Verified
-        </span>
+      {/* Card Divider & Bottom Vehicle Booking Metadata */}
+      <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <p className="truncate">
+          Booked <span className="text-slate-800 font-semibold">{review.bike}</span> for{" "}
+          <strong className="text-slate-900 font-black">{review.days}</strong>
+        </p>
       </div>
-    </div>
+    </motion.div>
   );
 }

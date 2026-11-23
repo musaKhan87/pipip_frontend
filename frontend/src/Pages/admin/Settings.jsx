@@ -653,33 +653,40 @@ export default function Settings() {
     <div className="space-y-6">
       {/* Top Header */}
       <div>
-        <h1 className="text-3xl font-display text-gradient-sunset">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and team access</p>
+        <h1 className="text-2xl font-bold font-display text-foreground tracking-tight">Organization & Settings</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage administrator account, team roles, and hub access credentials</p>
       </div>
 
       {/* Your Account Card */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-foreground">
-            <User className="w-5 h-5 text-primary" />
-            Your Account
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground text-xs font-semibold uppercase">Email</Label>
-              <p className="font-medium text-foreground mt-0.5">{user?.email}</p>
+      <Card className="bg-card border border-border/80 rounded-2xl shadow-2xs overflow-hidden">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-orange-500 text-primary-foreground font-extrabold text-base flex items-center justify-center shadow-xs">
+                {(user?.fullName || user?.email || "A").substring(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-base text-foreground leading-tight">
+                    {user?.fullName || "Administrator"}
+                  </h3>
+                  <Badge className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize bg-primary/15 text-primary border border-primary/30">
+                    {user?.role === "super_admin" || user?.role === "admin"
+                      ? "Administrator"
+                      : user?.role === "manager"
+                      ? "Area Manager"
+                      : user?.role}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5 font-medium">{user?.email}</p>
+              </div>
             </div>
-            <div>
-              <Label className="text-muted-foreground text-xs font-semibold uppercase">Role</Label>
-              <p className="font-medium text-foreground capitalize mt-0.5">
-                {user?.role === "super_admin" || user?.role === "admin"
-                  ? "Administrator"
-                  : user?.role === "manager"
-                  ? "Area Manager"
-                  : user?.role}
-              </p>
+
+            <div className="flex items-center gap-2 sm:self-center border-t sm:border-t-0 pt-2 sm:pt-0">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Active Session
+              </span>
             </div>
           </div>
         </CardContent>

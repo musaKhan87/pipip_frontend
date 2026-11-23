@@ -25,6 +25,7 @@ export default function NotificationsCenter() {
   const { user } = useAuth();
   const [deviceLinked, setDeviceLinked] = useState(false);
   const [linkingProcess, setLinkingProcess] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("all");
   const navigate = useNavigate();
 
   // VAPID Public Verification Key
@@ -175,62 +176,104 @@ export default function NotificationsCenter() {
       </Card>
 
       {/* ========================================================================= */}
-      {/* 📑 ALERT HISTORY HEADER COUNTERS CONTROLS */}
+      {/* 📑 ALERT HISTORY HEADER & SEGMENTED CONTROLS */}
       {/* ========================================================================= */}
-      <div className="flex justify-between items-center px-1">
-        <div className="flex items-center gap-2">
-          <Bell className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
-          <h3 className="font-display text-lg font-bold text-foreground">
-            Alert History Stream
-          </h3>
-          {logs.filter((l) => !l.read).length > 0 && (
-            <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse shadow-sm">
-              {logs.filter((l) => !l.read).length} UNREAD
-            </span>
-          )}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+            <h3 className="font-display text-base sm:text-lg font-bold text-foreground">
+              Alert Stream
+            </h3>
+            {logs.filter((l) => !l.read).length > 0 && (
+              <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse shadow-2xs">
+                {logs.filter((l) => !l.read).length} UNREAD
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 text-xs font-semibold">
+            <button
+              onClick={() =>
+                setLogs((prev) => prev.map((l) => ({ ...l, read: true })))
+              }
+              className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 active:scale-95"
+            >
+              <Check className="w-3.5 h-3.5" /> Mark all read
+            </button>
+            <span className="text-border">|</span>
+            <button
+              onClick={() => {
+                const expiryIds = logs
+                  .filter((l) => l.id.toString().startsWith("expiry-"))
+                  .map((l) => l.id);
+                if (expiryIds.length > 0) {
+                  try {
+                    const saved = localStorage.getItem("pipip_dismissed_notifications");
+                    const dismissed = saved ? JSON.parse(saved) : [];
+                    const updated = Array.from(new Set([...dismissed, ...expiryIds]));
+                    localStorage.setItem("pipip_dismissed_notifications", JSON.stringify(updated));
+                  } catch (e) {
+                    console.error("Failed to dismiss alerts during reset", e);
+                  }
+                }
+                setLogs([]);
+              }}
+              className="text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 active:scale-95"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Reset
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4 text-xs font-medium">
-          <button
-            onClick={() =>
-              setLogs((prev) => prev.map((l) => ({ ...l, read: true })))
-            }
-            className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-          >
-            <Check className="w-4 h-4" /> Mark all read
-          </button>
-          <span className="text-border">|</span>
-          <button
-            onClick={() => {
-              // Capture all expiry alerts in logs and add them to dismissed list
-              const expiryIds = logs
-                .filter((l) => l.id.toString().startsWith("expiry-"))
-                .map((l) => l.id);
-              if (expiryIds.length > 0) {
-                try {
-                  const saved = localStorage.getItem("pipip_dismissed_notifications");
-                  const dismissed = saved ? JSON.parse(saved) : [];
-                  const updated = Array.from(new Set([...dismissed, ...expiryIds]));
-                  localStorage.setItem("pipip_dismissed_notifications", JSON.stringify(updated));
-                } catch (e) {
-                  console.error("Failed to dismiss alerts during reset", e);
-                }
-              }
-              setLogs([]);
-            }}
-            className="text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1.5"
-          >
-            <Trash2 className="w-4 h-4" /> Reset Stream
-          </button>
+        {/* Segmented Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {[
+            { id: "all", label: "All Alerts", count: logs.length },
+            { id: "order", label: "Orders", count: logs.filter((l) => l.type === "order").length },
+            { id: "expiry", label: "Expiry / Compliance", count: logs.filter((l) => l.type === "expiry").length },
+            { id: "unread", label: "Unread Only", count: logs.filter((l) => !l.read).length },
+          ].map((tab) => {
+            const isActive = activeFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveFilter(tab.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 active:scale-95 ${
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-background text-foreground/70"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* ========================================================================= */}
       {/* 🚀 LIVE LOG ALERT STREAM INTERACTION CARDS */}
       {/* ========================================================================= */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <AnimatePresence mode="popLayout">
-          {logs.map((log) => {
+          {logs
+            .filter((log) => {
+              if (activeFilter === "order") return log.type === "order";
+              if (activeFilter === "expiry") return log.type === "expiry";
+              if (activeFilter === "unread") return !log.read;
+              return true;
+            })
+            .map((log) => {
             const isOrder = log.type === "order" && log.bookingData;
             const isExpiry = log.type === "expiry";
             const hasRedirect = isOrder || isExpiry;
@@ -242,13 +285,11 @@ export default function NotificationsCenter() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, x: -30, transition: { duration: 0.2 } }}
                 onClick={() => {
-                  // Mark as read when clicked
                   setLogs((prev) =>
                     prev.map((item) =>
                       item.id === log.id ? { ...item, read: true } : item
                     )
                   );
-                  // Redirect if order or expiry alerts
                   if (isOrder) {
                     const bookingId = log.bookingData._id || log.bookingData.payment_order_id || log.bookingData.booking_id;
                     if (bookingId) {
@@ -262,23 +303,23 @@ export default function NotificationsCenter() {
                   }
                 }}
                 className={cn(
-                  "rounded-xl border transition-all duration-200 overflow-hidden",
+                  "rounded-2xl border transition-all duration-200 overflow-hidden",
                   log.read
-                    ? "bg-card/40 border-border/50 opacity-60 shadow-none"
-                    : "bg-card border-l-4 border-l-rose-500 border-border shadow-md ring-1 ring-zinc-500/5",
-                  hasRedirect && "cursor-pointer hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50"
+                    ? "bg-card/50 border-border/60 opacity-75 shadow-none"
+                    : "bg-card border-l-4 border-l-rose-500 border-border shadow-xs ring-1 ring-zinc-500/5",
+                  hasRedirect && "cursor-pointer hover:bg-muted/40"
                 )}
               >
-                <div className="p-4 flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
-                  <div className="flex gap-3 items-start min-w-0 flex-1">
+                <div className="p-3 sm:p-4 flex flex-col sm:flex-row gap-2.5 sm:gap-3.5 sm:items-center justify-between">
+                  <div className="flex gap-2.5 sm:gap-3 items-start min-w-0 flex-1">
                     <div
                       className={cn(
-                        "p-2.5 rounded-lg shrink-0 mt-0.5",
+                        "p-2 rounded-xl shrink-0 mt-0.5",
                         log.type === "order"
-                          ? "bg-rose-500/10 text-rose-500 animate-bounce"
+                          ? "bg-rose-500/15 text-rose-600 animate-bounce"
                           : log.type === "expiry"
-                          ? "bg-amber-500/10 text-amber-500"
-                          : "bg-zinc-500/10 text-zinc-500",
+                          ? "bg-amber-500/15 text-amber-600"
+                          : "bg-muted text-muted-foreground",
                       )}
                     >
                       {log.type === "order" ? (
@@ -291,18 +332,18 @@ export default function NotificationsCenter() {
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1 sm:gap-4">
-                        <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-0.5 sm:gap-3">
+                        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                           <h4
                             className={cn(
-                              "text-sm font-bold tracking-tight truncate",
+                              "text-xs sm:text-sm font-bold tracking-tight truncate",
                               log.read ? "text-muted-foreground" : "text-foreground",
                             )}
                           >
                             {log.title}
                           </h4>
                           {log.areaName && (
-                            <span className="text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20 shrink-0">
+                            <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.2 rounded-full border border-amber-500/20 shrink-0">
                               📍 {log.areaName}
                             </span>
                           )}
@@ -318,7 +359,7 @@ export default function NotificationsCenter() {
                   </div>
 
                   {/* Individual actions */}
-                  <div className="flex gap-2 shrink-0 sm:self-center justify-end border-t sm:border-t-0 pt-2 sm:pt-0 mt-2 sm:mt-0">
+                  <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center border-t sm:border-t-0 pt-1.5 sm:pt-0">
                     {!log.read && (
                       <button
                         onClick={(e) => {
@@ -329,10 +370,10 @@ export default function NotificationsCenter() {
                             )
                           );
                         }}
-                        className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-500/10 text-zinc-500 hover:text-emerald-600 transition-colors"
+                        className="p-1.5 rounded-lg bg-muted/60 hover:bg-emerald-500/15 text-muted-foreground hover:text-emerald-600 transition-colors"
                         title="Mark as read"
                       >
-                        <Check className="w-4 h-4" />
+                        <Check className="w-3.5 h-3.5" />
                       </button>
                     )}
                     <button
@@ -340,7 +381,6 @@ export default function NotificationsCenter() {
                         e.stopPropagation();
                         setLogs((prev) => prev.filter((item) => item.id !== log.id));
                         
-                        // Dismiss list for expiry reminders
                         if (log.id.toString().startsWith("expiry-")) {
                           try {
                             const saved = localStorage.getItem("pipip_dismissed_notifications");
@@ -354,10 +394,10 @@ export default function NotificationsCenter() {
                           }
                         }
                       }}
-                      className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-destructive/10 text-zinc-500 hover:text-destructive transition-colors"
+                      className="p-1.5 rounded-lg bg-muted/60 hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors"
                       title="Delete notification"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -368,9 +408,9 @@ export default function NotificationsCenter() {
 
         {/* Stream Empty Placeholder State View */}
         {logs.length === 0 && (
-          <div className="text-center py-20 border border-dashed border-border rounded-xl bg-card/10">
-            <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-20" />
-            <p className="text-muted-foreground text-sm font-medium">
+          <div className="text-center py-16 border border-dashed border-border rounded-2xl bg-card/20">
+            <Bell className="w-10 h-10 text-muted-foreground mx-auto mb-2 opacity-30" />
+            <p className="text-muted-foreground text-xs sm:text-sm font-medium">
               The notification stream history log is completely empty.
             </p>
           </div>

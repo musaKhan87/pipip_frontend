@@ -69,52 +69,53 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.3 }}
+        className="w-full max-w-sm"
       >
-        <Card className="w-full max-w-md bg-card border-border">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 bg-primary rounded-full">
-                <Bike className="w-8 h-8 text-primary-foreground" />
+        <Card className="bg-card border border-border/80 shadow-lg rounded-xl">
+          <CardHeader className="text-center pb-4">
+            <div className="flex justify-center mb-2">
+              <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center shadow-sm">
+                <Bike className="w-5 h-5" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-foreground">
-              Admin Panel
+            <CardTitle className="text-xl font-bold tracking-tight text-foreground">
+              Pipip Operations
             </CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Enter your credentials to access the management dashboard
+            <CardDescription className="text-xs text-muted-foreground mt-1">
+              Sign in to access your operations dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               {error && (
-                <div className="p-3 bg-destructive/20 border border-destructive/50 rounded-lg flex items-center gap-2 text-destructive">
-                  <AlertCircle className="w-4 h-4" />
-                  <span className="text-sm">{error}</span>
+                <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-center gap-2 text-destructive text-xs">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="login-email" className="text-xs font-medium">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="login-email"
                     type="email"
-                    placeholder="admin@bikeshop.com"
+                    placeholder="admin@pipip.in"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-9"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="login-password" className="text-xs font-medium">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -123,20 +124,20 @@ export default function AdminLogin() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
+                    className="pl-9"
                   />
                 </div>
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? "Verifying..." : "Sign In"}
+              <Button type="submit" disabled={loading} className="w-full h-10 font-medium cursor-pointer">
+                {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-5 text-center">
               <a
                 href="/"
-                className="text-muted-foreground hover:text-foreground text-sm"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 ← Back to Website
               </a>

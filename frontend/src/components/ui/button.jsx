@@ -5,31 +5,31 @@ import { cn } from "../../lib/util";
 
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer active:scale-[0.98]",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/90 shadow-golden hover:shadow-lg",
+          "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
         outline:
-          "border-2 border-primary/30 bg-transparent text-foreground hover:bg-primary/10 hover:border-primary",
+          "border border-border bg-background text-foreground hover:bg-muted/70 shadow-sm",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-teal",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-muted hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        hero: "gradient-sunset text-primary-foreground font-bold shadow-golden hover:scale-105 hover:shadow-lg",
-        teal: "gradient-teal text-secondary-foreground font-bold shadow-teal hover:scale-105 hover:shadow-lg",
+        hero: "bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/25 active:scale-95",
+        teal: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
         glass:
-          "bg-foreground/10 backdrop-blur-sm border border-foreground/20 text-foreground hover:bg-foreground/20",
+          "bg-background/80 backdrop-blur-md border border-border text-foreground hover:bg-muted/60 shadow-sm",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-lg px-3",
-        lg: "h-12 rounded-xl px-8 text-base",
-        xl: "h-14 rounded-xl px-10 text-lg",
-        icon: "h-10 w-10",
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-10 rounded-md px-6 text-sm font-medium",
+        xl: "h-11 rounded-lg px-8 text-base font-medium",
+        icon: "h-9 w-9",
       },
     },
     defaultVariants: {

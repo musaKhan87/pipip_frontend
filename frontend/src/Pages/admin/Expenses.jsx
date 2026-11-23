@@ -663,77 +663,57 @@ export default function Expenses() {
     <div className="space-y-6">
       {/* Top Header */}
       <div>
-        <h1 className="text-3xl font-display text-gradient-sunset">Expenses & Account Tracking</h1>
-        <p className="text-muted-foreground">Manage claims and track daily operational balance logs</p>
+        <h1 className="text-2xl font-bold font-display text-foreground tracking-tight">Expenses & Account Tracking</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Manage operational claims, hub cash drawers, and daily balance logs</p>
       </div>
 
       {/* Tabs Selector Navigation */}
-      <div className="flex border-b border-border gap-6 overflow-x-auto">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         <button
           onClick={() => setActiveTab("claims")}
-          className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "claims"
-            ? "text-primary font-bold"
-            : "text-muted-foreground hover:text-foreground"
-            }`}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
+            activeTab === "claims"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground"
+          }`}
         >
           Expense Claims
-          {activeTab === "claims" && (
-            <motion.span
-              layoutId="activeTabUnderline"
-              className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
-            />
-          )}
         </button>
 
         {!isStaffOrManager && isAdmin && (
           <>
             <button
               onClick={() => setActiveTab("daily_account")}
-              className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "daily_account"
-                ? "text-primary font-bold"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
+                activeTab === "daily_account"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground"
+              }`}
             >
-              Daily Account Information
-              {activeTab === "daily_account" && (
-                <motion.span
-                  layoutId="activeTabUnderline"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
-                />
-              )}
+              Daily Account Info
             </button>
             <button
               onClick={() => setActiveTab("daily_report")}
-              className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "daily_report"
-                ? "text-primary font-bold"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
+                activeTab === "daily_report"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground"
+              }`}
             >
               Daily Report
-              {activeTab === "daily_report" && (
-                <motion.span
-                  layoutId="activeTabUnderline"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
-                />
-              )}
             </button>
           </>
         )}
 
         <button
           onClick={() => setActiveTab("service_history")}
-          className={`pb-3 font-semibold text-sm transition-all relative whitespace-nowrap ${activeTab === "service_history"
-            ? "text-primary font-bold"
-            : "text-muted-foreground hover:text-foreground"
-            }`}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
+            activeTab === "service_history"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground"
+          }`}
         >
           Vehicle Service History
-          {activeTab === "service_history" && (
-            <motion.span
-              layoutId="activeTabUnderline"
-              className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
-            />
-          )}
         </button>
       </div>
 
@@ -746,104 +726,101 @@ export default function Expenses() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.15 }}
-            className="space-y-6"
+            className="space-y-4 sm:space-y-6"
           >
             {/* 📊 Total Expense Calculation & Summary Metric Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-card border-border shadow-sm p-4 relative overflow-hidden group hover:border-primary/50 transition-all">
+            <div className="flex sm:grid sm:grid-cols-4 gap-3 overflow-x-auto pb-1 scrollbar-none">
+              <div className="min-w-[160px] sm:min-w-0 flex-1 bg-rose-50/70 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                      {periodFilter === "day"
-                        ? "Today's Expenses"
-                        : periodFilter === "weekly"
-                          ? "Weekly Expenses"
-                          : periodFilter === "monthly"
-                            ? "Monthly Expenses"
-                            : periodFilter === "custom"
-                              ? "Custom Period Total"
-                              : "Total Expenses (All Time)"}
-                    </p>
-                    <p className="text-2xl sm:text-3xl font-black text-rose-500 tracking-tight">
-                      ₹{totalExpenseAmount.toLocaleString()}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      Across {totalExpenseCount} recorded claims
-                    </p>
-                  </div>
-                  <div className="p-3 bg-rose-500/10 text-rose-500 rounded-2xl shrink-0">
-                    <Coins className="w-6 h-6" />
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-rose-900/70 dark:text-rose-300">
+                    {periodFilter === "day"
+                      ? "Today's Total"
+                      : periodFilter === "weekly"
+                        ? "Weekly Total"
+                        : periodFilter === "monthly"
+                          ? "Monthly Total"
+                          : periodFilter === "custom"
+                            ? "Custom Total"
+                            : "Total Expenses"}
+                  </span>
+                  <div className="w-7 h-7 rounded-full bg-rose-100 dark:bg-rose-900/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                    <Coins className="w-3.5 h-3.5" />
                   </div>
                 </div>
-              </Card>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-rose-950 dark:text-rose-100">
+                    ₹{totalExpenseAmount.toLocaleString()}
+                  </span>
+                  <span className="text-[11px] font-semibold text-rose-700/80 dark:text-rose-300">
+                    {totalExpenseCount} Claims
+                  </span>
+                </div>
+              </div>
 
-              <Card className="bg-card border-border shadow-sm p-4 relative overflow-hidden group hover:border-primary/50 transition-all">
+              <div className="min-w-[160px] sm:min-w-0 flex-1 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Total Claims Count
-                    </p>
-                    <p className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
-                      {totalExpenseCount}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      Avg: ₹{averageExpense.toLocaleString()} / claim
-                    </p>
-                  </div>
-                  <div className="p-3 bg-primary/10 text-primary rounded-2xl shrink-0">
-                    <FileText className="w-6 h-6" />
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-blue-900/70 dark:text-blue-300">
+                    Total Claims
+                  </span>
+                  <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                    <FileText className="w-3.5 h-3.5" />
                   </div>
                 </div>
-              </Card>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-blue-950 dark:text-blue-100">
+                    {totalExpenseCount}
+                  </span>
+                  <span className="text-[11px] font-semibold text-blue-700/80 dark:text-blue-300">
+                    Avg ₹{averageExpense.toLocaleString()}
+                  </span>
+                </div>
+              </div>
 
-              <Card className="bg-card border-border shadow-sm p-4 relative overflow-hidden group hover:border-primary/50 transition-all">
+              <div className="min-w-[160px] sm:min-w-0 flex-1 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Single Highest Claim
-                    </p>
-                    <p className="text-2xl sm:text-3xl font-black text-amber-400 tracking-tight">
-                      ₹{highestExpense.toLocaleString()}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      Maximum expense recorded
-                    </p>
-                  </div>
-                  <div className="p-3 bg-amber-500/10 text-amber-400 rounded-2xl shrink-0">
-                    <TrendingUp className="w-6 h-6" />
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-amber-900/70 dark:text-amber-300">
+                    Highest Claim
+                  </span>
+                  <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                    <TrendingUp className="w-3.5 h-3.5" />
                   </div>
                 </div>
-              </Card>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-amber-950 dark:text-amber-100">
+                    ₹{highestExpense.toLocaleString()}
+                  </span>
+                  <span className="text-[11px] font-semibold text-amber-700/80 dark:text-amber-300">
+                    Single Peak
+                  </span>
+                </div>
+              </div>
 
-              <Card className="bg-card border-border shadow-sm p-4 relative overflow-hidden group hover:border-primary/50 transition-all">
+              <div className="min-w-[160px] sm:min-w-0 flex-1 bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200/80 dark:border-indigo-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Active Time Filter
-                    </p>
-                    <p className="text-lg font-bold text-foreground capitalize mt-0.5">
-                      {periodFilter === "day"
-                        ? "Today (Day)"
-                        : periodFilter === "weekly"
-                          ? "This Week"
-                          : periodFilter === "monthly"
-                            ? format(new Date(), "MMMM yyyy")
-                            : periodFilter === "custom"
-                              ? "Custom Range"
-                              : "All Time"}
-                    </p>
-                    <p className="text-[11px] text-primary font-medium flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {periodFilter === "custom" && customStartDate
-                        ? `${format(new Date(customStartDate), "d MMM")} – ${customEndDate ? format(new Date(customEndDate), "d MMM") : "Now"}`
-                        : "Auto-synced fleet ledger"}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-blue-500/10 text-blue-400 rounded-2xl shrink-0">
-                    <Calendar className="w-6 h-6" />
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-indigo-900/70 dark:text-indigo-300">
+                    Active Period
+                  </span>
+                  <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                    <Calendar className="w-3.5 h-3.5" />
                   </div>
                 </div>
-              </Card>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span className="text-sm sm:text-base font-extrabold text-indigo-950 dark:text-indigo-100 capitalize truncate">
+                    {periodFilter === "day"
+                      ? "Today"
+                      : periodFilter === "weekly"
+                        ? "This Week"
+                        : periodFilter === "monthly"
+                          ? format(new Date(), "MMM yyyy")
+                          : periodFilter === "custom"
+                            ? "Custom"
+                            : "All Time"}
+                  </span>
+                  <span className="text-[11px] font-semibold text-indigo-700/80 dark:text-indigo-300">
+                    Filtered
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* 🔍 Filter Control Bar: Preset Periods, Date-to-Date Range & Category */}
@@ -968,7 +945,7 @@ export default function Expenses() {
 
               <Dialog open={isOpen} onOpenChange={handleOpenChange}>
                 <DialogTrigger asChild>
-                  <Button className="gradient-sunset text-primary-foreground shadow-golden w-full sm:w-auto">
+                  <Button variant="hero" size="sm" className="w-full sm:w-auto">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Expense
                   </Button>

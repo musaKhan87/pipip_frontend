@@ -6,8 +6,13 @@ import {
   Pencil,
   Trash2,
   Loader2,
+  X,
+  CheckCircle2,
+  Building2,
+  AlertCircle,
 } from "lucide-react";
-
+import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 import { Input } from "../../components/ui/input";
 import { Card, CardContent } from "../../components/ui/card";
@@ -31,7 +36,7 @@ import {
 } from "../../hooks/useAreas";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
-import {useAuth} from "../../lib/AuthProvider";
+import { useAuth } from "../../lib/AuthProvider";
 
 export default function Areas() {
   const [isOpen, setIsOpen] = useState(false);
@@ -59,10 +64,13 @@ export default function Areas() {
   const updateArea = useUpdateArea();
   const deleteArea = useDeleteArea();
 
+  const activeCount = areas?.filter((a) => a.is_active).length || 0;
+  const inactiveCount = (areas?.length || 0) - activeCount;
+
   const filteredAreas = areas?.filter(
     (area) =>
-      area.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      area.city.toLowerCase().includes(searchQuery.toLowerCase())
+      area.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      area.city?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const executeSaveArea = () => {
@@ -74,6 +82,7 @@ export default function Areas() {
           onSuccess: () => {
             setIsOpen(false);
             setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+            toast.success("Hub updated successfully");
           },
           onError: () => {
             setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
@@ -85,6 +94,7 @@ export default function Areas() {
         onSuccess: () => {
           setIsOpen(false);
           setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+          toast.success("Hub created successfully");
         },
         onError: () => {
           setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
@@ -139,6 +149,7 @@ export default function Areas() {
         deleteArea.mutate(area._id, {
           onSuccess: () => {
             setConfirmConfig((prev) => ({ ...prev, open: false, isLoading: false }));
+            toast.success("Hub deleted successfully");
           },
           onError: () => {
             setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
@@ -166,240 +177,97 @@ export default function Areas() {
     }
   };
 
-  // return (
-
-  //   <div className="space-y-6">
-  //     {/* Header */}
-  //     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-  //       <div>
-  //         <h1 className="text-3xl font-display text-gradient-sunset">
-  //           Areas
-  //         </h1>
-  //         <p className="text-muted-foreground">
-  //           Manage pickup/drop locations
-  //         </p>
-  //       </div>
-
-  //       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-  //         <DialogTrigger asChild>
-  //           <Button className="gradient-sunset text-primary-foreground shadow-golden">
-  //             <Plus className="w-4 h-4 mr-2" />
-  //             Add Area
-  //           </Button>
-  //         </DialogTrigger>
-
-  //         <DialogContent className="bg-card border-border">
-  //           <DialogHeader>
-  //             <DialogTitle className="text-foreground">
-  //               {editingArea ? "Edit Area" : "Add New Area"}
-  //             </DialogTitle>
-  //           </DialogHeader>
-
-  //           <form onSubmit={handleSubmit} className="space-y-4">
-  //             <div className="space-y-2">
-  //               <Label>Area Name</Label>
-  //               <Input
-  //                 value={formData.name}
-  //                 onChange={(e) =>
-  //                   setFormData({ ...formData, name: e.target.value })
-  //                 }
-  //                 required
-  //                 className="bg-input border-border"
-  //               />
-  //             </div>
-
-  //             <div className="space-y-2">
-  //               <Label>City</Label>
-  //               <Input
-  //                 value={formData.city}
-  //                 onChange={(e) =>
-  //                   setFormData({ ...formData, city: e.target.value })
-  //                 }
-  //                 required
-  //                 className="bg-input border-border"
-  //               />
-  //             </div>
-
-  //             <div className="flex items-center gap-2">
-  //               <Switch
-  //                 checked={formData.is_active}
-  //                 onCheckedChange={(checked) =>
-  //                   setFormData({ ...formData, is_active: checked })
-  //                 }
-  //               />
-  //               <Label>Active</Label>
-  //             </div>
-
-  //             <Button
-  //               type="submit"
-  //               className="w-full gradient-sunset text-primary-foreground"
-  //               disabled={createArea.isPending || updateArea.isPending}
-  //             >
-  //               {(createArea.isPending || updateArea.isPending) && (
-  //                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-  //               )}
-  //               {editingArea ? "Update" : "Add"} Area
-  //             </Button>
-  //           </form>
-  //         </DialogContent>
-  //       </Dialog>
-  //     </div>
-
-  //     {/* Search */}
-  //     <div className="relative max-w-md">
-  //       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-  //       <Input
-  //         placeholder="Search areas..."
-  //         value={searchQuery}
-  //         onChange={(e) => setSearchQuery(e.target.value)}
-  //         className="pl-10 bg-input border-border"
-  //       />
-  //     </div>
-
-  //     {/* List */}
-  //     {isLoading ? (
-  //       <div className="flex justify-center py-12">
-  //         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-  //       </div>
-  //     ) : (
-  //       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-  //         {filteredAreas?.map((area) => (
-  //           <Card
-  //             key={area._id}
-  //             className="bg-card border-border hover:border-primary/50 transition-colors"
-  //           >
-  //             <CardContent className="p-4">
-  //               <div className="flex items-start justify-between mb-2">
-  //                 <div className="flex items-center gap-2">
-  //                   <MapPin className="w-5 h-5 text-primary" />
-  //                   <h3 className="font-semibold text-foreground">
-  //                     {area.name}
-  //                   </h3>
-  //                 </div>
-
-  //                 <Badge
-  //                   variant={area.is_active ? "default" : "secondary"}
-  //                   className={
-  //                     area.is_active
-  //                       ? "bg-green-500/20 text-green-400"
-  //                       : ""
-  //                   }
-  //                 >
-  //                   {area.is_active ? "Active" : "Inactive"}
-  //                 </Badge>
-  //               </div>
-
-  //               <p className="text-sm text-muted-foreground mb-4">
-  //                 {area.city}
-  //               </p>
-
-  //               <div className="flex gap-2">
-  //                 <Button
-  //                   size="sm"
-  //                   variant="outline"
-  //                   onClick={() => handleEdit(area)}
-  //                   className="flex-1 border-border"
-  //                 >
-  //                   <Pencil className="w-3 h-3 mr-1" />
-  //                   Edit
-  //                 </Button>
-
-  //                 <Button
-  //                   size="sm"
-  //                   variant="destructive"
-  //                   onClick={() => handleDeleteClick(area)}
-  //                   className="flex-1"
-  //                 >
-  //                   <Trash2 className="w-3 h-3 mr-1" />
-  //                   Delete
-  //                 </Button>
-  //               </div>
-  //             </CardContent>
-  //           </Card>
-  //         ))}
-  //       </div>
-  //     )}
-  //   </div>
-  // );
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-4 sm:space-y-6 pb-8">
+      {/* ── Top Header ────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-display text-gradient-sunset">Areas</h1>
-          <p className="text-muted-foreground">Manage pickup/drop locations</p>
+          <h1 className="text-2xl font-bold font-display text-foreground tracking-tight">
+            Areas & Operational Hubs
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Manage bike pickup, drop-off stations, and city operational hubs
+          </p>
         </div>
 
-        {/* Update your Add Area Button Trigger */}
         {isAdmin && (
           <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
               <Button
-                className="gradient-sunset text-primary-foreground shadow-golden"
+                variant="hero"
+                size="sm"
+                className="w-full sm:w-auto h-9 text-xs sm:text-sm font-semibold rounded-xl"
                 onClick={() => {
-                  // EXPLICITLY reset state before opening
                   setEditingArea(null);
                   setFormData({ name: "", city: "Mumbai", is_active: true });
                 }}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Area
+                <Plus className="w-4 h-4 mr-1.5" />
+                Add New Hub
               </Button>
             </DialogTrigger>
-            {/* ... rest of the Dialog code */}
 
-            <DialogContent className="bg-card border-border">
+            <DialogContent className="w-[95vw] max-w-md bg-card border-border rounded-2xl p-5">
               <DialogHeader>
-                <DialogTitle className="text-foreground">
-                  {editingArea ? "Edit Area" : "Add New Area"}
+                <DialogTitle className="text-foreground text-lg font-bold flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  {editingArea ? "Edit Hub Location" : "Create New Hub Location"}
                 </DialogTitle>
               </DialogHeader>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Area Name</Label>
+              <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Hub / Station Name</Label>
                   <Input
+                    placeholder="e.g. Andheri West Station Hub"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
                     required
-                    className="bg-input border-border"
+                    className="bg-input border-border/80 rounded-xl text-sm h-10"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>City</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">City</Label>
                   <Input
+                    placeholder="e.g. Mumbai"
                     value={formData.city}
                     onChange={(e) =>
                       setFormData({ ...formData, city: e.target.value })
                     }
                     required
-                    className="bg-input border-border"
+                    className="bg-input border-border/80 rounded-xl text-sm h-10"
                   />
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/60">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-semibold cursor-pointer">
+                      Operational Status
+                    </Label>
+                    <p className="text-[11px] text-muted-foreground">
+                      {formData.is_active ? "Available for pickups & returns" : "Temporarily paused"}
+                    </p>
+                  </div>
                   <Switch
                     checked={formData.is_active}
                     onCheckedChange={(checked) =>
                       setFormData({ ...formData, is_active: checked })
                     }
                   />
-                  <Label>Active</Label>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full gradient-sunset text-primary-foreground"
+                  className="w-full gradient-sunset text-primary-foreground h-10 rounded-xl font-bold text-sm shadow-md"
                   disabled={createArea.isPending || updateArea.isPending}
                 >
                   {(createArea.isPending || updateArea.isPending) && (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   )}
-                  {editingArea ? "Update" : "Add"} Area
+                  {editingArea ? "Save Changes" : "Create Hub Location"}
                 </Button>
               </form>
             </DialogContent>
@@ -407,83 +275,183 @@ export default function Areas() {
         )}
       </div>
 
-      {/* Search */}
+      {/* ── KPI Stats Strip ───────────────────────────────────────── */}
+      {areas && (
+        <div className="flex sm:grid sm:grid-cols-3 gap-3 overflow-x-auto pb-1 scrollbar-none">
+          {/* Total Hubs */}
+          <div className="min-w-[150px] sm:min-w-0 flex-1 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-blue-900/70 dark:text-blue-300">
+                Total Hubs
+              </span>
+              <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <Building2 className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-2xl sm:text-3xl font-extrabold text-blue-950 dark:text-blue-100">
+                {areas.length}
+              </span>
+              <span className="text-[11px] font-semibold text-blue-700/80 dark:text-blue-300">
+                Registered
+              </span>
+            </div>
+          </div>
+
+          {/* Active Hubs */}
+          <div className="min-w-[150px] sm:min-w-0 flex-1 bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-900/70 dark:text-emerald-300 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Active Hubs
+              </span>
+              <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-950 dark:text-emerald-100">
+                {activeCount}
+              </span>
+              <span className="text-[11px] font-semibold text-emerald-700/80 dark:text-emerald-300">
+                Open for Bookings
+              </span>
+            </div>
+          </div>
+
+          {/* Inactive */}
+          <div className="min-w-[150px] sm:min-w-0 flex-1 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-amber-900/70 dark:text-amber-300">
+                Inactive Hubs
+              </span>
+              <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <AlertCircle className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="text-2xl sm:text-3xl font-extrabold text-amber-950 dark:text-amber-100">
+                {inactiveCount}
+              </span>
+              <span className="text-[11px] font-semibold text-amber-700/80 dark:text-amber-300">
+                Paused
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Search Bar ────────────────────────────────────────────── */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Search areas..."
+          placeholder="Search by hub name or city..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 bg-input border-border"
+          className="pl-9 pr-8 bg-card border-border/80 rounded-xl text-sm h-10"
         />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-muted text-muted-foreground"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
-      {/* List */}
+      {/* ── Hub Cards Grid ────────────────────────────────────────── */}
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="animate-pulse bg-card border-border/70 rounded-2xl p-4 space-y-3">
+              <div className="h-5 bg-muted rounded w-2/3" />
+              <div className="h-4 bg-muted rounded w-1/3" />
+              <div className="h-8 bg-muted rounded w-full" />
+            </Card>
+          ))}
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredAreas?.map((area) => (
-            <Card
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+          {filteredAreas?.map((area, index) => (
+            <motion.div
               key={area._id}
-              className="bg-card border-border hover:border-primary/50 transition-colors"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.02 }}
             >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold text-foreground">
-                      {area.name}
-                    </h3>
-                  </div>
+              <Card className="bg-card border border-border/80 hover:border-slate-400 dark:hover:border-slate-600 rounded-2xl shadow-2xs hover:shadow-xs transition-all p-3.5 sm:p-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-foreground text-sm truncate">
+                          {area.name}
+                        </h3>
+                        <p className="text-[11px] text-muted-foreground font-medium">
+                          {area.city || "Mumbai"}
+                        </p>
+                      </div>
+                    </div>
 
-                  <Badge
-                    variant={area.is_active ? "default" : "secondary"}
-                    className={
-                      area.is_active ? "bg-green-500/20 text-green-400" : ""
-                    }
-                  >
-                    {area.is_active ? "Active" : "Inactive"}
-                  </Badge>
+                    <Badge
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 border capitalize ${
+                        area.is_active
+                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                          : "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
+                      }`}
+                    >
+                      {area.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
                 </div>
 
-                <p className="text-sm text-muted-foreground mb-4">
-                  {area.city}
-                </p>
-
                 {isAdmin && (
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2 pt-3 mt-2 border-t border-border/50">
                     <Button
-                      size="sm"
+                      size="xs"
                       variant="outline"
                       onClick={() => handleEdit(area)}
-                      className="flex-1 border-border"
+                      className="flex-1 h-7 text-xs font-semibold rounded-lg border-border hover:border-primary"
                     >
                       <Pencil className="w-3 h-3 mr-1" />
                       Edit
                     </Button>
 
                     <Button
-                      size="sm"
-                      variant="destructive"
+                      size="xs"
+                      variant="outline"
                       onClick={() => handleDeleteClick(area)}
-                      className="flex-1"
+                      className="flex-1 h-7 text-xs font-semibold rounded-lg border-border text-destructive hover:bg-destructive/10 hover:border-destructive/30"
                     >
                       <Trash2 className="w-3 h-3 mr-1" />
                       Delete
                     </Button>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </Card>
+            </motion.div>
           ))}
+
+          {filteredAreas?.length === 0 && (
+            <div className="col-span-full text-center py-12 border border-dashed border-border rounded-2xl bg-card/20">
+              <MapPin className="w-10 h-10 text-muted-foreground mx-auto mb-2 opacity-30" />
+              <p className="text-muted-foreground text-sm font-medium">
+                No matching operational hubs found
+              </p>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Confirmation Dialog Integration */}
+      <ConfirmationDialog
+        {...confirmConfig}
+        onCancel={() => setConfirmConfig((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
-
-
-
 }

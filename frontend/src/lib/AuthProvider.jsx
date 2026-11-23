@@ -6,7 +6,14 @@ const AuthContext = createContext(undefined);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Initialize loading synchronously: only true if an auth token actually exists in storage
+  const [loading, setLoading] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem("token"));
+    } catch {
+      return false;
+    }
+  });
 
   // Define clean Auth endpoint
   const API_AUTH_URL = `${API_BASE_URL}/auth`;
@@ -134,7 +141,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

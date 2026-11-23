@@ -4,83 +4,94 @@
 
 @layer base {
   :root {
-    /* Deep navy blue theme inspired by Mumbai night */
-    --background: 220 60% 8%;
-    --foreground: 45 100% 96%;
+    /* Rich, Luxurious Porcelain Light Theme */
+    --background: 210 40% 98%; /* #F8FAFC soft porcelain */
+    --foreground: 222 47% 11%; /* #0F172A deep obsidian */
 
-    --card: 220 55% 12%;
-    --card-foreground: 45 100% 96%;
+    --card: 0 0% 100%; /* #FFFFFF crisp white */
+    --card-foreground: 222 47% 11%;
 
-    --popover: 220 55% 12%;
-    --popover-foreground: 45 100% 96%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Golden amber - sunset accent */
-    --primary: 38 95% 55%;
-    --primary-foreground: 220 60% 8%;
+    /* Premium Royal/Electric Blue */
+    --primary: 221 83% 53%; /* #2563EB */
+    --primary-foreground: 0 0% 100%;
 
-    /* Teal - scooter color */
-    --secondary: 174 65% 50%;
-    --secondary-foreground: 220 60% 8%;
+    /* Soft Slate Secondary */
+    --secondary: 210 30% 96%; /* #F1F5F9 */
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 40% 18%;
-    --muted-foreground: 220 20% 65%;
+    --muted: 210 25% 95%;
+    --muted-foreground: 215 16% 45%;
 
-    --accent: 174 65% 50%;
-    --accent-foreground: 220 60% 8%;
+    /* Warm Sunset Amber Accent */
+    --accent: 38 92% 50%; /* #F59E0B */
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 45 100% 96%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 40% 20%;
-    --input: 220 40% 15%;
-    --ring: 38 95% 55%;
+    --border: 214 32% 90%; /* #E2E8F0 */
+    --input: 214 32% 90%;
+    --ring: 221 83% 53%;
 
     --radius: 0.75rem;
 
-    /* Custom Pipip colors */
-    --sunset-start: 38 95% 55%;
-    --sunset-end: 25 100% 50%;
-    --navy-deep: 220 60% 6%;
-    --navy-light: 220 50% 15%;
-    --teal-glow: 174 65% 50%;
-    --star-shimmer: 45 100% 90%;
+    /* Custom brand colors */
+    --sunset-start: 221 83% 53%;
+    --sunset-end: 224 76% 48%;
+    --navy-deep: 222 47% 7%;
+    --navy-light: 222 47% 14%;
+    --teal-glow: 221 83% 53%;
+    --star-shimmer: 215 16% 47%;
 
-    /* Shadows and glows */
-    --shadow-golden: 0 10px 40px -10px hsl(38 95% 55% / 0.4);
-    --shadow-teal: 0 10px 40px -10px hsl(174 65% 50% / 0.3);
-    --glow-golden: 0 0 60px hsl(38 95% 55% / 0.3);
-    --glow-teal: 0 0 40px hsl(174 65% 50% / 0.25);
+    /* Refined Light Elevation Shadows */
+    --shadow-golden: 0 4px 20px -2px rgba(245, 158, 11, 0.15), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+    --shadow-teal: 0 4px 20px -2px rgba(37, 99, 235, 0.15), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+    --glow-golden: 0 0 0 1px rgba(245, 158, 11, 0.2);
+    --glow-teal: 0 0 0 1px rgba(37, 99, 235, 0.2);
 
-    --sidebar-background: 220 55% 10%;
-    --sidebar-foreground: 45 100% 96%;
-    --sidebar-primary: 38 95% 55%;
-    --sidebar-primary-foreground: 220 60% 8%;
-    --sidebar-accent: 174 65% 50%;
-    --sidebar-accent-foreground: 220 60% 8%;
-    --sidebar-border: 220 40% 20%;
-    --sidebar-ring: 38 95% 55%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 98%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 221 83% 53%;
   }
 
   .dark {
-    --background: 220 60% 8%;
-    --foreground: 45 100% 96%;
-    --card: 220 55% 12%;
-    --card-foreground: 45 100% 96%;
-    --popover: 220 55% 12%;
-    --popover-foreground: 45 100% 96%;
-    --primary: 38 95% 55%;
-    --primary-foreground: 220 60% 8%;
-    --secondary: 174 65% 50%;
-    --secondary-foreground: 220 60% 8%;
-    --muted: 220 40% 18%;
-    --muted-foreground: 220 20% 65%;
-    --accent: 174 65% 50%;
-    --accent-foreground: 220 60% 8%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 45 100% 96%;
-    --border: 220 40% 20%;
-    --input: 220 40% 15%;
-    --ring: 38 95% 55%;
+    /* Locked to matching porcelain luxury light theme */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 30% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 25% 95%;
+    --muted-foreground: 215 16% 45%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 90%;
+    --input: 214 32% 90%;
+    --ring: 221 83% 53%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 98%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 221 83% 53%;
   }
 }
 
@@ -98,7 +109,7 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
     overscroll-behavior-x: none;
   }
@@ -116,7 +127,9 @@
 
 @layer utilities {
   .font-display {
-    font-family: 'Righteous', cursive;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.025em;
+    font-weight: 700;
   }
 
   /* Content visibility for offscreen mobile rendering performance */
@@ -132,26 +145,30 @@
   }
 
   .gradient-sunset {
-    background: linear-gradient(135deg, hsl(var(--sunset-start)) 0%, hsl(var(--sunset-end)) 100%);
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #3B82F6 100%);
+  }
+
+  .gradient-warm {
+    background: linear-gradient(135deg, #F59E0B 0%, #EA580C 100%);
   }
 
   .gradient-teal {
-    background: linear-gradient(135deg, hsl(var(--teal-glow)) 0%, hsl(174 70% 40%) 100%);
+    background: linear-gradient(135deg, #2563EB 0%, #06B6D4 100%);
   }
 
   .gradient-navy {
-    background: linear-gradient(180deg, hsl(var(--navy-deep)) 0%, hsl(var(--navy-light)) 100%);
+    background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
   }
 
   .text-gradient-sunset {
-    background: linear-gradient(135deg, hsl(var(--sunset-start)) 0%, hsl(var(--sunset-end)) 100%);
+    background: linear-gradient(135deg, #0F172A 0%, #1D4ED8 60%, #2563EB 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-teal {
-    background: linear-gradient(135deg, hsl(var(--teal-glow)) 0%, hsl(174 70% 35%) 100%);
+    background: linear-gradient(135deg, #2563EB 0%, #0284C7 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -184,6 +201,66 @@
   .animate-pulse-slow {
     animation: pulse-slow 4s ease-in-out infinite;
   }
+
+  .animate-marquee-rtl {
+    display: flex;
+    width: max-content;
+    animation: marquee-rtl 35s linear infinite;
+    will-change: transform;
+  }
+
+  .animate-marquee-rtl:hover,
+  .animate-marquee-rtl:active {
+    animation-play-state: paused;
+  }
+
+  .animate-bike-glide {
+    animation: bike-glide 12s linear infinite;
+  }
+
+  .animate-road-move {
+    animation: road-move 0.8s linear infinite;
+  }
+
+  .animate-bike-bob {
+    animation: bike-bob 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes marquee-rtl {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes bike-glide {
+  0% {
+    transform: translateX(-120px);
+  }
+  100% {
+    transform: translateX(calc(100vw + 120px));
+  }
+}
+
+@keyframes road-move {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -48px 0;
+  }
+}
+
+@keyframes bike-bob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 @keyframes float {
@@ -215,26 +292,22 @@
   }
 }
 
-/* Make date picker icon white */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  cursor: pointer;
-  
-}
-
-/* This makes the native browser icons (calendar/clock) white */
+/* Modern date/time picker controls */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
-    filter: invert(1); /* Turns the black icon white */
-    cursor: pointer;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
 }
 
-/* This ensures the "dd/mm/yyyy" text is visible */
-input[type="date"]::-webkit-datetime-edit-text,
-input[type="date"]::-webkit-datetime-edit-month-field,
-input[type="date"]::-webkit-datetime-edit-day-field,
-input[type="date"]::-webkit-datetime-edit-year-field {
-    color: white;
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -308,6 +381,15 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   }
 }
 
+@keyframes marquee-horizontal-reverse {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @keyframes marquee-vertical {
   0% {
     transform: translate3d(0, 0, 0);
@@ -327,13 +409,23 @@ input[type="date"]::-webkit-datetime-edit-year-field {
   will-change: transform;
 }
 
+.animate-marquee-right {
+  animation: marquee-horizontal-reverse 40s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-right-fast {
+  animation: marquee-horizontal-reverse 30s linear infinite;
+  will-change: transform;
+}
+
 .animate-marquee-up-1 {
-  animation: marquee-vertical 26s linear infinite;
+  animation: marquee-vertical 24s linear infinite;
   will-change: transform;
 }
 
 .animate-marquee-up-2 {
-  animation: marquee-vertical 32s linear infinite;
+  animation: marquee-vertical 30s linear infinite;
   will-change: transform;
 }
 

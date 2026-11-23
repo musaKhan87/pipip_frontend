@@ -14,11 +14,16 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
-  Banknote,
   Bike,
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Upload,
+  Clock,
+  ShieldCheck,
+  Mail,
+  Shield,
+  Download,
 } from "lucide-react";
 import { API_BASE_URL } from "../config/api";
 
@@ -43,7 +48,8 @@ import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import useSEO from "../hooks/useSEO";
-import { useCluster } from "../hooks/useClusters"
+import { useCluster } from "../hooks/useClusters";
+import MobileBottomNav from "../components/MobileBottomNav";
 
 const initialCustomerData = {
   name: "",
@@ -52,47 +58,139 @@ const initialCustomerData = {
   address: "",
   id_proof_type: "aadhaar",
   id_proof_number: "",
-  aadhaar_image: null, // 👈 FILE
-  license_image: null, // 👈 FILE
+  aadhaar_image: null,
+  license_image: null,
 };
 
 const POLICY_DATA = {
   privacy: {
     title: "Privacy Policy",
     content: [
-      { title: "1. What We Collect", items: ["Identity & Contact Info: Name, email, address", "Government ID: Aadhaar, Driving License", "Vehicle Info: Registration, insurance, permits", "Payment Details: Bank account, UPI, transaction history", "Location Data: GPS tracking during trips (with consent)"] },
-      { title: "2. How We Use Your Data", items: ["Provide and improve services", "Process bookings and payments", "Ensure safety and security", "Communicate with you", "Comply with laws and regulations"] },
-      { title: "3. Sharing Your Data", items: ["Service providers and partners", "Law enforcement and regulatory authorities", "Hosts and Guests (for trip-related info)"] },
-      { title: "4. Your Rights", items: ["Access and correct your data", "Withdraw consent", "Delete your data", "Nominate someone to manage your data"] }
-    ]
+      {
+        title: "1. What We Collect",
+        items: [
+          "Identity & Contact Info: Name, email, address",
+          "Government ID: Aadhaar, Driving License",
+          "Vehicle Info: Registration, insurance, permits",
+          "Payment Details: Bank account, UPI, transaction history",
+          "Location Data: GPS tracking during trips (with consent)",
+        ],
+      },
+      {
+        title: "2. How We Use Your Data",
+        items: [
+          "Provide and improve services",
+          "Process bookings and payments",
+          "Ensure safety and security",
+          "Communicate with you",
+          "Comply with laws and regulations",
+        ],
+      },
+      {
+        title: "3. Sharing Your Data",
+        items: [
+          "Service providers and partners",
+          "Law enforcement and regulatory authorities",
+          "Hosts and Guests (for trip-related info)",
+        ],
+      },
+      {
+        title: "4. Your Rights",
+        items: [
+          "Access and correct your data",
+          "Withdraw consent",
+          "Delete your data",
+          "Nominate someone to manage your data",
+        ],
+      },
+    ],
   },
   refund: {
     title: "Refund Policy",
     content: [
-      { title: "1. Cancellation by User (Before Trip)", items: ["24 hours or more: Full refund minus convenience fee (if applicable).", "Less than 24 hours: 50% of rental amount refunded."] },
-      { title: "2. Cancellation by User (During Trip)", items: ["No refund for remaining rental period."] },
-      { title: "3. Cancellation by Pipip", items: ["If we cancel due to unforeseen circumstances, you'll receive a full refund."] },
-      { title: "4. Refund Process", items: ["Refunds are processed within 5-7 business days to the original payment method."] },
-      { title: "5. Security Deposit", items: ["Refunded within 24-48 hours after vehicle return and inspection."] },
-      { title: "6. Damages and Charges", items: ["Any damages, fines, or charges will be deducted from the security deposit."] }
-    ]
+      {
+        title: "1. Cancellation by User (Before Trip)",
+        items: [
+          "24 hours or more: Full refund minus convenience fee (if applicable).",
+          "Less than 24 hours: 50% of rental amount refunded.",
+        ],
+      },
+      {
+        title: "2. Cancellation by User (During Trip)",
+        items: ["No refund for remaining rental period."],
+      },
+      {
+        title: "3. Cancellation by Pipip",
+        items: [
+          "If we cancel due to unforeseen circumstances, you'll receive a full refund.",
+        ],
+      },
+      {
+        title: "4. Refund Process",
+        items: [
+          "Refunds are processed within 5-7 business days to the original payment method.",
+        ],
+      },
+      {
+        title: "5. Security Deposit",
+        items: [
+          "Refunded within 24-48 hours after vehicle return and inspection.",
+        ],
+      },
+      {
+        title: "6. Damages and Charges",
+        items: [
+          "Any damages, fines, or charges will be deducted from the security deposit.",
+        ],
+      },
+    ],
   },
   terms: {
     title: "Terms & Conditions",
     content: [
-      { title: "1. Introduction", items: ["Welcome to Pipip! These Terms and Conditions govern your use of our Platform. By accessing or using our Platform, you agree to be bound by these Terms."] },
-      { title: "2. User Responsibilities", items: ["Provide accurate information for registration and booking.", "Ensure you have a valid driving license and follow traffic rules.", "Use vehicles responsibly and return them in the same condition."] },
-      { title: "3. Booking and Payment", items: ["Bookings are subject to vehicle availability.", "Payments are processed through our secure payment gateway.", "Rental charges, security deposits, and additional fees apply."] },
-      { title: "4. Cancellation Policy", items: ["Cancellations 48 hours before trip start: Complete refund in 3-5 working days (exc. GST)", "Cancellations 24 hours before trip starts: 50% of the amount (exc. GST)", "Cancellations 12 hours before trip starts: No refund"] },
-      { title: "5. Liability and Insurance", items: ["Pipip is not liable for damages or losses due to User negligence.", "Users are responsible for insurance excess and damages."] }
-    ]
-  }
+      {
+        title: "1. Introduction",
+        items: [
+          "Welcome to Pipip! These Terms and Conditions govern your use of our Platform. By accessing or using our Platform, you agree to be bound by these Terms.",
+        ],
+      },
+      {
+        title: "2. User Responsibilities",
+        items: [
+          "Provide accurate information for registration and booking.",
+          "Ensure you have a valid driving license and follow traffic rules.",
+          "Use vehicles responsibly and return them in the same condition.",
+        ],
+      },
+      {
+        title: "3. Booking and Payment",
+        items: [
+          "Bookings are subject to vehicle availability.",
+          "Payments are processed through our secure payment gateway.",
+          "Rental charges, security deposits, and additional fees apply.",
+        ],
+      },
+      {
+        title: "4. Cancellation Policy",
+        items: [
+          "Cancellations 48 hours before trip start: Complete refund in 3-5 working days (exc. GST)",
+          "Cancellations 24 hours before trip starts: 50% of the amount (exc. GST)",
+          "Cancellations 12 hours before trip starts: No refund",
+        ],
+      },
+      {
+        title: "5. Liability and Insurance",
+        items: [
+          "Pipip is not liable for damages or losses due to User negligence.",
+          "Users are responsible for insurance excess and damages.",
+        ],
+      },
+    ],
+  },
 };
-
 
 export default function BookBike() {
   const { bikeId } = useParams();
-
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -114,11 +212,13 @@ export default function BookBike() {
   const [confirmedBookingId, setConfirmedBookingId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("online");
 
-  // const { data: bike, isLoading: bikeLoading } = useBike(bikeId || "");
-
   const isCluster = searchParams.get("type") === "cluster";
-  const { data: bikeData, isLoading: bikeLoading } = useBike(isCluster ? "" : (bikeId || ""));
-  const { data: clusterData, isLoading: clusterLoading } = useCluster(isCluster ? (bikeId || "") : "");
+  const { data: bikeData, isLoading: bikeLoading } = useBike(
+    isCluster ? "" : bikeId || ""
+  );
+  const { data: clusterData, isLoading: clusterLoading } = useCluster(
+    isCluster ? bikeId || "" : ""
+  );
   const bike = isCluster ? clusterData : bikeData;
   const activeLoading = isCluster ? clusterLoading : bikeLoading;
 
@@ -131,32 +231,56 @@ export default function BookBike() {
     });
     return imgs;
   }, [isCluster, bike]);
+
   const handlePrevImage = (e) => {
     e.stopPropagation();
-    setCurrentImgIndex((prev) => (prev - 1 + clusterImages.length) % clusterImages.length);
+    setCurrentImgIndex(
+      (prev) => (prev - 1 + clusterImages.length) % clusterImages.length
+    );
   };
   const handleNextImage = (e) => {
     e.stopPropagation();
     setCurrentImgIndex((prev) => (prev + 1) % clusterImages.length);
   };
 
-
-
-
   const { data: areas } = useActiveAreas();
   useSEO({
-    title: bike ? `Book ${bike.model} on Rent in Mumbai | Pipip Rentals` : "Book a Bike on Rent in Mumbai - Pipip",
-    description: bike ? `Rent ${bike.model} in Mumbai starting at just Rs. ${bike.price_per_day}/day. Easy online bike booking, zero hidden charges, and quick pickup.` : "Book your self-drive bike rental online in Mumbai."
+    title: bike
+      ? `Book ${bike.name || bike.model} on Rent | Pipip Rentals`
+      : "Book a Bike on Rent - Pipip",
+    description: bike
+      ? `Rent ${bike.name || bike.model} starting at just Rs. ${bike.price_per_day}/day. Easy online bike booking with ₹200 token lock.`
+      : "Book your self-drive bike rental online with Pipip.",
   });
+
   const createCustomer = useCreateCustomer();
   const createBooking = useCreateBooking();
   const { checkAvailability, checking } = useBikeAvailability();
 
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
-  const [activePolicy, setActivePolicy] = useState(null); // 'terms' | 'privacy' | 'refund' | null
+  const [activePolicy, setActivePolicy] = useState(null);
 
   const SECURITY_DEPOSIT = 2000;
+
+  const tripHours = useMemo(() => {
+    if (!startDate || !endDate) return 0;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (end <= start) return 0;
+    return differenceInHours(end, start);
+  }, [startDate, endDate]);
+
+  const durationFormatted = useMemo(() => {
+    if (tripHours <= 0) return "";
+    const days = Math.floor(tripHours / 24);
+    const remainingHours = tripHours % 24;
+    if (days === 0) return `${tripHours} Hours`;
+    if (remainingHours === 0) return `${days} Day${days > 1 ? "s" : ""}`;
+    return `${days} Day${days > 1 ? "s" : ""} ${remainingHours} Hr${
+      remainingHours > 1 ? "s" : ""
+    }`;
+  }, [tripHours]);
 
   const isEligibleForDailyRate = useMemo(() => {
     if (!startDate || !endDate) return false;
@@ -169,21 +293,18 @@ export default function BookBike() {
     return remainingHours >= 6;
   }, [startDate, endDate]);
 
-  // 1. Helper to get ISO string rounded to the top of the hour
   const getRoundedISO = (date) => {
     const d = new Date(date);
-    d.setMinutes(0, 0, 0); // Force minutes and seconds to 00:00
-    // Adjust for timezone offset to get local 'YYYY-MM-DDTHH:mm'
+    d.setMinutes(0, 0, 0);
     const tzOffset = d.getTimezoneOffset() * 60000;
     return new Date(d - tzOffset).toISOString().slice(0, 16);
   };
 
   const now = new Date();
   const minDateTime = getRoundedISO(now);
-
-  const sevenDaysLater = new Date();
-  sevenDaysLater.setDate(now.getDate() + 2);
-  const maxDateTime = getRoundedISO(sevenDaysLater);
+  const maxLimitDate = new Date();
+  maxLimitDate.setDate(now.getDate() + 30);
+  const maxDateTime = getRoundedISO(maxLimitDate);
 
   /* =========================
      AVAILABILITY CHECK
@@ -193,7 +314,6 @@ export default function BookBike() {
       if (!bikeId || !startDate || !endDate) {
         setAvailabilityMessage(null);
         setIsAvailable(null);
-
         return;
       }
 
@@ -205,8 +325,6 @@ export default function BookBike() {
         setIsAvailable(false);
         return;
       }
-
-
 
       const totalHours = differenceInHours(end, start);
       if (totalHours < 3) {
@@ -226,7 +344,9 @@ export default function BookBike() {
       };
 
       if (isTimeInInactiveHours(startDate) || isTimeInInactiveHours(endDate)) {
-        setAvailabilityMessage("⚠️ Bookings are not available during inactive hours (10:00 PM to 10:00 AM)");
+        setAvailabilityMessage(
+          "⚠️ Hub is closed for pickup/returns between 10:00 PM and 10:00 AM"
+        );
         setIsAvailable(false);
         return;
       }
@@ -240,75 +360,63 @@ export default function BookBike() {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
-          },
+          }
         );
-
         const fromTime = new Date(result.bookedFrom).toLocaleTimeString(
           "en-IN",
           {
             hour: "2-digit",
             minute: "2-digit",
-          },
+          }
         );
-
         const toDate = new Date(result.bookedTo).toLocaleDateString("en-IN", {
           day: "2-digit",
           month: "2-digit",
           year: "numeric",
         });
-
         const toTime = new Date(result.bookedTo).toLocaleTimeString("en-IN", {
           hour: "2-digit",
           minute: "2-digit",
         });
 
         setAvailabilityMessage(
-          `Bike is booked from ${fromDate} ${fromTime} to ${toDate} ${toTime}`,
+          `Vehicle is reserved from ${fromDate} ${fromTime} to ${toDate} ${toTime}`
         );
       } else {
-        setAvailabilityMessage(result.message);
+        setAvailabilityMessage(
+          result.message ||
+            "Vehicle is ready & available for your selected dates!"
+        );
       }
       setIsAvailable(result.isAvailable);
     };
 
     checkDates();
-  }, [bikeId, startDate, endDate, checkAvailability]);
+  }, [bikeId, startDate, endDate, checkAvailability, isCluster]);
 
   /* =========================
      HELPERS
   ========================= */
   const getAreaName = (area) => {
-    if (!area) return "Mumbai";
+    if (!area) return "Designated Hub";
     if (typeof area === "object" && area.name) return area.name;
-    const targetId = typeof area === "object" ? (area._id || area.id) : area;
-    if (!targetId) return "Mumbai";
+    const targetId = typeof area === "object" ? area._id || area.id : area;
+    if (!targetId) return "Designated Hub";
     const matched = (areas || []).find(
       (a) =>
         String(a._id || a.id) === String(targetId) ||
         (a.name && a.name.toLowerCase() === String(targetId).toLowerCase())
     );
     if (matched?.name) return matched.name;
-    if (typeof targetId === "string" && targetId.trim() !== "" && !/^[0-9a-fA-F]{24}$/.test(targetId)) {
+    if (
+      typeof targetId === "string" &&
+      targetId.trim() !== "" &&
+      !/^[0-9a-fA-F]{24}$/.test(targetId)
+    ) {
       return targetId;
     }
-    return "Mumbai";
+    return "Designated Hub";
   };
-
-  // const calculatePrice = () => {
-  //   if (!bike || !startDate || !endDate) return 0;
-
-  //   const start = new Date(startDate);
-  //   const end = new Date(endDate);
-  //   const totalHours = Math.max(1, differenceInHours(end, start));
-
-  //   const days = Math.floor(totalHours / 24);
-  //   const remainingHours = totalHours % 24;
-
-  //   return (
-  //     days * Number(bike.price_per_day) +
-  //     remainingHours * Number(bike.price_per_hour)
-  //   );
-  // };
 
   const calculatePrice = (includeDeposit = false) => {
     if (!bike || !startDate || !endDate) return 0;
@@ -320,13 +428,10 @@ export default function BookBike() {
     const days = Math.floor(totalHours / 24);
     const remainingHours = totalHours % 24;
 
-    // const rentalPrice =
-    //   days * Number(bike.price_per_day) +
-    //   remainingHours * Number(bike.price_per_hour);
-
     let rentalPrice = 0;
     const hourlyRate = Number(bike.price_per_hour || 0);
     const dailyRate = Number(bike.price_per_day || 0);
+
     if (days === 0) {
       if (totalHours < 3) {
         rentalPrice = 3 * hourlyRate;
@@ -367,9 +472,6 @@ export default function BookBike() {
     return `${year}-${month}-${day}T${hours}:00`;
   };
 
-  /* =========================
-     DATE HANDLERS
-  ========================= */
   const handleStartDateChange = (value) => {
     setStartDate(roundToHour(value));
   };
@@ -382,321 +484,114 @@ export default function BookBike() {
      CUSTOMER STEP
   ========================= */
   const handleCustomerSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
-    if (!customerData.name || !customerData.phone) {
-      toast.error("Please fill in name and phone number");
+    if (!startDate || !endDate) {
+      toast.error("Please select pickup and return dates");
+      return;
+    }
+
+    if (isAvailable === false) {
+      toast.error("Vehicle is not available for selected dates");
+      return;
+    }
+
+    if (!customerData.name.trim() || !customerData.phone.trim()) {
+      toast.error("Please enter your name and contact phone number");
+      return;
+    }
+
+    if (customerData.phone.replace(/\D/g, "").length < 10) {
+      toast.error("Please enter a valid 10-digit phone number");
       return;
     }
 
     if (!customerData.aadhaar_image && !customerData.license_image) {
-      toast.error("Please upload at least one ID proof");
+      toast.error(
+        "Please upload at least one ID proof (Aadhaar or Driving License)"
+      );
+      return;
+    }
+
+    if (!termsAccepted) {
+      toast.error(
+        "Please agree to the Terms, Privacy, and Refund policies to continue"
+      );
       return;
     }
 
     setStep(2);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  //online payment
-
-  // const handleOnlinePayment =
-  //   async (bookingId) => {
-  //     try {
-  //       const res = await fetch(
-  //         `${API_BASE_URL}/payment/create-order`,
-  //         {
-  //           method: "POST",
-
-  //           headers: {
-  //             "Content-Type":
-  //               "application/json",
-  //           },
-
-  //           body: JSON.stringify({
-  //             amount:
-  //               calculatePrice(),
-
-  //             customerName:
-  //               customerData.name,
-
-  //             customerEmail:
-  //               customerData.email ||
-  //               "test@email.com",
-
-  //             customerPhone:
-  //               customerData.phone,
-
-  //             bookingId:
-  //               bookingId,
-  //           }),
-  //         }
-  //       );
-
-  //       const data =
-  //         await res.json();
-
-  // if (!data.paymentSessionId) {
-  //   console.error("Payment Error:", data);
-  //   toast.error("Payment session failed");
-  //   return;
-  // }
-
-  //       const cashfree =
-  //         new window.Cashfree({
-  //           mode: "production",
-  //         });
-
-  //       cashfree.checkout({
-  //         paymentSessionId:
-  //           data.paymentSessionId,
-
-  //         redirectTarget:
-  //           "_modal",
-  //       });
-
-  //     } catch (error) {
-  //       console.error(error);
-  //     }
-  //   };
-
-  // const handleOnlinePayment =
-  //   async (bookingId) => {
-  //     try {
-
-  //       console.log("Creating payment order...");
-
-  //       const res = await fetch(
-  //         `${API_BASE_URL}/payment/create-order`,
-  //         {
-  //           method: "POST",
-  //           headers: {
-  //             "Content-Type":
-  //               "application/json",
-  //           },
-
-  //           body: JSON.stringify({
-  //             // amount: calculatePrice(),
-  //             customerName: customerData.name,
-  //             customerEmail:
-  //               customerData.email ||
-  //               "test@email.com",
-  //             customerPhone:
-  //               customerData.phone,
-  //             bookingId,
-  //           }),
-  //         }
-  //       );
-
-  //       const data =
-  //         await res.json();
-
-  //       console.log("Payment response:", data);
-
-  //       if (!data.paymentSessionId) {
-  //         console.error("Payment failed:", data);
-  //         toast.error("Payment failed");
-  //         return;
-  //       }
-
-  //       const cashfree =
-  //         new window.Cashfree({
-  //           mode: "production",
-  //         });
-
-  //       cashfree.checkout({
-  //         paymentSessionId:
-  //           data.paymentSessionId,
-  //         redirectTarget: "_modal",
-  //       });
-
-  //     } catch (error) {
-
-  //       console.error(
-  //         "PAYMENT ERROR:",
-  //         error
-  //       );
-
-  //       toast.error(
-  //         "Payment initialization failed"
-  //       );
-  //     }
-  //   };
-
-  // --- PAYMENT LOGIC ---
-  const handleOnlinePayment = async () => {
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/payment/create-order`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            // amount: calculatePrice(),
-            amount: 200,
-            // amount: 1,
-            customerName: customerData.name,
-            customerEmail: customerData.email || "customer@pipip.com",
-            customerPhone: customerData.phone,
-            // bookingId,
-          }),
-        },
-      );
-
-      const data = await res.json();
-      if (!data.paymentSessionId) throw new Error("Session creation failed");
-
-      const cashfree = new window.Cashfree({ mode: "production" });
-
-      const result = await cashfree.checkout({
-        paymentSessionId: data.paymentSessionId,
-        redirectTarget: "_modal",
-      });
-      if (result.error) {
-        // If user cancels or payment fails at gateway
-        setPaymentFailed(true);
-        setIsSubmitting(false);
-      } else {
-        // Modal closed successfully, verify with your backend
-        await checkStatusAndConfirm(data.orderId, customerData._Id);
-      }
-
-      //.then((result) => {
-      //     // You can check status here or wait for webhook
-      //     setConfirmedBookingId(bookingId);
-      //     setBookingComplete(true);
-      // });
-    } catch (error) {
-      console.error("PAYMENT ERROR:", error);
-      setPaymentFailed(true);
-    }
-  };
-
-  const checkStatusAndConfirm = async (orderId, customerId) => {
-    try {
-      // Pass booking details in query params so backend can save them
-      const queryParams = new URLSearchParams({
-        customerId: customerId,
-        // bikeId: bike._id,
-        bikeId: isCluster ? "" : bike._id,
-        clusterId: isCluster ? bike._id : "",
-        startDate: new Date(startDate).toISOString(),
-        endDate: new Date(endDate).toISOString(),
-        amount: calculatePrice(true),
-      }).toString();
-
-      const verifyRes = await fetch(
-        `${API_BASE_URL}/payment/verify/${orderId}?${queryParams}`,
-      );
-      const verifyData = await verifyRes.json();
-
-      if (verifyData.status === "PAID") {
-        setConfirmedBookingId(orderId);
-        setBookingComplete(true);
-        toast.success("Booking Confirmed!");
-      } else {
-        setPaymentFailed(true);
-      }
-    } catch (error) {
-      setPaymentFailed(true);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // const handleBookingSubmit = async () => {
-  //   if (!bike || !startDate || !endDate) return;
-  //   setIsSubmitting(true);
-  //   try {
-  //     // const formData = new FormData();
-  //     // Object.entries(customerData).forEach(([key, value]) => {
-  //     //   if (value !== null) formData.append(key, value);
-  //     // });
-
-  //     // const customer = await createCustomer.mutateAsync(formData);
-  //     // const booking = await createBooking.mutateAsync({
-  //     //   bike_id: bike._id,
-  //     //   customer_id: customer._id,
-  //     //   start_datetime: new Date(startDate).toISOString(),
-  //     //   end_datetime: new Date(endDate).toISOString(),
-  //     //   total_amount: calculatePrice(),
-  //     //   notes: notes || undefined,
-  //     //   booking_source: "online",
-  //     //   status: "pending",
-  //     // });
-
-  //     await handleOnlinePayment();
-  //   } catch (err) {
-  //     toast.error("Failed to create booking");
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
+  /* =========================
+     PAYMENT & BOOKING SUBMISSION
+  ========================= */
   const handleBookingSubmit = async () => {
     if (!bike || !startDate || !endDate) return;
     if (!turnstileToken) {
-      toast.error("Bot verification in progress. Please complete the security check.");
+      toast.error(
+        "Bot verification check in progress. Please complete the verification."
+      );
       return;
     }
     setIsSubmitting(true);
 
     try {
-      // 1. START PAYMENT FIRST (Create the Cashfree Order)
-      const res = await fetch(
-        `${API_BASE_URL}/payment/create-order`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            // amount: calculatePrice(true),
-            amount: 200,
-            // amount: 1,
-            customerName: customerData.name,
-            customerEmail: customerData.email || "customer@pipip.com",
-            customerPhone: customerData.phone,
-            // Notice: We do NOT pass a bookingId here because it doesn't exist yet
-          }),
-        },
-      );
+      // 1. Create Cashfree Order for ₹200 Token
+      const res = await fetch(`${API_BASE_URL}/payment/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: 200,
+          customerName: customerData.name,
+          customerEmail: customerData.email || "customer@pipip.com",
+          customerPhone: customerData.phone,
+        }),
+      });
 
       const paymentOrder = await res.json();
       if (!paymentOrder.paymentSessionId) {
-        throw new Error("Failed to create payment session");
+        throw new Error(
+          "Failed to initialize payment session. Please try again."
+        );
       }
 
-      // 2. OPEN THE PAYMENT MODAL
+      // 2. Open Cashfree Checkout Modal
       const cashfree = new window.Cashfree({ mode: "production" });
-      const result = await cashfree.checkout({
+      await cashfree.checkout({
         paymentSessionId: paymentOrder.paymentSessionId,
         redirectTarget: "_modal",
       });
 
-      // 3. CHECK IF PAYMENT WAS SUCCESSFUL
-      // We call your backend to verify the actual status from Cashfree
+      // 3. Verify Payment Status with Backend
       const verifyRes = await fetch(
-        `${API_BASE_URL}/payment/verify/${paymentOrder.orderId}`,
+        `${API_BASE_URL}/payment/verify/${paymentOrder.orderId}`
       );
       const verifyData = await verifyRes.json();
 
       if (verifyData.status === "PAID") {
-        // 4. ONLY NOW CREATE THE DATABASE RECORDS
+        // 4. Save Customer and Booking Records
         const formData = new FormData();
         Object.entries(customerData).forEach(([key, value]) => {
           if (value !== null) formData.append(key, value);
         });
 
-        // Create Customer
         const targetAreaId =
           bike?.area_id?._id ||
           bike?.area_id ||
-          (Array.isArray(bike?.area_ids) ? (bike.area_ids[0]?._id || bike.area_ids[0]) : null) ||
+          (Array.isArray(bike?.area_ids)
+            ? bike.area_ids[0]?._id || bike.area_ids[0]
+            : null) ||
           areaParam ||
           null;
 
         if (targetAreaId) {
           formData.append(
             "area_id",
-            typeof targetAreaId === "object" ? (targetAreaId._id || targetAreaId) : targetAreaId
+            typeof targetAreaId === "object"
+              ? targetAreaId._id || targetAreaId
+              : targetAreaId
           );
         }
 
@@ -706,7 +601,6 @@ export default function BookBike() {
         const totalRental = calculatePrice(false);
         const isPaidInFull = tokenPaid >= totalRental;
 
-        // Create Booking (Set status to 'confirmed' immediately since token was paid)
         const booking = await createBooking.mutateAsync({
           bike_id: isCluster ? null : bike._id,
           cluster_id: isCluster ? bike._id : null,
@@ -741,10 +635,10 @@ export default function BookBike() {
 
         setConfirmedBookingId(booking._id);
         setBookingComplete(true);
-        toast.success("Payment Successful & Booking Confirmed!");
+        toast.success("Payment Received & Booking Confirmed!");
       } else {
         setPaymentFailed(true);
-        toast.error("Payment was not successful");
+        toast.error("Payment could not be verified");
       }
     } catch (err) {
       console.error("BOOKING ERROR:", err);
@@ -755,867 +649,362 @@ export default function BookBike() {
   };
 
   /* =========================
-     BOOKING SUBMIT
+     LOADING & NOT FOUND STATES
   ========================= */
-  // const handleBookingSubmit = async () => {
-  //   if (!bike || !startDate || !endDate) return;
-
-  //   setIsSubmitting(true);
-  //   try {
-  //   const formData = new FormData();
-
-  //   Object.entries(customerData).forEach(([key, value]) => {
-  //     if (value !== null) {
-  //       formData.append(key, value);
-  //     }
-  //   });
-
-  //   const customer = await createCustomer.mutateAsync(formData);
-
-  //     await createBooking.mutateAsync({
-  //       bike_id: bike._id,
-  //       customer_id: customer._id,
-  //       start_datetime: new Date(startDate).toISOString(),
-  //       end_datetime: new Date(endDate).toISOString(),
-  //       total_amount: calculatePrice(),
-  //       notes: notes || undefined,
-  //       booking_source: "online",
-  //       status: "pending",
-  //     });
-
-  //     handleOnlinePayment(
-  // booking._id);
-
-  //     setBookingComplete(true);
-  //     toast.success("Booking request submitted!");
-  //   } catch (err) {
-  //     toast.error("Failed to create booking");
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
-  //   const handleBookingSubmit = async () => {
-  //   if (!bike || !startDate || !endDate) return;
-
-  //   setIsSubmitting(true);
-
-  //   try {
-  //     console.log("STEP 1: Creating customer");
-
-  //     const formData = new FormData();
-
-  //     Object.entries(customerData).forEach(([key, value]) => {
-  //       if (value !== null) {
-  //         formData.append(key, value);
-  //       }
-  //     });
-
-  //     const customer =
-  //       await createCustomer.mutateAsync(formData);
-
-  //     console.log("Customer created:", customer);
-
-  //     console.log("STEP 2: Creating booking");
-
-  //     const booking =
-  //       await createBooking.mutateAsync({
-  //         bike_id: bike._id,
-  //         customer_id: customer._id,
-  //         start_datetime: new Date(startDate).toISOString(),
-  //         end_datetime: new Date(endDate).toISOString(),
-  //         total_amount: calculatePrice(),
-  //         notes: notes || undefined,
-  //         booking_source: "online",
-  //         status: "pending",
-  //       });
-
-  //     console.log("Booking created:", booking);
-
-  //     console.log("STEP 3: Starting payment");
-
-  //     await handleOnlinePayment(
-  //       booking._id
-  //     );
-
-  //     toast.success("Booking created!");
-
-  //   } catch (err) {
-  //     console.error("BOOKING ERROR:", err);
-
-  //     toast.error(
-  //       err?.response?.data?.message ||
-  //       "Failed to create booking"
-  //     );
-
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
-  // if (bikeLoading) {
   if (activeLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center mb-4">
+          <div className="animate-spin w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full" />
+        </div>
+        <p className="text-sm font-bold text-slate-700">Loading vehicle details...</p>
+        <p className="text-xs text-slate-400 mt-1">Preparing your booking session</p>
       </div>
     );
   }
 
   if (!bike) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-        <p className="text-muted-foreground mb-4">Bike not found</p>
-        <Button onClick={() => navigate("/")}>Go Home</Button>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4 text-slate-400">
+          <Bike className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-extrabold text-slate-900 mb-2">Vehicle Not Found</h2>
+        <p className="text-sm text-slate-500 max-w-sm mb-6">
+          This vehicle is currently unavailable or may have been unlisted. Explore other premium bikes in our fleet catalog.
+        </p>
+        <Button
+          onClick={() => navigate("/bikes")}
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold px-6"
+        >
+          Browse Catalog
+        </Button>
       </div>
     );
   }
 
-  // if (bookingComplete) {
-  //   return (
-  //     <>
-  //       <Header />
-  //       <main className="min-h-screen bg-background pt-24 pb-12">
-  //         <div className="container mx-auto px-4 max-w-lg">
-  //           <motion.div
-  //             initial={{ opacity: 0, scale: 0.9 }}
-  //             animate={{ opacity: 1, scale: 1 }}
-  //             className="bg-card border border-border rounded-2xl p-8 text-center"
-  //           >
-  //             <motion.div
-  //               initial={{ scale: 0 }}
-  //               animate={{ scale: 1 }}
-  //               transition={{ delay: 0.2, type: "spring" }}
-  //               className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6"
-  //             >
-  //               <Check className="w-10 h-10 text-green-500" />
-  //             </motion.div>
-  //             <h1 className="text-2xl font-bold text-foreground mb-2">
-  //               Booking Submitted!
-  //             </h1>
-  //             <p className="text-muted-foreground mb-6">
-  //               Your booking request for{" "}
-  //               <span className="text-primary">{bike.model}</span> has been
-  //               received. Our team will contact you shortly to confirm.
-  //             </p>
-  //             <div className="space-y-2 text-sm text-muted-foreground mb-6">
-  //               <p>
-  //                 📞 We'll call you at:{" "}
-  //                 <span className="text-foreground">{customerData.phone}</span>
-  //               </p>
-  //               <p>
-  //                 📅 Pickup:{" "}
-  //                 <span className="text-foreground">
-  //                   {format(new Date(startDate), "PPp")}
-  //                 </span>
-  //               </p>
-  //               <p>
-  //                 📅 Return:{" "}
-  //                 <span className="text-foreground">
-  //                   {format(new Date(endDate), "PPp")}
-  //                 </span>
-  //               </p>
-  //             </div>
-  //             <Button
-  //               onClick={() => navigate("/")}
-  //               className="gradient-sunset text-primary-foreground"
-  //             >
-  //               Back to Home
-  //             </Button>
-  //           </motion.div>
-  //         </div>
-  //       </main>
-  //       <Footer />
-  //     </>
-  //   );
-  // }
-
+  /* =========================
+     PAYMENT FAILED VIEW
+  ========================= */
   if (paymentFailed) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="max-w-md w-full text-center p-10 bg-card/50 backdrop-blur-xl border border-red-500/20 rounded-[2.5rem] shadow-2xl shadow-red-500/10"
+          className="max-w-md w-full text-center p-6 sm:p-8 bg-white border border-slate-200/90 rounded-3xl shadow-xl shadow-slate-200/50"
         >
-          {/* Animated Icon Container */}
-          <div className="relative w-24 h-24 mx-auto mb-8">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", damping: 12, delay: 0.2 }}
-              className="absolute inset-0 bg-red-500/10 rounded-full blur-xl"
-            />
-            <div className="relative bg-gradient-to-br from-red-500 to-orange-600 w-24 h-24 rounded-full flex items-center justify-center shadow-lg shadow-red-500/40">
-              <XCircle className="w-12 h-12 text-white stroke-[2.5px]" />
-            </div>
+          <div className="w-18 h-18 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-center mx-auto mb-6 text-rose-600">
+            <XCircle className="w-9 h-9" />
           </div>
 
-          {/* Text Content */}
-          <h2 className="text-3xl font-extrabold tracking-tight text-foreground mb-3">
-            Payment Declined
+          <h2 className="text-2xl font-black text-slate-900 mb-2">
+            Payment Not Completed
           </h2>
-          <p className="text-muted-foreground leading-relaxed mb-8 px-4">
-            We couldn't process your transaction. Don't worry, if any amount was
-            debited, it will be
-            <span className="text-foreground font-medium underline decoration-red-500/30">
-              refunded automatically
-            </span>
-            within 3-5 days.
+          <p className="text-sm text-slate-600 leading-relaxed mb-6">
+            The transaction was not finalized or was canceled at the gateway. No funds were captured. If any amount was deducted, your bank will auto-refund it in 3-5 business days.
           </p>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col gap-3">
+          <div className="space-y-3">
             <Button
               onClick={() => setPaymentFailed(false)}
-              size="lg"
-              className="w-full h-14 text-lg font-bold gradient-sunset text-primary-foreground rounded-2xl shadow-xl shadow-orange-500/20 hover:scale-[1.02] transition-transform active:scale-95"
+              className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md shadow-blue-500/25 cursor-pointer"
             >
-              Try Another Way
+              Try Again with ₹200 Token
             </Button>
-
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={() => navigate("/")}
-              className="w-full h-12 text-muted-foreground hover:text-foreground transition-colors"
+              className="w-full h-11 rounded-xl border-slate-200 font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
             >
-              Cancel & Go Home
+              Return to Home
             </Button>
           </div>
 
-          {/* Footer Note */}
-          <div className="mt-8 pt-8 border-t border-border/50">
-            <p className="text-xs text-muted-foreground/60 uppercase tracking-widest font-semibold">
-              Secure Payment Gateway
-            </p>
-          </div>
+          <p className="text-[11px] text-slate-400 mt-6 flex items-center justify-center gap-1.5 font-medium">
+            <Shield className="w-3.5 h-3.5 text-slate-400" />
+            Cashfree 256-Bit Encrypted Payment Security
+          </p>
         </motion.div>
       </div>
     );
   }
 
-  // if (bookingComplete) {
-  //   // 1. Make sure you have installed: npm install html2canvas
-
-  //   const handleDownload = async () => {
-  //     const element = document.getElementById("receipt-content");
-
-  //     try {
-  //       const { default: html2canvas } = await import("html2canvas");
-
-  //       const canvas = await html2canvas(element, {
-  //         scale: 3, // Higher scale for professional "Print" quality
-  //         useCORS: true,
-  //         logging: false,
-  //         backgroundColor: "#ffffff", // Forces white background for the whole image
-  //         onclone: (clonedDoc) => {
-  //           const receipt = clonedDoc.getElementById("receipt-content");
-
-  //           // 1. Force the main container to look like paper
-  //           receipt.style.backgroundColor = "white";
-  //           receipt.style.color = "black";
-  //           receipt.style.borderRadius = "0px";
-  //           receipt.style.border = "none";
-  //           receipt.style.boxShadow = "none";
-
-  //           // 2. Hide the Sunset Gradient Header (Web only)
-  //           const webHeader = clonedDoc.querySelector(".gradient-sunset");
-  //           if (webHeader) webHeader.style.display = "none";
-
-  //           // 3. Show the Formal Header (Print only)
-  //           const printHeader = clonedDoc.querySelector(".print\\:flex");
-  //           if (printHeader) {
-  //             printHeader.style.display = "flex";
-  //             printHeader.style.flexDirection = "row";
-  //             printHeader.style.justifyContent = "space-between";
-  //             printHeader.style.padding = "2rem";
-  //             printHeader.style.borderBottom = "4px solid black";
-  //             // Force black text for the header items
-  //             printHeader
-  //               .querySelectorAll("h1, h2, p")
-  //               .forEach((el) => (el.style.color = "black"));
-  //           }
-
-  //           // 4. Clean up the Content Area
-  //           const content = clonedDoc.querySelector(".space-y-8"); // Your CardContent
-  //           if (content) {
-  //             content.style.backgroundColor = "white";
-  //             content.style.padding = "2rem";
-  //           }
-
-  //           // 5. Force ALL text in the document to be Black
-  //           const allText = clonedDoc.querySelectorAll(
-  //             "p, span, h1, h2, h4, div",
-  //           );
-  //           allText.forEach((text) => {
-  //             text.style.color = "black";
-  //             text.style.borderColor = "black"; // For dashed lines
-  //           });
-
-  //           // 6. Style the Amount Box to be a simple black outline box
-  //           const amountBox = clonedDoc.querySelector(".bg-primary\\/5");
-  //           if (amountBox) {
-  //             amountBox.style.backgroundColor = "white";
-  //             amountBox.style.border = "2px solid black";
-  //             amountBox.style.borderRadius = "0px";
-  //             amountBox.style.padding = "2rem";
-  //           }
-
-  //           // 7. Style the Instructions box
-  //           const instructions = clonedDoc.querySelector(".bg-muted");
-  //           if (instructions) {
-  //             instructions.style.backgroundColor = "white";
-  //             instructions.style.border = "1px solid black";
-  //             instructions.style.color = "black";
-  //           }
-
-  //           const buttonRow = clonedDoc.querySelector(".print\\:hidden");
-  //           if (buttonRow) {
-  //             buttonRow.style.setProperty("display", "none", "important");
-  //           }
-
-  //           const buttonRow1 = clonedDoc.querySelector(".receipt-buttons");
-  //           if (buttonRow1) {
-  //             buttonRow1.style.display = "none";
-  //           }
-
-  //           // 2. FIX THE "PAY ON PICKUP" BADGE COLOR
-  //           // This finds the badge and forces it to be white background with black text
-  //           const badge = clonedDoc.querySelector(".rounded-full.uppercase");
-  //           if (badge) {
-  //             badge.style.setProperty("background-color", "white", "important");
-  //             badge.style.setProperty("background-image", "none", "important");
-  //             badge.style.setProperty("color", "black", "important");
-  //             badge.style.setProperty("border", "1px solid black", "important");
-  //           }
-  //         },
-  //       });
-
-  //       // Create download link
-  //       const image = canvas.toDataURL("image/png", 1.0);
-  //       const link = document.createElement("a");
-  //       link.href = image;
-  //       link.download = `Receipt-${confirmedBookingId}.png`;
-  //       link.click();
-  //     } catch (err) {
-  //       console.error("Download failed", err);
-  //     }
-  //   };
-
-  //   return (
-  //     <>
-  //       <Header />
-  //       <main className="min-h-screen pt-32 pb-20 bg-background/50">
-  //         <div className="container mx-auto px-4 max-w-lg">
-  //           <motion.div
-  //             initial={{ opacity: 0, y: 40 }}
-  //             animate={{ opacity: 1, y: 0 }}
-  //             className="relative bg-card rounded-[3rem] shadow-golden overflow-hidden print:shadow-none print:border-none print:rounded-none"
-  //             id="receipt-content"
-  //           >
-  //             {/* WEB ONLY HEADER */}
-  //             <div className="gradient-sunset p-10 text-center text-white relative overflow-hidden print:hidden">
-  //               <div className="relative z-10">
-  //                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md border border-white/30">
-  //                   <CheckCircle2 className="w-8 h-8 text-white drop-shadow-md" />
-  //                 </div>
-  //                 <h2 className="text-2xl font-display font-black tracking-tight uppercase">
-  //                   Booking Confirmed
-  //                 </h2>
-  //                 <p className="text-white/80 text-[10px] font-medium mt-1 tracking-[0.3em] uppercase">
-  //                   Official Receipt
-  //                 </p>
-  //               </div>
-  //             </div>
-
-  //             {/* PRINT ONLY HEADER */}
-  //             <div className="hidden print:flex justify-between items-start p-8 border-b-4 border-black mb-6">
-  //               <div>
-  //                 <h1 className="text-3xl font-black tracking-tighter text-black">
-  //                   PIPIP RENTALS
-  //                 </h1>
-  //                 <p className="text-xs text-black italic">
-  //                   Premium Bike Rental Service
-  //                 </p>
-  //               </div>
-  //               <div className="text-right">
-  //                 <h2 className="text-xl font-bold text-black uppercase">
-  //                   Tax Invoice
-  //                 </h2>
-  //                 <p className="text-xs text-black font-mono">
-  //                   #{confirmedBookingId}
-  //                 </p>
-  //               </div>
-  //             </div>
-
-  //             <CardContent className="p-8 md:p-12 space-y-8 bg-card print:bg-white">
-  //               {/* RESPONSIVE FIX: Changed grid to flex to prevent overlap */}
-  //               <div className="flex flex-col xs:flex-row justify-between gap-4 border-b border-dashed border-border pb-6 print:border-black">
-  //                 <div className="flex flex-col">
-  //                   <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest print:text-black">
-  //                     Order ID
-  //                   </span>
-  //                   <p className="text-sm font-mono font-bold text-primary print:text-black">
-  //                     #{confirmedBookingId}
-  //                   </p>
-  //                 </div>
-  //                 <div className="flex flex-col xs:items-end">
-  //                   <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest print:text-black">
-  //                     Issue Date
-  //                   </span>
-  //                   <p className="text-sm font-bold text-foreground print:text-black">
-  //                     {format(new Date(), "dd MMM yyyy")}
-  //                   </p>
-  //                 </div>
-  //               </div>
-
-  //               {/* Summary Details - ALL preserved exactly */}
-  //               <div className="space-y-4">
-  //                 <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-4 print:text-black">
-  //                   Summary Details
-  //                 </h4>
-  //                 <div className="flex justify-between items-center text-sm">
-  //                   <span className="text-muted-foreground print:text-black">
-  //                     Customer Name
-  //                   </span>
-  //                   <span className="font-bold print:text-black">
-  //                     {customerData.name}
-  //                   </span>
-  //                 </div>
-  //                 <div className="flex justify-between items-center text-sm">
-  //                   <span className="text-muted-foreground print:text-black">
-  //                     Contact Number
-  //                   </span>
-  //                   <span className="font-bold print:text-black">
-  //                     +91 {customerData.phone}
-  //                   </span>
-  //                 </div>
-  //                 <div className="flex justify-between items-center text-sm">
-  //                   <span className="text-muted-foreground print:text-black">
-  //                     Bike Model
-  //                   </span>
-  //                   <span className="font-bold print:text-black">
-  //                     {bike?.model}
-  //                   </span>
-  //                 </div>
-  //                 <div className="flex justify-between items-start text-sm">
-  //                   <span className="text-muted-foreground print:text-black">
-  //                     Rental Period
-  //                   </span>
-  //                   <div className="text-right">
-  //                     <p className="font-bold print:text-black">
-  //                       {format(new Date(startDate), "MMM dd, hh:mm a")}
-  //                     </p>
-  //                     <p className="text-[10px] text-muted-foreground print:text-black">
-  //                       to {format(new Date(endDate), "MMM dd, hh:mm a")}
-  //                     </p>
-  //                   </div>
-  //                 </div>
-  //               </div>
-
-  //               {/* Amount Box */}
-  //               <div className="bg-primary/5 p-8 rounded-[2rem] border border-primary/10 print:bg-white print:border-2 print:border-black print:rounded-none">
-  //                 <div className="flex justify-between items-end">
-  //                   <div>
-  //                     <span className="text-[10px] font-black uppercase text-primary print:text-black tracking-widest">
-  //                       Total Amount Paid
-  //                     </span>
-  //                     <p className="text-5xl font-display font-black text-foreground print:text-black">
-  //                       ₹{calculatePrice(true)}
-  //                     </p>
-  //                   </div>
-  //                   <div className="text-right">
-  //                     <span
-  //                       className={`text-[10px] font-black px-3 py-1 rounded-full uppercase border ${paymentMethod === "online" ? "bg-green-500 text-white border-none" : "bg-orange-500 text-white border-none"} print:bg-white print:text-black print:border-black print:border`}
-  //                     >
-  //                       {paymentMethod === "online"
-  //                         ? "Verified PAID"
-  //                         : "Pay on Pickup"}
-  //                     </span>
-  //                   </div>
-  //                 </div>
-  //               </div>
-
-  //               {/* Fine Print */}
-  //               <div className="bg-muted p-4 rounded-xl text-[10px] text-muted-foreground leading-relaxed border border-border print:border-black print:text-black print:bg-white">
-  //                 <p className="font-bold mb-1 text-foreground print:text-black uppercase tracking-tighter">
-  //                   Instructions:
-  //                 </p>
-  //                 <p>• Carry original Aadhar & DL. No digital copies.</p>
-  //                 <p>• Helmets provided based on availability.</p>
-  //                 <p>
-  //                   • Vehicle should be returned at{" "}
-  //                   {customerData.area || "the pickup point"}.
-  //                 </p>
-  //               </div>
-
-  //               {/* Web Only Buttons */}
-  //               <div className="receipt-buttons flex flex-col sm:flex-row gap-4 pt-4 print:hidden">
-  //                 <Button
-  //                   variant="outline"
-  //                   onClick={handleDownload}
-  //                   className="flex-1 h-14 rounded-2xl border-2 border-border font-bold hover:bg-muted"
-  //                 >
-  //                   <FileText className="w-5 h-5 mr-2" /> Download Bill
-  //                 </Button>
-  //                 <Button
-  //                   onClick={() => navigate("/")}
-  //                   className="flex-1 h-14 rounded-2xl gradient-sunset text-white shadow-golden font-bold"
-  //                 >
-  //                   Done
-  //                 </Button>
-  //               </div>
-  //             </CardContent>
-  //           </motion.div>
-  //         </div>
-  //       </main>
-  //       <Footer />
-  //     </>
-  //   );
-  // }
-
+  /* =========================
+     BOOKING CONFIRMED RECEIPT VIEW
+  ========================= */
   if (bookingComplete) {
-    // 1. Make sure you have installed: npm install html2canvas
-
     const handleDownload = async () => {
       const element = document.getElementById("receipt-content");
-
       try {
         const { default: html2canvas } = await import("html2canvas");
-
         const canvas = await html2canvas(element, {
-          scale: 3, // Higher scale for professional "Print" quality
+          scale: 3,
           useCORS: true,
           logging: false,
-          backgroundColor: "#ffffff", // Forces white background for the whole image
-          onclone: (clonedDoc) => {
-            const receipt = clonedDoc.getElementById("receipt-content");
-
-            // 1. Force the main container to look like paper
-            receipt.style.backgroundColor = "white";
-            receipt.style.color = "black";
-            receipt.style.borderRadius = "0px";
-            receipt.style.border = "none";
-            receipt.style.boxShadow = "none";
-
-            // 2. Hide the Sunset Gradient Header (Web only)
-            const webHeader = clonedDoc.querySelector(".gradient-sunset");
-            if (webHeader) webHeader.style.display = "none";
-
-            // 3. Show the Formal Header (Print only)
-            const printHeader = clonedDoc.querySelector(".print\\:flex");
-            if (printHeader) {
-              printHeader.style.display = "flex";
-              printHeader.style.flexDirection = "row";
-              printHeader.style.justifyContent = "space-between";
-              printHeader.style.padding = "2rem";
-              printHeader.style.borderBottom = "4px solid black";
-              // Force black text for the header items
-              printHeader
-                .querySelectorAll("h1, h2, p")
-                .forEach((el) => (el.style.color = "black"));
-            }
-
-            // 4. Clean up the Content Area
-            const content = clonedDoc.querySelector(".space-y-8"); // Your CardContent
-            if (content) {
-              content.style.backgroundColor = "white";
-              content.style.padding = "2rem";
-            }
-
-            // 5. Force ALL text in the document to be Black
-            const allText = clonedDoc.querySelectorAll(
-              "p, span, h1, h2, h4, div",
-            );
-            allText.forEach((text) => {
-              text.style.color = "black";
-              text.style.borderColor = "black"; // For dashed lines
-            });
-
-            // 6. Style the Amount Box to be a simple black outline box
-            const amountBox = clonedDoc.querySelector(".bg-primary\\/5");
-            if (amountBox) {
-              amountBox.style.backgroundColor = "white";
-              amountBox.style.border = "2px solid black";
-              amountBox.style.borderRadius = "0px";
-              amountBox.style.padding = "2rem";
-            }
-
-            // 7. Style the Instructions box
-            const instructions = clonedDoc.querySelector(".bg-muted");
-            if (instructions) {
-              instructions.style.backgroundColor = "white";
-              instructions.style.border = "1px solid black";
-              instructions.style.color = "black";
-            }
-
-            const buttonRow = clonedDoc.querySelector(".print\\:hidden");
-            if (buttonRow) {
-              buttonRow.style.setProperty("display", "none", "important");
-            }
-
-            const buttonRow1 = clonedDoc.querySelector(".receipt-buttons");
-            if (buttonRow1) {
-              buttonRow1.style.display = "none";
-            }
-
-            // 2. FIX THE "PAY ON PICKUP" BADGE COLOR
-            // This finds the badge and forces it to be white background with black text
-            const badge = clonedDoc.querySelector(".rounded-full.uppercase");
-            if (badge) {
-              badge.style.setProperty("background-color", "white", "important");
-              badge.style.setProperty("background-image", "none", "important");
-              badge.style.setProperty("color", "black", "important");
-              badge.style.setProperty("border", "1px solid black", "important");
-            }
-          },
+          backgroundColor: "#ffffff",
         });
-
-        // Create download link
         const image = canvas.toDataURL("image/png", 1.0);
         const link = document.createElement("a");
         link.href = image;
-        link.download = `Receipt-${confirmedBookingId}.png`;
+        link.download = `Pipip-Receipt-${confirmedBookingId}.png`;
         link.click();
       } catch (err) {
-        console.error("Download failed", err);
+        console.error("Receipt download failed", err);
+        toast.error("Could not export receipt image");
       }
     };
 
     return (
-      <>
-        <Header />
-        <main className="min-h-screen pt-32 pb-20 bg-background/50">
-          <div className="container mx-auto px-4 max-w-lg">
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative bg-card rounded-[3rem] shadow-golden overflow-hidden print:shadow-none print:border-none print:rounded-none"
-              id="receipt-content"
+      <div className="min-h-screen bg-slate-900 py-8 sm:py-16 px-4">
+        <div className="max-w-md mx-auto">
+          {/* Action Header */}
+          <div className="flex items-center justify-between mb-4 px-1">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white transition-colors cursor-pointer"
             >
-              {/* WEB ONLY HEADER */}
-              <div className="gradient-sunset p-10 text-center text-white relative overflow-hidden print:hidden">
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md border border-white/30">
-                    <CheckCircle2 className="w-8 h-8 text-white drop-shadow-md" />
-                  </div>
-                  <h2 className="text-2xl font-display font-black tracking-tight uppercase">
-                    Booking Confirmed
-                  </h2>
-                  <p className="text-white/80 text-[10px] font-medium mt-1 tracking-[0.3em] uppercase">
-                    Official Receipt
-                  </p>
-                </div>
-              </div>
-
-              {/* PRINT ONLY HEADER */}
-              {/* PRINT ONLY HEADER */}
-              <div className="hidden print:flex justify-between items-start p-8 border-b-4 border-black mb-6">
-                <div className="flex items-center gap-3">
-                  {/* LOGO ADDED HERE */}
-                  <img
-                    src="/logo.jpeg"
-                    alt="Pipip Logo"
-                    className="w-12 h-12 object-contain print:block"
-                  />
-                  <div>
-                    <h1 className="text-3xl font-black tracking-tighter text-black">
-                      PIPIP RENTALS
-                    </h1>
-                    <p className="text-xs text-black italic">
-                      Premium Bike Rental Service
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <h2 className="text-xl font-bold text-black uppercase">
-                    Tax Invoice
-                  </h2>
-                  <p className="text-xs text-black font-mono">
-                    #{confirmedBookingId}
-                  </p>
-                </div>
-              </div>
-
-              <CardContent className="p-8 md:p-12 space-y-8 bg-card print:bg-white">
-                {/* RESPONSIVE FIX: Changed grid to flex to prevent overlap */}
-                <div className="flex flex-col xs:flex-row justify-between gap-4 border-b border-dashed border-border pb-6 print:border-black">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest print:text-black">
-                      Order ID
-                    </span>
-                    <p className="text-sm font-mono font-bold text-primary print:text-black">
-                      #{confirmedBookingId}
-                    </p>
-                  </div>
-                  <div className="flex flex-col xs:items-end">
-                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest print:text-black">
-                      Issue Date
-                    </span>
-                    <p className="text-sm font-bold text-foreground print:text-black">
-                      {format(new Date(), "dd MMM yyyy")}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Summary Details - ALL preserved exactly */}
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-4 print:text-black">
-                    Summary Details
-                  </h4>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground print:text-black">
-                      Customer Name
-                    </span>
-                    <span className="font-bold print:text-black">
-                      {customerData.name}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground print:text-black">
-                      Contact Number
-                    </span>
-                    <span className="font-bold print:text-black">
-                      +91 {customerData.phone}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground print:text-black">
-                      {/* Bike Model */}
-                      Vehicle/Category
-                    </span>
-                    <span className="font-bold print:text-black">
-                      {/* {bike?.model} */}
-                      {bike?.name || bike?.model}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-start text-sm">
-                    <span className="text-muted-foreground print:text-black">
-                      Rental Period
-                    </span>
-                    <div className="text-right">
-                      <p className="font-bold print:text-black">
-                        {format(new Date(startDate), "MMM dd, hh:mm a")}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground print:text-black">
-                        to {format(new Date(endDate), "MMM dd, hh:mm a")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Amount Box */}
-
-                {/* <div className="bg-primary/5 p-8 rounded-[2rem] border border-primary/10 print:bg-white print:border-2 print:border-black print:rounded-none">
-                  <div className="flex justify-between items-end"> */}
-
-                <div className="bg-primary/5 p-6 rounded-[2rem] border border-primary/10 print:bg-white print:border-2 print:border-black print:rounded-none space-y-4">
-                  <div className="flex justify-between items-center pb-2 border-b border-dashed border-primary/20">
-                    <div>
-                      {/* <span className="text-[10px] font-black uppercase text-primary print:text-black tracking-widest">
-                        Total Amount Paid */}
-
-                      <span className="text-[10px] font-black uppercase text-muted-foreground print:text-black tracking-widest">
-                        Total Bill
-                      </span>
-                      {/* <p className="text-5xl font-display font-black text-foreground print:text-black">
-                        ₹{calculatePrice(true)} */}
-                      <p className="text-2xl font-display font-black text-foreground print:text-black">
-                        ₹{calculatePrice(false) + SECURITY_DEPOSIT}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={`text-[10px] font-black px-3 py-1 rounded-full uppercase border ${paymentMethod === "online" ? "bg-green-500 text-white border-none" : "bg-orange-500 text-white border-none"} print:bg-white print:text-black print:border-black print:border`}
-                      >
-                        {paymentMethod === "online"
-                          // ? "Verified PAID"
-                          ? "Token Paid Online"
-                          : "Pay on Pickup"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-[10px] font-black uppercase text-muted-foreground print:text-black tracking-widest block">
-                        Amount Paid Now
-                      </span>
-                      <span className="font-bold text-foreground print:text-black">
-                        ₹{paymentMethod === "online" ? "200" : "0"}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[10px] font-black uppercase text-primary print:text-black tracking-widest block">
-                        Remaining at Pickup
-                      </span>
-                      <span className="font-extrabold text-primary print:text-black text-lg">
-                        ₹{paymentMethod === "online" ? calculatePrice(false) + SECURITY_DEPOSIT - 200 : calculatePrice(false) + SECURITY_DEPOSIT}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Fine Print */}
-                <div className="bg-muted p-4 rounded-xl text-[10px] text-muted-foreground leading-relaxed border border-border print:border-black print:text-black print:bg-white">
-                  <p className="font-bold mb-1 text-foreground print:text-black uppercase tracking-tighter">
-                    Instructions:
-                  </p>
-                  <p>• Carry original Aadhar & DL. No digital copies.</p>
-                  <p>• Helmets provided based on availability.</p>
-                  <p>
-                    • Vehicle should be returned at{" "}
-                    {customerData.area || "the pickup point"}.
-                  </p>
-                </div>
-
-                {/* Web Only Buttons */}
-                <div className="receipt-buttons flex flex-col sm:flex-row gap-4 pt-4 print:hidden">
-                  <Button
-                    variant="outline"
-                    onClick={handleDownload}
-                    className="flex-1 h-14 rounded-2xl border-2 border-border font-bold hover:bg-muted"
-                  >
-                    <FileText className="w-5 h-5 mr-2" /> Download Bill
-                  </Button>
-                  <Button
-                    onClick={() => navigate("/")}
-                    className="flex-1 h-14 rounded-2xl gradient-sunset text-white shadow-golden font-bold"
-                  >
-                    Done
-                  </Button>
-                </div>
-              </CardContent>
-            </motion.div>
+              <ArrowLeft className="w-4 h-4" /> Back to Home
+            </button>
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" /> Save Bill
+            </button>
           </div>
-        </main>
-        <Footer />
-      </>
+
+          {/* Ticket Card Container */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            id="receipt-content"
+            className="bg-white rounded-3xl overflow-hidden shadow-2xl"
+          >
+            {/* Top Brand Banner */}
+            <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 p-6 text-white text-center relative overflow-hidden">
+              <div className="w-14 h-14 bg-white/15 backdrop-blur-md rounded-2xl border border-white/25 flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <CheckCircle2 className="w-8 h-8 text-white" />
+              </div>
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-400 text-slate-950 mb-1">
+                Booking Confirmed
+              </span>
+              <h2 className="text-xl font-black tracking-tight">Pipip Self-Drive Rentals</h2>
+              <p className="text-xs text-blue-100 mt-0.5 font-mono">
+                Order #{confirmedBookingId.slice(-8).toUpperCase()}
+              </p>
+            </div>
+
+            {/* Ride Details Ticket Section */}
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="min-w-0">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                    Reserved Vehicle
+                  </span>
+                  <p className="text-sm font-extrabold text-slate-900 truncate">
+                    {bike?.name || bike?.model}
+                  </p>
+                </div>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60">
+                  {isCluster ? "Cluster Fleet" : bike?.number_plate}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs border-b border-slate-100 pb-3">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                    Rider Name
+                  </span>
+                  <p className="font-bold text-slate-800 truncate">{customerData.name}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                    Contact Phone
+                  </span>
+                  <p className="font-bold text-slate-800">+91 {customerData.phone}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-xs border-b border-slate-100 pb-3">
+                <div className="flex justify-between items-start">
+                  <span className="text-slate-500 font-medium">Pickup Schedule</span>
+                  <span className="font-bold text-slate-900 text-right">
+                    {format(new Date(startDate), "dd MMM yyyy, hh:mm a")}
+                  </span>
+                </div>
+                <div className="flex justify-between items-start">
+                  <span className="text-slate-500 font-medium">Return Schedule</span>
+                  <span className="font-bold text-slate-900 text-right">
+                    {format(new Date(endDate), "dd MMM yyyy, hh:mm a")}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 font-medium">Pickup Location</span>
+                  <span className="font-bold text-blue-700">{getAreaName(bike.area_id)}</span>
+                </div>
+              </div>
+
+              {/* Financial Box */}
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500 font-medium">Rental Tariff ({durationFormatted})</span>
+                  <span className="font-bold text-slate-900">₹{calculatePrice(false)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500 font-medium">Security Deposit (Refundable)</span>
+                  <span className="font-bold text-slate-900">₹{SECURITY_DEPOSIT}</span>
+                </div>
+                <div className="border-t border-slate-200 pt-2 flex justify-between items-center text-xs font-bold">
+                  <span className="text-slate-700">Total Estimation</span>
+                  <span className="text-slate-900">₹{calculatePrice(false) + SECURITY_DEPOSIT}</span>
+                </div>
+                <div className="border-t border-slate-200 border-dashed pt-2 flex justify-between items-center">
+                  <div>
+                    <span className="text-[10px] uppercase font-black tracking-wider text-emerald-700 block">
+                      Token Paid Online
+                    </span>
+                    <span className="text-sm font-black text-emerald-600">₹200</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 block">
+                      Due at Pickup
+                    </span>
+                    <span className="text-sm font-black text-slate-900">
+                      ₹{calculatePrice(false) + SECURITY_DEPOSIT - 200}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-3 text-[11px] text-blue-900 leading-relaxed space-y-1">
+                <p className="font-bold">Next Steps at Pickup:</p>
+                <p>1. Carry your original Aadhaar Card and Driving License for swift physical check-in.</p>
+                <p>2. Pay the remaining rental balance + ₹2,000 security deposit via UPI or Cash.</p>
+                <p>3. Complimentary sanitized helmet included with every vehicle.</p>
+              </div>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row gap-2.5">
+              <Button
+                variant="outline"
+                onClick={handleDownload}
+                className="flex-1 h-11 rounded-xl font-bold border-slate-300 text-slate-700 hover:bg-white cursor-pointer"
+              >
+                <Download className="w-4 h-4 mr-2" /> Download Bill
+              </Button>
+              <Button
+                onClick={() => navigate("/")}
+                className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold cursor-pointer"
+              >
+                Done
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
     );
   }
 
+  /* =========================
+     MAIN FORM / PAGE VIEW
+  ========================= */
   return (
-    <>
+    <div className="min-h-screen bg-slate-50/70 pb-28 md:pb-12 text-slate-900">
       <Header />
-      <main className="min-h-screen bg-background pt-24 pb-12">
-        <div className="container mx-auto px-4">
+
+      <main className="pt-20 md:pt-24 pb-12">
+        <div className="container mx-auto px-4 max-w-6xl">
+          {/* Back Action */}
           <Button
             variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-6 text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              if (step === 2) setStep(1);
+              else navigate(-1);
+            }}
+            className="mb-4 text-slate-600 hover:text-slate-900 font-semibold p-0 h-auto hover:bg-transparent"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            <ArrowLeft className="w-4 h-4 mr-1.5" />
+            <span>{step === 2 ? "Back to Trip & Rider Info" : "Back"}</span>
           </Button>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Bike Summary */}
-            <div className="lg:col-span-1">
-              <Card className="bg-card border-border sticky top-24">
-                {/* <div className="aspect-video relative overflow-hidden rounded-t-lg">
-                  {bike.image_url ? (
-                  {(isCluster ? bike?.bikes?.[0]?.image_url : bike?.image_url) ? ( */}
+          {/* Mobile-Only Small Compact Vehicle Card (<lg) - App-like compact banner */}
+          <div className="lg:hidden mb-4 bg-white border border-slate-200/90 rounded-2xl p-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center p-1 shrink-0 overflow-hidden">
+                {isCluster && clusterImages.length > 0 ? (
+                  <img
+                    src={clusterImages[0]}
+                    alt={bike?.name || "Vehicle"}
+                    className="w-full h-full object-contain"
+                  />
+                ) : bike?.image_url ? (
+                  <img
+                    src={bike.image_url}
+                    alt={bike.model}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <Bike className="w-8 h-8 text-slate-300" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-1">
+                  <h2 className="text-sm font-extrabold text-slate-900 truncate">
+                    {bike?.name || bike?.model}
+                  </h2>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60 shrink-0">
+                    {isCluster ? bike?.bikes?.[0]?.cc || 125 : bike?.cc}cc
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 truncate flex items-center gap-1 mt-0.5">
+                  <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
+                  <span className="truncate">{getAreaName(bike.area_id)}</span>
+                </p>
+                <div className="flex items-center gap-2 mt-1 text-xs">
+                  <span className="font-bold text-slate-900">
+                    ₹{bike.price_per_hour}
+                    <span className="text-[10px] font-normal text-slate-400">/hr</span>
+                  </span>
+                  <span className="text-slate-300">•</span>
+                  <span className="font-bold text-blue-600">
+                    ₹{bike.price_per_day}
+                    <span className="text-[10px] font-normal text-blue-400">/day</span>
+                  </span>
+                </div>
+              </div>
+            </div>
 
-                <div className="aspect-video relative overflow-hidden rounded-t-lg bg-muted">
+            <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+              <span className="text-slate-600 font-medium">
+                Online Token: <strong className="text-blue-600 font-bold">₹200</strong>
+              </span>
+              <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                ₹{SECURITY_DEPOSIT} Ref. Deposit at Pickup
+              </span>
+            </div>
+
+            {/* Mobile live estimated total when dates are selected */}
+            {tripHours > 0 && (
+              <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs bg-blue-50/70 px-2.5 py-1.5 rounded-xl border border-blue-100">
+                <span className="text-[11px] font-bold text-slate-700">
+                  Rental ({durationFormatted}): <strong className="text-slate-900 font-extrabold">₹{calculatePrice(false)}</strong>
+                </span>
+                <span className="text-[11px] font-bold text-blue-700">
+                  Total: ₹{calculatePrice(true)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            {/* Desktop-Only Sticky Vehicle Summary Card (hidden on mobile) */}
+            <div className="hidden lg:block lg:col-span-5 lg:sticky lg:top-24">
+              <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-[0_4px_25px_-5px_rgba(15,23,42,0.06)] overflow-hidden">
+                {/* Vehicle Image Container */}
+                <div className="aspect-[16/10] relative rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center mb-4">
                   {isCluster && clusterImages.length > 0 ? (
                     <div className="relative w-full h-full">
                       <AnimatePresence mode="wait">
@@ -1623,287 +1012,484 @@ export default function BookBike() {
                           key={currentImgIndex}
                           src={clusterImages[currentImgIndex]}
                           alt={bike?.name || "Cluster"}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-fill absolute inset-0"
+                          className="w-full h-full object-contain p-3"
                           initial={{ opacity: 0, x: 20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -20 }}
-                          transition={{ duration: 0.3 }}
+                          transition={{ duration: 0.25 }}
                         />
                       </AnimatePresence>
                       {clusterImages.length > 1 && (
                         <>
                           <button
                             onClick={handlePrevImage}
-                            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-background/85 hover:bg-background text-foreground rounded-full p-1 z-10 shadow-sm"
+                            className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-800 rounded-full p-1.5 shadow-sm border border-slate-200 cursor-pointer"
                           >
                             <ChevronLeft className="w-4 h-4" />
                           </button>
                           <button
                             onClick={handleNextImage}
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-background/85 hover:bg-background text-foreground rounded-full p-1 z-10 shadow-sm"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-800 rounded-full p-1.5 shadow-sm border border-slate-200 cursor-pointer"
                           >
                             <ChevronRight className="w-4 h-4" />
                           </button>
-                        </>
-                      )}
-                      {clusterImages.length > 1 && (
-                        <div className="absolute bottom-3 right-3 flex gap-1 z-10 bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                          {clusterImages.map((_, idx) => (
-                            <span
-                              key={idx}
-                              className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentImgIndex ? "w-3 bg-primary" : "w-1.5 bg-white/60"
+                          <div className="absolute bottom-2.5 right-2.5 flex gap-1 bg-black/60 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                            {clusterImages.map((_, idx) => (
+                              <span
+                                key={idx}
+                                className={`h-1.5 rounded-full transition-all ${
+                                  idx === currentImgIndex
+                                    ? "w-3 bg-white"
+                                    : "w-1.5 bg-white/50"
                                 }`}
-                            />
-                          ))}
-                        </div>
+                              />
+                            ))}
+                          </div>
+                        </>
                       )}
                     </div>
                   ) : bike?.image_url ? (
-
                     <img
                       src={bike.image_url}
                       alt={bike.model}
-                      // src={isCluster ? bike?.bikes?.[0]?.image_url : bike?.image_url}
-                      // alt={bike?.name || bike?.model}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain p-3"
                     />
                   ) : (
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <span className="text-muted-foreground">No Image</span>
+                    <div className="flex flex-col items-center justify-center text-slate-400">
+                      <Bike className="w-12 h-12 stroke-[1.5]" />
+                      <span className="text-xs mt-1">Vehicle Image</span>
                     </div>
                   )}
-                </div>
-                <CardContent className="p-4">
-                  <h2 className="text-xl font-bold text-foreground mb-1">
-                    {/* {bike.model} */}
-                    {bike?.name || bike?.model}
-                  </h2>
-                  <p className="text-muted-foreground text-sm mb-3">
-                    {/* {bike.number_plate} • {bike.cc}cc */}
-                    {isCluster ? "Multiple Available" : bike?.number_plate} • {isCluster ? (bike?.bikes?.[0]?.cc || 125) : bike?.cc}cc
-                  </p>
 
-                  <div className="flex items-center gap-1 text-sm mb-4">
-                    <MapPin className="w-4 h-4 text-primary" />
-                    <span className="text-muted-foreground">
-                      {getAreaName(bike.area_id)}
-                    </span>
+                  {/* Top CC pill */}
+                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-200/80 text-[11px] font-extrabold text-slate-800 shadow-2xs">
+                    {isCluster ? bike?.bikes?.[0]?.cc || 125 : bike?.cc} CC
                   </div>
 
-                  <div className="space-y-2 text-sm border-t border-border pt-4">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Hourly Rate</span>
-                      <span className="text-foreground">
+                  {/* RTO Fleet verified */}
+                  <div className="absolute top-3 right-3 bg-emerald-500/90 text-white backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-2xs">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Verified Fleet</span>
+                  </div>
+                </div>
+
+                {/* Vehicle Details */}
+                <div className="space-y-3">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+                      {bike?.name || bike?.model}
+                    </h2>
+                    <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
+                      <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <span className="font-semibold text-slate-700">
+                        {getAreaName(bike.area_id)}
+                      </span>
+                      <span>•</span>
+                      <span>
+                        {isCluster ? "Fleet Cluster" : bike?.number_plate}
+                      </span>
+                    </p>
+                  </div>
+
+                  {/* Tariffs Grid */}
+                  <div className="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 text-center">
+                      <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
+                        Hourly Rate
+                      </span>
+                      <p className="text-base font-black text-slate-900">
                         ₹{bike.price_per_hour}
-                      </span>
+                        <span className="text-xs font-normal text-slate-400">/hr</span>
+                      </p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Daily Rate</span>
-                      <span className="text-foreground">
+                    <div className="bg-white p-2.5 rounded-xl border border-blue-200/80 text-center">
+                      <span className="text-[10px] font-bold uppercase text-blue-600 tracking-wider block">
+                        24-Hr Daily Rate
+                      </span>
+                      <p className="text-base font-black text-blue-700">
                         ₹{bike.price_per_day}
-                      </span>
+                        <span className="text-xs font-normal text-blue-400">/day</span>
+                      </p>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Security Deposit (Refundable)
+                  </div>
+
+                  {/* Security Deposit & Token Callouts */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between text-xs py-1 px-1">
+                      <span className="text-slate-500 font-medium">
+                        Security Deposit
                       </span>
-                      <span className="text-foreground font-medium">
-                        ₹{SECURITY_DEPOSIT}
+                      <span className="font-bold text-slate-800">
+                        ₹{SECURITY_DEPOSIT}{" "}
+                        <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 ml-1">
+                          100% Refundable
+                        </span>
                       </span>
                     </div>
 
-                    <div className="border-t border-border border-dashed my-3" />
-                    <div className="bg-primary/10 border border-primary/20 rounded-2xl p-3 text-center space-y-1 relative overflow-hidden shadow-sm shadow-primary/5">
-                      <div className="absolute -right-6 -top-6 w-16 h-16 bg-primary/10 rounded-full blur-lg pointer-events-none" />
-                      <span className="text-[10px] font-black uppercase text-primary tracking-widest block">
-                        Exclusive Booking Token Offer
-                      </span>
-                      <p className="text-xl font-display font-black text-foreground">
-                        Pay only <span className="text-gradient-sunset font-extrabold">₹200</span> online!
-                      </p>
-                      <p className="text-[10px] text-muted-foreground leading-normal">
-                        Confirm your ride now for ₹200. Pay the remaining balance at pickup!
-                      </p>
+                    <div className="bg-gradient-to-r from-blue-50 via-indigo-50/50 to-blue-50 border border-blue-200/90 rounded-xl p-3 flex items-center justify-between">
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-extrabold uppercase text-blue-800 tracking-wider block">
+                          Reserve Online
+                        </span>
+                        <p className="text-xs text-slate-600 font-medium truncate">
+                          Pay remaining balance at pickup
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-base font-black text-blue-700 block">
+                          ₹200 Token
+                        </span>
+                      </div>
                     </div>
 
-                    {startDate && endDate && (
-                      <>
-                        <div className="border-t border-border my-2" />
-                        <div className="flex justify-between font-semibold">
-                          <span className="text-foreground">
-                            Estimated Total
+                    {tripHours > 0 && (
+                      <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-blue-50/90 border border-blue-200/90 rounded-2xl p-3.5 shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between pb-1.5 border-b border-blue-200/60">
+                          <span className="text-[10px] uppercase font-extrabold text-blue-900 tracking-wider flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+                            Estimated Fare ({durationFormatted})
                           </span>
-                          <span className="text-primary">
-                            ₹{calculatePrice(true)}
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200/70">
+                            ₹{SECURITY_DEPOSIT} Ref. Deposit
                           </span>
                         </div>
-                      </>
+                        <div className="flex items-center justify-between text-xs">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-slate-500 block">
+                              Rental Tariff
+                            </span>
+                            <span className="text-base font-black text-slate-900">
+                              ₹{calculatePrice(false)}
+                            </span>
+                          </div>
+                          <div className="text-center">
+                            <span className="text-[10px] uppercase font-bold text-blue-700 block">
+                              Pay Online
+                            </span>
+                            <span className="text-xs font-black text-blue-600 bg-white px-2 py-0.5 rounded-lg border border-blue-200/80 shadow-2xs">
+                              ₹200 Token
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] uppercase font-bold text-slate-500 block">
+                              Total with Deposit
+                            </span>
+                            <span className="text-base font-black text-blue-700">
+                              ₹{calculatePrice(true)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
 
-                  {isCluster && (
-                    <div className="mt-4 p-3 bg-primary/5 border border-primary/10 rounded-xl text-xs text-primary flex items-start gap-2 leading-relaxed">
-                      <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                      <span>Note: Any available bike from this cluster fleet category will be assigned to you at pickup.</span>
+                  {/* Fleet Inclusions */}
+                  <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+                    <div className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Sanitized Helmet</span>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                    <div className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>24/7 Roadside Help</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Booking Form */}
-            <div className="lg:col-span-2 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2">
-              {/* Progress Steps */}
-              <div className="flex items-center gap-4 mb-8">
+            {/* RIGHT COLUMN: Mobile-Friendly Compact Form Card */}
+            <div className="lg:col-span-7">
+              {/* Stepper Header */}
+              <div className="flex items-center gap-2 sm:gap-4 mb-4">
                 <div
-                  className={`flex items-center gap-2 ${step >= 1 ? "text-primary" : "text-muted-foreground"}`}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                    step >= 1
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-slate-200 text-slate-600"
+                  }`}
                 >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-                  >
+                  <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
                     1
-                  </div>
-                  <span className="font-medium">Your Details</span>
+                  </span>
+                  <span>Rider Details</span>
                 </div>
-                <div className="flex-1 h-0.5 bg-border" />
                 <div
-                  className={`flex items-center gap-2 ${step >= 2 ? "text-primary" : "text-muted-foreground"}`}
+                  className={`flex-1 h-1 rounded-full transition-all ${
+                    step >= 2 ? "bg-blue-600" : "bg-slate-200"
+                  }`}
+                />
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                    step >= 2
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-500"
+                  }`}
                 >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-                  >
+                  <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
                     2
-                  </div>
-                  <span className="font-medium">Confirm Booking</span>
+                  </span>
+                  <span>Review & Pay</span>
                 </div>
               </div>
 
               {step === 1 && (
                 <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                 >
-                  <Card className="bg-card border-border">
-                    <CardHeader>
-                      <CardTitle className="text-foreground flex items-center gap-2">
-                        <User className="w-5 h-5 text-primary" />
-                        Your Information
+                  <Card className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
+                    <CardHeader className="bg-slate-50/70 border-b border-slate-100 p-3.5 sm:p-5">
+                      <CardTitle className="text-slate-900 font-extrabold text-sm sm:text-base flex items-center gap-2">
+                        <User className="w-4 h-4 text-blue-600" />
+                        <span>Rider & Booking Information</span>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <form
-                        onSubmit={handleCustomerSubmit}
-                        className="space-y-6"
-                      >
-                        {/* Personal Info */}
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="name">Full Name *</Label>
-                            <Input
-                              id="name"
-                              value={customerData.name}
-                              onChange={(e) =>
-                                setCustomerData({
-                                  ...customerData,
-                                  name: e.target.value,
-                                })
-                              }
-                              placeholder="Enter your name"
-                              className="bg-input border-border"
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="phone">Phone Number *</Label>
-                            <Input
-                              id="phone"
-                              value={customerData.phone}
-                              onChange={(e) =>
-                                setCustomerData({
-                                  ...customerData,
-                                  phone: e.target.value,
-                                })
-                              }
-                              placeholder="+91 98765 43210"
-                              className="bg-input border-border"
-                              required
-                            />
-                          </div>
-                        </div>
 
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="email">Email (Optional)</Label>
-                            <Input
-                              id="email"
-                              type="email"
-                              value={customerData.email}
-                              onChange={(e) =>
-                                setCustomerData({
-                                  ...customerData,
-                                  email: e.target.value,
-                                })
-                              }
-                              placeholder="your@email.com"
-                              className="bg-input border-border"
-                            />
+                    <CardContent className="p-3.5 sm:p-6">
+                      <form onSubmit={handleCustomerSubmit} className="space-y-4 sm:space-y-5">
+                        {/* 1. Booking Dates */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Booking Period *</span>
+                            </Label>
+                            {tripHours > 0 && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
+                                {durationFormatted}
+                              </span>
+                            )}
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="id_number">ID Proof Number</Label>
-                            <Input
-                              id="id_number"
-                              value={customerData.id_proof_number}
-                              onChange={(e) =>
-                                setCustomerData({
-                                  ...customerData,
-                                  id_proof_number: e.target.value,
-                                })
-                              }
-                              placeholder="Aadhaar/License Number"
-                              className="bg-input border-border"
-                            />
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div className="space-y-1">
+                              <span className="text-[11px] font-semibold text-slate-600 block">Pickup Date & Time</span>
+                              <Input
+                                type="datetime-local"
+                                value={startDate}
+                                min={minDateTime}
+                                max={maxDateTime}
+                                step="3600"
+                                onChange={(e) => handleStartDateChange(e.target.value)}
+                                required
+                                className="h-10 rounded-xl bg-slate-50/80 border-slate-200 text-xs sm:text-sm font-semibold focus:bg-white"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-[11px] font-semibold text-slate-600 block">Return Date & Time</span>
+                              <Input
+                                type="datetime-local"
+                                value={endDate}
+                                min={startDate || minDateTime}
+                                step="3600"
+                                onChange={(e) => handleEndDateChange(e.target.value)}
+                                required
+                                className="h-10 rounded-xl bg-slate-50/80 border-slate-200 text-xs sm:text-sm font-semibold focus:bg-white"
+                              />
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="address">Address (Optional)</Label>
-                          <Textarea
-                            id="address"
-                            value={customerData.address}
-                            onChange={(e) =>
-                              setCustomerData({
-                                ...customerData,
-                                address: e.target.value,
-                              })
-                            }
-                            placeholder="Your address"
-                            className="bg-input border-border"
-                            rows={2}
-                          />
-                        </div>
-
-                        {/* Document Upload */}
-                        <div className="border-t border-border pt-6">
-                          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-secondary" />
-                            ID Proof Documents
-                          </h3>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            Upload Both ID Proof (Aadhaar Card and Driving
-                            License)
+                          <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                            <Clock className="w-3 h-3 shrink-0" />
+                            <span>Hub operational 10:00 AM – 10:00 PM. Times round to nearest hour.</span>
                           </p>
 
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label>Aadhaar Card Photo *</Label>
+                          {/* Availability message - Perfectly aligned flexbox banner */}
+                          <AnimatePresence mode="wait">
+                            {availabilityMessage && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -4 }}
+                                className="mt-2"
+                              >
+                                <div
+                                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold leading-normal transition-all ${
+                                    isAvailable
+                                      ? "bg-emerald-50/90 border-emerald-300 text-emerald-800"
+                                      : "bg-rose-50/90 border-rose-300 text-rose-800"
+                                  }`}
+                                >
+                                  {isAvailable ? (
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                  ) : (
+                                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                                  )}
+                                  <span className="flex-1 min-w-0">{availabilityMessage}</span>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* Live Estimated Rental Card (Shows on mobile and desktop right under dates!) */}
+                          {tripHours > 0 && isAvailable && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="mt-3 bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-blue-50/90 border border-blue-200/90 rounded-2xl p-3 sm:p-3.5 shadow-2xs space-y-2"
+                            >
+                              <div className="flex items-center justify-between pb-1.5 border-b border-blue-200/60">
+                                <span className="text-[10px] uppercase font-extrabold text-blue-900 tracking-wider flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+                                  Estimated Fare ({durationFormatted})
+                                </span>
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200/70">
+                                  ₹{SECURITY_DEPOSIT} Ref. Deposit
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-xs">
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-slate-500 block">
+                                    Rental Tariff
+                                  </span>
+                                  <span className="text-sm sm:text-base font-black text-slate-900">
+                                    ₹{calculatePrice(false)}
+                                  </span>
+                                </div>
+                                <div className="text-center px-1">
+                                  <span className="text-[10px] uppercase font-bold text-blue-700 block">
+                                    Pay Online
+                                  </span>
+                                  <span className="text-xs font-black text-blue-600 bg-white px-2 py-0.5 rounded-lg border border-blue-200/80 shadow-2xs">
+                                    ₹200 Token
+                                  </span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-[10px] uppercase font-bold text-slate-500 block">
+                                    Total (with Deposit)
+                                  </span>
+                                  <span className="text-sm sm:text-base font-black text-blue-700">
+                                    ₹{calculatePrice(true)}
+                                  </span>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {isAvailable && isEligibleForDailyRate && (
+                            <div className="mt-2 p-2 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-1.5 text-[11px] text-emerald-900 font-medium">
+                              <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span>24-Hour Daily Cap discount applied!</span>
+                            </div>
+                          )}
+
+                          {checking && (
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mt-1.5">
+                              <div className="animate-spin w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full" />
+                              <span>Checking availability...</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 2. Personal Info */}
+                        <div className="border-t border-slate-100 pt-3.5 space-y-3">
+                          <Label className="text-xs font-bold text-slate-900 block">
+                            Contact Information
+                          </Label>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div className="space-y-1">
+                              <Label htmlFor="name" className="text-[11px] font-semibold text-slate-600">Full Name *</Label>
                               <Input
+                                id="name"
+                                value={customerData.name}
+                                onChange={(e) =>
+                                  setCustomerData({ ...customerData, name: e.target.value })
+                                }
+                                placeholder="e.g. Rahul Sharma"
+                                required
+                                className="h-10 rounded-xl bg-slate-50/80 border-slate-200 text-xs sm:text-sm font-semibold focus:bg-white"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor="phone" className="text-[11px] font-semibold text-slate-600">Phone Number *</Label>
+                              <div className="relative">
+                                <Input
+                                  id="phone"
+                                  type="tel"
+                                  value={customerData.phone}
+                                  onChange={(e) =>
+                                    setCustomerData({ ...customerData, phone: e.target.value })
+                                  }
+                                  placeholder="9876543210"
+                                  required
+                                  className="h-10 rounded-xl bg-slate-50/80 border-slate-200 pl-11 text-xs sm:text-sm font-semibold focus:bg-white"
+                                />
+                                <span className="absolute left-2.5 top-2.5 text-xs font-bold text-slate-500">
+                                  +91
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div className="space-y-1">
+                              <Label htmlFor="email" className="text-[11px] font-semibold text-slate-600">Email (Optional)</Label>
+                              <Input
+                                id="email"
+                                type="email"
+                                value={customerData.email}
+                                onChange={(e) =>
+                                  setCustomerData({ ...customerData, email: e.target.value })
+                                }
+                                placeholder="yourname@gmail.com"
+                                className="h-10 rounded-xl bg-slate-50/80 border-slate-200 text-xs sm:text-sm font-semibold focus:bg-white"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor="id_number" className="text-[11px] font-semibold text-slate-600">ID / DL Number (Optional)</Label>
+                              <Input
+                                id="id_number"
+                                value={customerData.id_proof_number}
+                                onChange={(e) =>
+                                  setCustomerData({ ...customerData, id_proof_number: e.target.value })
+                                }
+                                placeholder="Aadhaar or DL Number"
+                                className="h-10 rounded-xl bg-slate-50/80 border-slate-200 text-xs sm:text-sm font-semibold focus:bg-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label htmlFor="address" className="text-[11px] font-semibold text-slate-600">Address (Optional)</Label>
+                            <Textarea
+                              id="address"
+                              value={customerData.address}
+                              onChange={(e) =>
+                                setCustomerData({ ...customerData, address: e.target.value })
+                              }
+                              placeholder="Your current or pickup address"
+                              rows={2}
+                              className="rounded-xl bg-slate-50/80 border-slate-200 text-xs sm:text-sm font-semibold focus:bg-white py-2"
+                            />
+                          </div>
+                        </div>
+
+                        {/* 3. Document Upload (Compact Touch Cards) */}
+                        <div className="border-t border-slate-100 pt-3.5 space-y-2">
+                          <Label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5 text-blue-600" />
+                            <span>ID Proof Documents *</span>
+                          </Label>
+                          <p className="text-[11px] text-slate-400">
+                            Upload photos of Aadhaar Card and Driving License for verification.
+                          </p>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                            {/* Aadhaar Upload */}
+                            <label
+                              className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${
+                                customerData.aadhaar_image
+                                  ? "border-emerald-500 bg-emerald-50/50"
+                                  : "border-slate-300 bg-slate-50/80 hover:bg-slate-100/80"
+                              }`}
+                            >
+                              <input
                                 type="file"
                                 accept="image/*"
-                                required
+                                className="sr-only"
                                 onChange={(e) =>
                                   setCustomerData({
                                     ...customerData,
@@ -1911,13 +1497,41 @@ export default function BookBike() {
                                   })
                                 }
                               />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Driving License Photo *</Label>
-                              <Input
+                              {customerData.aadhaar_image ? (
+                                <>
+                                  <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <Check className="w-4 h-4 stroke-[3]" />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-emerald-800 truncate">
+                                      {customerData.aadhaar_image.name}
+                                    </p>
+                                    <span className="text-[10px] text-emerald-600">Aadhaar uploaded</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="w-5 h-5 text-slate-400 shrink-0 ml-1" />
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-slate-700">Upload Aadhaar Photo *</p>
+                                    <span className="text-[10px] text-slate-400">JPG or PNG</span>
+                                  </div>
+                                </>
+                              )}
+                            </label>
+
+                            {/* License Upload */}
+                            <label
+                              className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${
+                                customerData.license_image
+                                  ? "border-emerald-500 bg-emerald-50/50"
+                                  : "border-slate-300 bg-slate-50/80 hover:bg-slate-100/80"
+                              }`}
+                            >
+                              <input
                                 type="file"
                                 accept="image/*"
-                                required
+                                className="sr-only"
                                 onChange={(e) =>
                                   setCustomerData({
                                     ...customerData,
@@ -1925,395 +1539,222 @@ export default function BookBike() {
                                   })
                                 }
                               />
-                            </div>
+                              {customerData.license_image ? (
+                                <>
+                                  <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <Check className="w-4 h-4 stroke-[3]" />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-emerald-800 truncate">
+                                      {customerData.license_image.name}
+                                    </p>
+                                    <span className="text-[10px] text-emerald-600">License uploaded</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="w-5 h-5 text-slate-400 shrink-0 ml-1" />
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-slate-700">Upload License Photo *</p>
+                                    <span className="text-[10px] text-slate-400">JPG or PNG</span>
+                                  </div>
+                                </>
+                              )}
+                            </label>
                           </div>
                         </div>
 
-                        {/* Booking Dates */}
-                        <div className="border-t border-border pt-6">
-                          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                            <Calendar className="w-5 h-5 text-primary" />
-                            Booking Period
-                          </h3>
-
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="startDate">
-                                Pickup Date & Time *
-                              </Label>
-                              <Input
-                                id="startDate"
-                                type="datetime-local"
-                                value={startDate}
-                                min={minDateTime} // Now ends in :00
-                                max={maxDateTime} // Now ends in :00
-                                onChange={(e) =>
-                                  handleStartDateChange(e.target.value)
-                                }
-                                step="3600"
-                                className="bg-input border-border [color-scheme:dark] "
-                                required
-                              />
-                              <p className="text-xs text-muted-foreground">
-                                Time will round to nearest hour
-                              </p>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="endDate">
-                                Return Date & Time *
-                              </Label>
-                              <Input
-                                id="endDate"
-                                type="datetime-local"
-                                value={endDate}
-                                onChange={(e) =>
-                                  handleEndDateChange(e.target.value)
-                                }
-                                min={startDate}
-                                step="3600"
-                                className="bg-input border-border [color-scheme:dark] "
-                                required
-                              />
-                              <p className="text-xs text-muted-foreground">
-                                Time will round to nearest hour
-                              </p>
-                            </div>
+                        {/* 4. Terms Checkbox */}
+                        <div className="border-t border-slate-100 pt-3">
+                          <div className="flex items-start gap-2.5">
+                            <input
+                              id="termsCheck"
+                              type="checkbox"
+                              className="w-4 h-4 mt-0.5 rounded border-slate-300 accent-blue-600 cursor-pointer shrink-0"
+                              checked={termsAccepted}
+                              onChange={(e) => setTermsAccepted(e.target.checked)}
+                              required
+                            />
+                            <Label
+                              htmlFor="termsCheck"
+                              className="text-[11px] text-slate-600 leading-normal cursor-pointer font-medium"
+                            >
+                              I agree to the{" "}
+                              <span
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setActivePolicy("terms");
+                                }}
+                                className="text-blue-600 font-bold hover:underline cursor-pointer"
+                              >
+                                Terms & Conditions
+                              </span>
+                              ,{" "}
+                              <span
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setActivePolicy("privacy");
+                                }}
+                                className="text-blue-600 font-bold hover:underline cursor-pointer"
+                              >
+                                Privacy Policy
+                              </span>
+                              , and{" "}
+                              <span
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setActivePolicy("refund");
+                                }}
+                                className="text-blue-600 font-bold hover:underline cursor-pointer"
+                              >
+                                Refund Policy
+                              </span>
+                              .
+                            </Label>
                           </div>
-
-                          {/* Availability Message */}
-                          <AnimatePresence mode="wait">
-                            {availabilityMessage && (
-                              <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <Alert
-                                  className={`${isAvailable ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"}`}
-                                >
-                                  {isAvailable ? (
-                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                  ) : (
-                                    <AlertCircle className="h-4 w-4 text-red-500" />
-                                  )}
-                                  <AlertDescription
-                                    className={`${isAvailable ? "text-green-400" : "text-red-400"}`}
-                                  >
-                                    {availabilityMessage}
-                                  </AlertDescription>
-                                </Alert>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-
-                          {/* Daily Rate Offer Message */}
-                          <AnimatePresence>
-                            {isAvailable && isEligibleForDailyRate && (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                transition={{ duration: 0.3, type: "spring", stiffness: 100 }}
-                                className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-red-500/20 border border-orange-500/30 shadow-lg shadow-orange-500/5 flex items-start gap-3 relative overflow-hidden"
-                              >
-                                <div className="absolute -right-8 -top-8 w-24 h-24 bg-orange-500/10 rounded-full blur-xl pointer-events-none" />
-                                <Sparkles className="w-5 h-5 text-orange-400 shrink-0 mt-0.5 animate-pulse" />
-                                <div className="space-y-1">
-                                  <h4 className="text-sm font-bold text-orange-200">
-                                    Woohoo! You get the entire day offer! 🎁
-                                  </h4>
-                                  <p className="text-xs text-orange-300/90 leading-relaxed">
-                                    Your booking duration qualifies for our <strong>Daily Price Cap</strong>. Any extra hours are upgraded to a full day pass at no additional charge!
-                                  </p>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-
-                          {checking && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
-                              Checking availability...
-                            </div>
-                          )}
                         </div>
 
-                        {/* Terms & Conditions Checkbox */}
-                        <div className="flex items-start gap-3 mt-6 border-t border-border pt-4">
-                          <input
-                            id="terms"
-                            type="checkbox"
-                            className="w-4 h-4 mt-1 rounded border-border cursor-pointer accent-primary"
-                            checked={termsAccepted}
-                            onChange={(e) => setTermsAccepted(e.target.checked)}
-                            required
-                          />
-                          <Label htmlFor="terms" className="text-xs text-muted-foreground leading-normal cursor-pointer">
-                            I agree to the{" "}
-                            <span
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setActivePolicy("terms");
-                              }}
-                              className="text-primary font-semibold hover:underline cursor-pointer font-bold"
-                            >
-                              Terms & Conditions
-                            </span>
-                            ,{" "}
-                            <span
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setActivePolicy("privacy");
-                              }}
-                              className="text-primary font-semibold hover:underline cursor-pointer font-bold"
-                            >
-                              Privacy Policy
-                            </span>
-                            , and{" "}
-                            <span
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setActivePolicy("refund");
-                              }}
-                              className="text-primary font-semibold hover:underline cursor-pointer font-bold"
-                            >
-                              Refund Policy
-                            </span>
-                            .
-                          </Label>
+                        {/* Submit Button */}
+                        <div className="pt-1">
+                          <Button
+                            type="submit"
+                            disabled={isAvailable === false || checking || !termsAccepted}
+                            className="w-full h-11 sm:h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md shadow-blue-500/20 active:scale-98 transition-all cursor-pointer"
+                          >
+                            {isAvailable === false
+                              ? "Vehicle Not Available for Selected Slot"
+                              : "Continue to Review & Pay ₹200 →"}
+                          </Button>
                         </div>
-
-                        <Button
-                          type="submit"
-                          // className="w-full gradient-sunset text-primary-foreground"
-                          // disabled={isAvailable === false || checking}
-
-                          className="w-full gradient-sunset text-primary-foreground mt-4"
-                          disabled={isAvailable === false || checking || !termsAccepted}
-                        >
-                          {isAvailable === false
-                            ? "Bike Not Available"
-                            : "Continue to Confirm"}
-                        </Button>
                       </form>
                     </CardContent>
                   </Card>
                 </motion.div>
               )}
 
+              {/* STEP 2: Review Booking & Cashfree Token Payment */}
               {step === 2 && (
                 <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                 >
-                  <Card className="bg-card border-border">
-                    <CardHeader>
-                      <CardTitle className="text-foreground flex items-center gap-2">
-                        <CreditCard className="w-5 h-5 text-primary" />
-                        Confirm Your Booking
+                  <Card className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
+                    <CardHeader className="bg-slate-50/70 border-b border-slate-100 p-3.5 sm:p-5 flex flex-row items-center justify-between">
+                      <CardTitle className="text-slate-900 font-bold text-sm sm:text-base flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-blue-600" />
+                        <span>Confirm Your Booking</span>
                       </CardTitle>
+                      <button
+                        onClick={() => setStep(1)}
+                        className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+                      >
+                        Edit Details
+                      </button>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                      {/* Summary */}
-                      <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">
+
+                    <CardContent className="p-3.5 sm:p-6 space-y-4">
+                      {/* Trip Summary Details */}
+                      <div className="grid grid-cols-2 gap-2.5 text-xs bg-slate-50/80 p-3.5 rounded-xl border border-slate-100">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
                             Customer
                           </span>
-                          <span className="text-foreground">
-                            {customerData.name}
-                          </span>
+                          <p className="font-extrabold text-slate-900 truncate">{customerData.name}</p>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Phone</span>
-                          <span className="text-foreground">
-                            {customerData.phone}
+                        <div>
+                          <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
+                            Phone
                           </span>
+                          <p className="font-extrabold text-slate-900 truncate">+91 {customerData.phone}</p>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Bike</span>
-                          <span className="text-foreground">{bike.model}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Pickup</span>
-                          <span className="text-foreground">
-                            {format(new Date(startDate), "PPp")}
+                        <div className="border-t border-slate-200/60 pt-2">
+                          <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
+                            Pickup
                           </span>
+                          <p className="font-extrabold text-slate-900">
+                            {format(new Date(startDate), "dd MMM, hh:mm a")}
+                          </p>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Return</span>
-                          <span className="text-foreground">
-                            {format(new Date(endDate), "PPp")}
+                        <div className="border-t border-slate-200/60 pt-2">
+                          <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
+                            Return
                           </span>
+                          <p className="font-extrabold text-slate-900">
+                            {format(new Date(endDate), "dd MMM, hh:mm a")}
+                          </p>
                         </div>
-                        {/* <div className="border-t border-border pt-2">
-                          <div className="flex justify-between font-semibold">
-                            <span className="text-foreground">
-                              Total Amount
-                            </span>
-                            <span className="text-primary text-lg">
-                              ₹{calculatePrice()}
-                            </span>
-                          </div>
-                        </div> */}
-
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            Duration
-                          </span>
-                          <span className="text-foreground">
-                            {differenceInHours(
-                              new Date(endDate),
-                              new Date(startDate),
-                            )}{" "}
-                            Hours
-                          </span>
-                        </div>
-                        {/* Pricing Breakdown */}
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            Rental Amount
-                          </span>
-                          <div className="flex flex-col items-end gap-1">
-                            <span className="text-foreground font-medium">
-                              ₹{calculatePrice(false)}
-                            </span>
-                            {isEligibleForDailyRate && (
-                              <span className="text-[10px] text-orange-400 font-semibold flex items-center gap-1 bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/20">
-                                <Sparkles className="w-2.5 h-2.5" /> Full day cap applied!
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            Security Deposit (Refundable)
-                          </span>
-                          <span className="text-foreground font-medium">
-                            ₹{SECURITY_DEPOSIT}
-                          </span>
-                        </div>
-
-                        <div className="border-t border-border pt-2">
-                          {/* <div className="flex justify-between items-center">
-                            <span className="font-bold text-foreground">
-                              Total Amount */}
-                          <div className="flex justify-between items-center text-sm font-semibold">
-                            <span className="text-foreground">
-                              Total Bill
-                            </span>
-                            {/* <span className="text-primary text-xl font-black">
-                              ₹{calculatePrice(true)} */}
-                            <span className="text-foreground">
-                              ₹{calculatePrice(false) + SECURITY_DEPOSIT}
-                            </span>
-                          </div>
-                        </div>
-                        {paymentMethod === "online" ? (
-                          <>
-                            <div className="border-t border-border border-dashed pt-2 space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm font-bold text-primary">
-                                  Booking Amount (Pay Online Now)
-                                </span>
-                                <span className="text-primary text-xl font-black">
-                                  ₹200
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                <span>Remaining Amount (Pay at Pickup)</span>
-                                <span className="font-semibold text-foreground">
-                                  ₹{calculatePrice(false) + SECURITY_DEPOSIT - 200}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="bg-primary/5 p-3 rounded-xl border border-primary/25 text-[11px] text-primary/90 leading-relaxed">
-                              💡 <strong>Note:</strong> You will pay only ₹200 now to confirm your booking. The remaining balance of ₹{calculatePrice(false) + SECURITY_DEPOSIT - 200} (including security deposit) is to be paid directly to our staff when you pick up the bike.
-                            </div>
-                          </>
-                        ) : (
-                          <div className="border-t border-border border-dashed pt-2 space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-bold text-foreground">
-                                Amount to Pay at Pickup
-                              </span>
-                              <span className="text-primary text-xl font-black">
-                                ₹{calculatePrice(false) + SECURITY_DEPOSIT}
-                              </span>
-                            </div>
-                            <div className="bg-muted p-3 rounded-xl text-[11px] text-muted-foreground leading-relaxed">
-                              💡 <strong>Note:</strong> Since you chose Pay at Pickup, no advance payment is needed. The total bill of ₹{calculatePrice(false) + SECURITY_DEPOSIT} is payable to our staff at shop check-in.
-                            </div>
-                          </div>
-                        )}
                       </div>
 
-                      <div className="border-t border-border/50 my-2" />
+                      {/* Fare Breakdown */}
+                      <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 space-y-2.5 text-xs">
+                        <div className="flex justify-between items-center text-slate-600">
+                          <span>Rental Amount ({durationFormatted})</span>
+                          <span className="font-bold text-slate-900">₹{calculatePrice(false)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-slate-600">
+                          <span>Security Deposit (Refundable)</span>
+                          <span className="font-bold text-slate-900">₹{SECURITY_DEPOSIT}</span>
+                        </div>
+                        <div className="border-t border-slate-100 pt-2 flex justify-between items-center font-bold text-slate-800 text-sm">
+                          <span>Total Bill</span>
+                          <span className="text-slate-900">₹{calculatePrice(false) + SECURITY_DEPOSIT}</span>
+                        </div>
 
-                      {/* Deposit Note */}
-                      <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 flex gap-3">
-                        <AlertCircle className="w-5 h-5 text-orange-500 shrink-0" />
-                        <p className="text-xs text-orange-200 leading-relaxed">
-                          <strong>Security Deposit Note:</strong> The ₹
-                          {SECURITY_DEPOSIT} deposit is fully refundable upon
-                          rental completion. In case of damages, traffic
-                          violations, or late returns, the corresponding costs
-                          will be deducted from this deposit.
+                        {/* Token Breakdown */}
+                        <div className="border-t border-slate-200 border-dashed pt-2.5 space-y-2">
+                          <div className="flex justify-between items-center bg-blue-50/70 p-2.5 rounded-lg border border-blue-200/70">
+                            <div>
+                              <span className="text-[10px] font-extrabold uppercase text-blue-800 tracking-wider block">
+                                Booking Amount (Pay Online Now)
+                              </span>
+                              <span className="text-[11px] text-slate-500">
+                                Locks vehicle immediately
+                              </span>
+                            </div>
+                            <span className="text-lg font-black text-blue-700">₹200</span>
+                          </div>
+
+                          <div className="flex justify-between items-center px-1">
+                            <span className="text-slate-500 font-medium">Remaining Due at Pickup</span>
+                            <span className="font-extrabold text-slate-900">
+                              ₹{calculatePrice(false) + SECURITY_DEPOSIT - 200}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Deposit Alert */}
+                      <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-3 flex gap-2 text-amber-900 text-[11px]">
+                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <p className="leading-relaxed">
+                          <strong>Deposit Note:</strong> The ₹{SECURITY_DEPOSIT} security deposit is 100% refundable when you return the vehicle in good condition.
                         </p>
                       </div>
 
-                      {/* Notes */}
-                      <div className="space-y-2">
-                        <Label htmlFor="notes">
+                      {/* Optional Notes */}
+                      <div className="space-y-1">
+                        <Label htmlFor="trip_notes" className="text-xs font-semibold text-slate-700">
                           Additional Notes (Optional)
                         </Label>
                         <Textarea
-                          id="notes"
+                          id="trip_notes"
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
-                          placeholder="Any special requests or notes..."
-                          className="bg-input border-border"
+                          placeholder="Special requests or instructions..."
                           rows={2}
+                          className="rounded-xl bg-slate-50/80 border-slate-200 text-xs font-semibold focus:bg-white py-2"
                         />
                       </div>
 
-                      {/* Payment Info */}
-                      {/* <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-                        <p className="text-sm text-foreground">
-                          💳 <strong>Payment at Pickup:</strong> Pay when you
-                          collect the bike. We accept Cash, UPI, and Cards.
-                        </p>
-                      </div> */}
-
-                      {/* <div className="flex gap-4">
-                        <Button
-                          variant="outline"
-                          onClick={() => setStep(1)}
-                          className="flex-1"
-                        >
-                          Back
-                        </Button>
-                        <Button
-                          onClick={handleBookingSubmit}
-                          className="flex-1 gradient-sunset text-primary-foreground"
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting ? "Submitting..." : "Confirm Booking"}
-                        </Button>
-                      </div> */}
-                      {/* Cloudflare Turnstile Invisible/Managed Bot Protection Widget */}
-                      <div className="my-3 flex flex-col items-center justify-center">
+                      {/* Turnstile */}
+                      <div className="flex flex-col items-center justify-center pt-1">
                         <Turnstile
                           siteKey={
                             import.meta.env.VITE_CLOUDFLARE_TURNSTILE_SITE_KEY ||
                             "1x00000000000000000000AA"
                           }
                           options={{
-                            theme: "dark",
+                            theme: "light",
                             retry: "auto",
                             retryInterval: 1000,
                             refreshExpired: "auto",
@@ -2324,28 +1765,30 @@ export default function BookBike() {
                         />
                       </div>
 
-                      <div className="flex gap-4">
+                      {/* Step 2 Actions */}
+                      <div className="flex gap-2.5 pt-1">
                         <Button
+                          type="button"
                           variant="outline"
                           onClick={() => setStep(1)}
-                          className="flex-1"
+                          className="h-11 px-4 rounded-xl font-bold border-slate-300 text-slate-700 hover:bg-slate-100 cursor-pointer"
                           disabled={isSubmitting}
                         >
                           Back
                         </Button>
                         <Button
+                          type="button"
                           onClick={handleBookingSubmit}
-                          className="flex-1 gradient-sunset text-primary-foreground"
                           disabled={isSubmitting}
+                          className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md shadow-blue-500/20 active:scale-98 transition-all cursor-pointer"
                         >
                           {isSubmitting ? (
-                            <div className="flex items-center gap-2">
-                              <div className="animate-spin w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full" />
-                              Processing...
+                            <div className="flex items-center gap-1.5 justify-center">
+                              <div className="animate-spin w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full" />
+                              <span>Processing...</span>
                             </div>
                           ) : (
-                            // `Pay ₹${calculatePrice(true)}`
-                            "Pay ₹200"
+                            "Pay ₹200 Token via Cashfree →"
                           )}
                         </Button>
                       </div>
@@ -2357,40 +1800,78 @@ export default function BookBike() {
           </div>
         </div>
       </main>
+
+      {/* MOBILE STICKY BOTTOM CHECKOUT BAR (<lg) */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
+          <div>
+            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
+              Pay Online Now
+            </span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-black text-blue-700">₹200</span>
+              <span className="text-[10px] text-slate-500 font-medium">
+                Token Lock
+              </span>
+            </div>
+          </div>
+
+          {step === 1 ? (
+            <Button
+              type="button"
+              onClick={handleCustomerSubmit}
+              disabled={isAvailable === false || checking || !termsAccepted}
+              className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer flex-1"
+            >
+              Continue →
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={handleBookingSubmit}
+              disabled={isSubmitting}
+              className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer flex-1"
+            >
+              {isSubmitting ? "Processing..." : "Pay ₹200 Token"}
+            </Button>
+          )}
+        </div>
+      </div>
+
       <Footer />
+      <MobileBottomNav />
 
       {/* Policy Modal Dialog */}
       <AnimatePresence>
         {activePolicy && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-card border border-border w-full max-w-2xl max-h-[80vh] rounded-[2rem] overflow-hidden flex flex-col shadow-2xl"
+              className="bg-white border border-slate-200 w-full max-w-xl max-h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl"
             >
-              {/* Header */}
-              <div className="p-6 border-b border-border flex items-center justify-between bg-muted/30">
-                <h2 className="text-2xl font-bold font-display text-foreground">
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 className="text-lg font-black text-slate-900">
                   {POLICY_DATA[activePolicy].title}
-                </h2>
+                </h3>
                 <button
                   onClick={() => setActivePolicy(null)}
-                  className="p-2 hover:bg-muted rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                  className="p-1.5 hover:bg-slate-200 rounded-full text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
                 >
-                  <XCircle className="w-6 h-6" />
+                  <XCircle className="w-5 h-5" />
                 </button>
               </div>
-              {/* Scrollable Content */}
-              <div className="p-6 overflow-y-auto space-y-6 flex-1 text-sm text-muted-foreground leading-relaxed">
+
+              <div className="p-5 overflow-y-auto space-y-4 flex-1 text-xs text-slate-600 leading-relaxed">
                 {POLICY_DATA[activePolicy].content.map((sec, idx) => (
-                  <div key={idx} className="space-y-4">
-                    <h3 className="font-semibold text-foreground text-base">
+                  <div key={idx} className="space-y-1.5">
+                    <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm">
                       {sec.title}
-                    </h3>
-                    <ul className="space-y-2 pl-4 list-disc">
+                    </h4>
+                    <ul className="space-y-1 pl-4 list-disc text-slate-600">
                       {sec.items.map((item, j) => (
-                        <li key={j} className="marker:text-primary">
+                        <li key={j} className="marker:text-blue-600">
                           {item}
                         </li>
                       ))}
@@ -2398,9 +1879,12 @@ export default function BookBike() {
                   </div>
                 ))}
               </div>
-              {/* Footer */}
-              <div className="p-6 border-t border-border flex justify-end bg-muted/30">
-                <Button onClick={() => setActivePolicy(null)} className="gradient-sunset text-white">
+
+              <div className="p-4 border-t border-slate-100 flex justify-end bg-slate-50">
+                <Button
+                  onClick={() => setActivePolicy(null)}
+                  className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer"
+                >
                   Close
                 </Button>
               </div>
@@ -2408,6 +1892,6 @@ export default function BookBike() {
           </div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
