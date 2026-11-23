@@ -277,9 +277,8 @@ export default function BookBike() {
     const remainingHours = tripHours % 24;
     if (days === 0) return `${tripHours} Hours`;
     if (remainingHours === 0) return `${days} Day${days > 1 ? "s" : ""}`;
-    return `${days} Day${days > 1 ? "s" : ""} ${remainingHours} Hr${
-      remainingHours > 1 ? "s" : ""
-    }`;
+    return `${days} Day${days > 1 ? "s" : ""} ${remainingHours} Hr${remainingHours > 1 ? "s" : ""
+      }`;
   }, [tripHours]);
 
   const isEligibleForDailyRate = useMemo(() => {
@@ -385,7 +384,7 @@ export default function BookBike() {
       } else {
         setAvailabilityMessage(
           result.message ||
-            "Vehicle is ready & available for your selected dates!"
+          "Vehicle is ready & available for your selected dates!"
         );
       }
       setIsAvailable(result.isAvailable);
@@ -653,12 +652,25 @@ export default function BookBike() {
   ========================= */
   if (activeLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center mb-4">
-          <div className="animate-spin w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full" />
-        </div>
-        <p className="text-sm font-bold text-slate-700">Loading vehicle details...</p>
-        <p className="text-xs text-slate-400 mt-1">Preparing your booking session</p>
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between">
+        <Header />
+        <main className="flex-1 flex flex-col items-center justify-center p-6 text-center pt-28 pb-20">
+          <div className="relative flex items-center justify-center mb-5">
+            {/* Soft Ambient Pulse Ring */}
+            <div className="absolute w-20 h-20 rounded-full bg-blue-500/10 animate-ping pointer-events-none" />
+            <div className="relative w-16 h-16 rounded-3xl bg-white border border-slate-200/90 shadow-md flex items-center justify-center">
+              <Bike className="w-8 h-8 text-blue-600 animate-pulse" />
+            </div>
+            <div className="absolute -inset-1 rounded-3xl border-2 border-blue-600 border-t-transparent animate-spin" />
+          </div>
+          <h3 className="text-base sm:text-lg font-black text-slate-900 font-display tracking-tight">
+            Loading Vehicle Details...
+          </h3>
+          <p className="text-xs text-slate-500 mt-1 max-w-xs leading-relaxed">
+            Fetching verified fleet rates & live hub availability
+          </p>
+        </main>
+        <MobileBottomNav />
       </div>
     );
   }
@@ -1037,11 +1049,10 @@ export default function BookBike() {
                             {clusterImages.map((_, idx) => (
                               <span
                                 key={idx}
-                                className={`h-1.5 rounded-full transition-all ${
-                                  idx === currentImgIndex
-                                    ? "w-3 bg-white"
-                                    : "w-1.5 bg-white/50"
-                                }`}
+                                className={`h-1.5 rounded-full transition-all ${idx === currentImgIndex
+                                  ? "w-3 bg-white"
+                                  : "w-1.5 bg-white/50"
+                                  }`}
                               />
                             ))}
                           </div>
@@ -1204,11 +1215,10 @@ export default function BookBike() {
               {/* Stepper Header */}
               <div className="flex items-center gap-2 sm:gap-4 mb-4">
                 <div
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                    step >= 1
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "bg-slate-200 text-slate-600"
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${step >= 1
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "bg-slate-200 text-slate-600"
+                    }`}
                 >
                   <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
                     1
@@ -1216,16 +1226,14 @@ export default function BookBike() {
                   <span>Rider Details</span>
                 </div>
                 <div
-                  className={`flex-1 h-1 rounded-full transition-all ${
-                    step >= 2 ? "bg-blue-600" : "bg-slate-200"
-                  }`}
+                  className={`flex-1 h-1 rounded-full transition-all ${step >= 2 ? "bg-blue-600" : "bg-slate-200"
+                    }`}
                 />
                 <div
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                    step >= 2
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "bg-slate-100 text-slate-500"
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${step >= 2
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-500"
+                    }`}
                 >
                   <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
                     2
@@ -1306,11 +1314,10 @@ export default function BookBike() {
                                 className="mt-2"
                               >
                                 <div
-                                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold leading-normal transition-all ${
-                                    isAvailable
-                                      ? "bg-emerald-50/90 border-emerald-300 text-emerald-800"
-                                      : "bg-rose-50/90 border-rose-300 text-rose-800"
-                                  }`}
+                                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold leading-normal transition-all ${isAvailable
+                                    ? "bg-emerald-50/90 border-emerald-300 text-emerald-800"
+                                    : "bg-rose-50/90 border-rose-300 text-rose-800"
+                                    }`}
                                 >
                                   {isAvailable ? (
                                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -1480,11 +1487,10 @@ export default function BookBike() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                             {/* Aadhaar Upload */}
                             <label
-                              className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${
-                                customerData.aadhaar_image
-                                  ? "border-emerald-500 bg-emerald-50/50"
-                                  : "border-slate-300 bg-slate-50/80 hover:bg-slate-100/80"
-                              }`}
+                              className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${customerData.aadhaar_image
+                                ? "border-emerald-500 bg-emerald-50/50"
+                                : "border-slate-300 bg-slate-50/80 hover:bg-slate-100/80"
+                                }`}
                             >
                               <input
                                 type="file"
@@ -1522,11 +1528,10 @@ export default function BookBike() {
 
                             {/* License Upload */}
                             <label
-                              className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${
-                                customerData.license_image
-                                  ? "border-emerald-500 bg-emerald-50/50"
-                                  : "border-slate-300 bg-slate-50/80 hover:bg-slate-100/80"
-                              }`}
+                              className={`flex items-center gap-2.5 p-2.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${customerData.license_image
+                                ? "border-emerald-500 bg-emerald-50/50"
+                                : "border-slate-300 bg-slate-50/80 hover:bg-slate-100/80"
+                                }`}
                             >
                               <input
                                 type="file"

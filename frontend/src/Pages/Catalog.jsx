@@ -1,4 +1,4 @@
-import { useState, useEffect , useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -34,14 +34,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { Skeleton } from "../components/ui/skeleton";
-
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useBikes } from "../hooks/useBikes";
 import { useActiveAreas } from "../hooks/useAreas";
 import useSEO from "../hooks/useSEO";
-import {useClusters} from "../hooks/useClusters"
+import { useClusters } from "../hooks/useClusters"
 import { useBikeAvailability } from "../hooks/useBikeAvailability";
 import MobileBottomNav from "../components/MobileBottomNav";
 
@@ -49,7 +47,7 @@ import MobileBottomNav from "../components/MobileBottomNav";
 // const Catalog = () => {
 //   const navigate = useNavigate();
 //   const [searchParams] = useSearchParams();
-  
+
 
 //   const urlAreaId = searchParams.get("area");
 //   const urlStart = searchParams.get("start");
@@ -89,7 +87,7 @@ import MobileBottomNav from "../components/MobileBottomNav";
 
 //  const filteredBikes =
 //   bikes?.filter((bike) => {
-    
+
 //   const areaMatch =
 //   selectedArea === "all" ||
 //   String(bike.area_id) === String(selectedArea);
@@ -135,7 +133,7 @@ import MobileBottomNav from "../components/MobileBottomNav";
 //  return (
 //     <div className="min-h-screen bg-background pt-[60px]">
 //       <Header />
-      
+
 //       <main className="pt-24 pb-16">
 //         <div className="container mx-auto px-4">
 //           {/* Page Header */}
@@ -349,7 +347,7 @@ import MobileBottomNav from "../components/MobileBottomNav";
 //                           <Bike className="w-16 h-16 text-muted-foreground" />
 //                         </div>
 //                       )}
-                      
+
 //                       {/* Status Badge */}
 //                       <div className="absolute top-3 right-3">
 //                         <Badge
@@ -377,8 +375,8 @@ import MobileBottomNav from "../components/MobileBottomNav";
 //                       )}
 
 //                       {/* Rating */}
-                      
-                       
+
+
 //                     </div>
 
 //                     {/* Info */}
@@ -624,9 +622,8 @@ const BikeCard = ({
       whileHover={{ y: -8 }}
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
       onClick={() => isAvailableNow && handleBookNow(bike._id)}
-      className={`group relative bg-white border border-slate-200/90 rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-300 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_22px_50px_-12px_rgba(15,23,42,0.18)] ${
-        viewMode === "list" ? "flex flex-col sm:flex-row" : "flex flex-col h-full justify-between"
-      }`}
+      className={`group relative bg-white border border-slate-200/90 rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-300 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_22px_50px_-12px_rgba(15,23,42,0.18)] ${viewMode === "list" ? "flex flex-col sm:flex-row" : "flex flex-col h-full justify-between"
+        }`}
     >
       {/* Dynamic Colored Glowing Border Hue on Hover */}
       <div
@@ -640,11 +637,9 @@ const BikeCard = ({
       {/* 🎨 VEHICLE STAGE WITH TIER GRADIENT & DYNAMIC SHIMMER     */}
       {/* ========================================================= */}
       <div
-        className={`relative ${
-          viewMode === "list" ? "w-full sm:w-72 h-52 sm:h-auto shrink-0" : "h-52 sm:h-56"
-        } bg-gradient-to-b ${profile.stageGradient} overflow-hidden border-b sm:border-b-0 ${
-          viewMode === "list" ? "sm:border-r border-slate-100" : ""
-        } flex items-center justify-center p-4`}
+        className={`relative ${viewMode === "list" ? "w-full sm:w-72 h-52 sm:h-auto shrink-0" : "h-52 sm:h-56"
+          } bg-gradient-to-b ${profile.stageGradient} overflow-hidden border-b sm:border-b-0 ${viewMode === "list" ? "sm:border-r border-slate-100" : ""
+          } flex items-center justify-center p-4`}
       >
         {/* Ambient Subtle Radial Glow */}
         <div
@@ -667,11 +662,11 @@ const BikeCard = ({
             animate={
               isHovered
                 ? {
-                    x: profile.hoverAnimation.x,
-                    y: profile.hoverAnimation.y,
-                    scale: profile.hoverAnimation.scale,
-                    rotate: profile.hoverAnimation.rotate,
-                  }
+                  x: profile.hoverAnimation.x,
+                  y: profile.hoverAnimation.y,
+                  scale: profile.hoverAnimation.scale,
+                  rotate: profile.hoverAnimation.rotate,
+                }
                 : { x: 0, y: 0, scale: 1, rotate: 0 }
             }
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
@@ -901,9 +896,8 @@ const ClusterCard = ({
       whileHover={{ y: -8 }}
       transition={{ type: "spring", stiffness: 350, damping: 25 }}
       onClick={() => handleBookNow(cluster._id, true)}
-      className={`group relative bg-white border border-slate-200/90 rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-300 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_22px_50px_-12px_rgba(15,23,42,0.18)] ${
-        viewMode === "list" ? "flex flex-col sm:flex-row" : "flex flex-col h-full justify-between"
-      }`}
+      className={`group relative bg-white border border-slate-200/90 rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-300 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_22px_50px_-12px_rgba(15,23,42,0.18)] ${viewMode === "list" ? "flex flex-col sm:flex-row" : "flex flex-col h-full justify-between"
+        }`}
     >
       {/* Dynamic Colored Glowing Border Hue on Hover */}
       <div
@@ -917,11 +911,9 @@ const ClusterCard = ({
       {/* 🎨 IMAGE GALLERY SHOWCASE STAGE                           */}
       {/* ========================================================= */}
       <div
-        className={`relative ${
-          viewMode === "list" ? "w-full sm:w-72 h-52 sm:h-auto shrink-0" : "h-52 sm:h-56"
-        } bg-gradient-to-b ${profile.stageGradient} overflow-hidden border-b sm:border-b-0 ${
-          viewMode === "list" ? "sm:border-r border-slate-100" : ""
-        } flex items-center justify-center p-4`}
+        className={`relative ${viewMode === "list" ? "w-full sm:w-72 h-52 sm:h-auto shrink-0" : "h-52 sm:h-56"
+          } bg-gradient-to-b ${profile.stageGradient} overflow-hidden border-b sm:border-b-0 ${viewMode === "list" ? "sm:border-r border-slate-100" : ""
+          } flex items-center justify-center p-4`}
       >
         {/* Shimmer Light Reflection Sweep */}
         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/35 to-transparent pointer-events-none z-10" />
@@ -937,12 +929,12 @@ const ClusterCard = ({
               animate={
                 isHovered
                   ? {
-                      opacity: 1,
-                      x: profile.hoverAnimation.x,
-                      y: profile.hoverAnimation.y,
-                      scale: profile.hoverAnimation.scale,
-                      rotate: profile.hoverAnimation.rotate,
-                    }
+                    opacity: 1,
+                    x: profile.hoverAnimation.x,
+                    y: profile.hoverAnimation.y,
+                    scale: profile.hoverAnimation.scale,
+                    rotate: profile.hoverAnimation.rotate,
+                  }
                   : { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }
               }
               exit={{ opacity: 0, scale: 1.03 }}
@@ -981,9 +973,8 @@ const ClusterCard = ({
             {clusterImages.map((_, idx) => (
               <span
                 key={idx}
-                className={`h-1 rounded-full transition-all duration-200 ${
-                  idx === currentImgIndex ? "w-2.5 bg-white" : "w-1 bg-white/50"
-                }`}
+                className={`h-1 rounded-full transition-all duration-200 ${idx === currentImgIndex ? "w-2.5 bg-white" : "w-1 bg-white/50"
+                  }`}
               />
             ))}
           </div>
@@ -1408,9 +1399,8 @@ const Catalog = () => {
                     variant={viewMode === "grid" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("grid")}
-                    className={`h-8 px-2.5 rounded-md text-xs font-medium ${
-                      viewMode === "grid" ? "bg-white text-slate-900 dark:bg-slate-900 dark:text-white shadow-xs" : "text-muted-foreground"
-                    }`}
+                    className={`h-8 px-2.5 rounded-md text-xs font-medium ${viewMode === "grid" ? "bg-white text-slate-900 dark:bg-slate-900 dark:text-white shadow-xs" : "text-muted-foreground"
+                      }`}
                   >
                     <Grid className="w-3.5 h-3.5" />
                   </Button>
@@ -1418,9 +1408,8 @@ const Catalog = () => {
                     variant={viewMode === "list" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("list")}
-                    className={`h-8 px-2.5 rounded-md text-xs font-medium ${
-                      viewMode === "list" ? "bg-white text-slate-900 dark:bg-slate-900 dark:text-white shadow-xs" : "text-muted-foreground"
-                    }`}
+                    className={`h-8 px-2.5 rounded-md text-xs font-medium ${viewMode === "list" ? "bg-white text-slate-900 dark:bg-slate-900 dark:text-white shadow-xs" : "text-muted-foreground"
+                      }`}
                   >
                     <List className="w-3.5 h-3.5" />
                   </Button>
@@ -1475,26 +1464,19 @@ const Catalog = () => {
 
           {/* Bikes Display */}
           {bikesLoading || clustersLoading ? (
-            <div
-              className={`grid ${
-                viewMode === "grid"
-                  ? "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                  : "grid-cols-1"
-              } gap-6`}
-            >
-              {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-card border border-border rounded-2xl overflow-hidden"
-                >
-                  <Skeleton className="h-48 w-full" />
-                  <div className="p-5">
-                    <Skeleton className="h-6 w-3/4 mb-2" />
-                    <Skeleton className="h-4 w-1/2 mb-4" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
+            <div className="py-20 flex flex-col items-center justify-center text-center">
+              <div className="relative flex items-center justify-center mb-4">
+                <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center justify-center">
+                  <Bike className="w-7 h-7 text-blue-600 animate-pulse" />
                 </div>
-              ))}
+                <div className="absolute -inset-1 rounded-2xl border-2 border-blue-600 border-t-transparent animate-spin" />
+              </div>
+              <h3 className="text-base font-black text-slate-900 font-display">
+                Loading Fleet...
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                Checking live availability across Mumbai, Thane & Surat hubs
+              </p>
             </div>
           ) : filteredItems.length === 0 ? (
             <motion.div className="text-center py-16">
@@ -1541,11 +1523,10 @@ const Catalog = () => {
                   </div>
 
                   <motion.div
-                    className={`grid ${
-                      viewMode === "grid"
-                        ? "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                        : "grid-cols-1"
-                    } gap-6`}
+                    className={`grid ${viewMode === "grid"
+                      ? "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                      : "grid-cols-1"
+                      } gap-6`}
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
@@ -1588,11 +1569,10 @@ const Catalog = () => {
                   </div>
 
                   <motion.div
-                    className={`grid ${
-                      viewMode === "grid"
-                        ? "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                        : "grid-cols-1"
-                    } gap-6`}
+                    className={`grid ${viewMode === "grid"
+                      ? "md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                      : "grid-cols-1"
+                      } gap-6`}
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
