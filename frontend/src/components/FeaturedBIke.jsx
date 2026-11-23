@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { Skeleton } from "./ui/skeleton";
 import { useBikes } from "../hooks/useBikes";
 
 const categoryFilters = [
@@ -95,7 +96,7 @@ const FeaturedBikes = () => {
       <div className="absolute bottom-10 -right-32 w-[450px] h-[450px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
-
+        
         {/* Section Header & View Controls */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
           <div>
@@ -117,10 +118,11 @@ const FeaturedBikes = () => {
               <button
                 type="button"
                 onClick={() => handleSetViewMode("marquee")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${viewMode === "marquee"
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs font-black"
-                  : "text-slate-600 hover:text-slate-900"
-                  }`}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === "marquee"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs font-black"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
                 title="Continuous Right to Left Animation"
               >
                 <span className={`w-2 h-2 rounded-full ${viewMode === "marquee" ? "bg-white" : "bg-blue-600"} animate-pulse`} />
@@ -130,10 +132,11 @@ const FeaturedBikes = () => {
               <button
                 type="button"
                 onClick={() => handleSetViewMode("grid")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${viewMode === "grid"
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs font-black"
-                  : "text-slate-600 hover:text-slate-900"
-                  }`}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  viewMode === "grid"
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs font-black"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
                 <span>Grid View</span>
@@ -160,10 +163,11 @@ const FeaturedBikes = () => {
                 key={cat.id}
                 type="button"
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${activeCategory === cat.id
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 font-black"
-                  : "bg-white border border-slate-200/80 text-slate-700 hover:border-blue-300 hover:bg-slate-50"
-                  }`}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+                  activeCategory === cat.id
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 font-black"
+                    : "bg-white border border-slate-200/80 text-slate-700 hover:border-blue-300 hover:bg-slate-50"
+                }`}
               >
                 <span>{cat.icon}</span>
                 <span>{cat.label}</span>
@@ -172,16 +176,17 @@ const FeaturedBikes = () => {
           </div>
         </div>
 
-        {/* Clean Modern Loading State */}
+        {/* Skeleton Loading State */}
         {isLoading ? (
-          <div className="py-16 flex flex-col items-center justify-center text-center">
-            <div className="relative flex items-center justify-center mb-3">
-              <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex items-center justify-center">
-                <Bike className="w-6 h-6 text-blue-600 animate-pulse" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-3 p-4 bg-white border border-slate-200 rounded-3xl">
+                <Skeleton className="h-48 w-full rounded-2xl" />
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-12 w-full rounded-xl" />
               </div>
-              <div className="absolute -inset-1 rounded-2xl border-2 border-blue-600 border-t-transparent animate-spin" />
-            </div>
-            <p className="text-xs font-black text-slate-800">Loading Featured Rides...</p>
+            ))}
           </div>
         ) : viewMode === "marquee" ? (
           /* ========================================================= */
@@ -198,8 +203,9 @@ const FeaturedBikes = () => {
 
             {/* RTL Marquee Track */}
             <div
-              className={`animate-marquee-rtl flex gap-6 py-2 ${isPaused ? "[animation-play-state:paused]" : ""
-                }`}
+              className={`animate-marquee-rtl flex gap-6 py-2 ${
+                isPaused ? "[animation-play-state:paused]" : ""
+              }`}
             >
               {/* Duplicate array 2x to ensure infinite seamless gliding from Right to Left */}
               {[...featuredBikes, ...featuredBikes].map((bike, idx) => (
@@ -358,7 +364,7 @@ function BikeCard({ bike, onBook }) {
       {/* 🎨 VEHICLE SHOWCASE STAGE WITH TIER-SPECIFIC ANIMATIONS   */}
       {/* ========================================================= */}
       <div className={`relative h-56 bg-gradient-to-b ${profile.stageGradient} overflow-hidden border-b border-slate-100 flex items-center justify-center p-4`}>
-
+        
         {/* Tier 1 (Cruiser): Shimmering Gold Orbit + Amber Light Sheen Sweep */}
         {profile.type === "cruiser" && (
           <>
@@ -435,11 +441,11 @@ function BikeCard({ bike, onBook }) {
             animate={
               isHovered
                 ? {
-                  x: profile.hoverAnimation.x,
-                  y: profile.hoverAnimation.y,
-                  scale: profile.hoverAnimation.scale,
-                  rotate: profile.hoverAnimation.rotate,
-                }
+                    x: profile.hoverAnimation.x,
+                    y: profile.hoverAnimation.y,
+                    scale: profile.hoverAnimation.scale,
+                    rotate: profile.hoverAnimation.rotate,
+                  }
                 : { x: 0, y: 0, scale: 1, rotate: 0 }
             }
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
