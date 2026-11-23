@@ -1192,7 +1192,7 @@ export default function BookBike() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>24/7 Roadside Help</span>
+                      <span>Dedicated Support</span>
                     </div>
                   </div>
                 </div>

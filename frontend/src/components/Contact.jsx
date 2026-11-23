@@ -409,7 +409,7 @@ const Contact = () => {
                         Monday to Sunday: <span className="font-bold text-slate-900">7:00 AM – 11:00 PM</span>
                       </p>
                       <p className="text-[11px] text-slate-400 mt-1 font-medium">
-                        24/7 Roadside breakdown support line for all active rentals.
+                        Dedicated customer support line for all active rentals.
                       </p>
                     </div>
                   </div>

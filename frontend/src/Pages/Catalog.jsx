@@ -1130,21 +1130,55 @@ const Catalog = () => {
   const [ccFilter, setCcFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
-  const [initialized, setInitialized] = useState(false);
   const [hoveredBike, setHoveredBike] = useState(null);
 
   const { data: bikes, isLoading: bikesLoading } = useBikes();
   const { data: clusters, isLoading: clustersLoading } = useClusters();
   const { data: areas } = useActiveAreas();
 
+  // Reactively synchronize filters with URL query parameters
   useEffect(() => {
-    if (!initialized && areas && areas.length > 0) {
-      if (urlAreaId && areas.some((a) => a._id === urlAreaId)) {
-        setSelectedArea(urlAreaId);
-      }
-      setInitialized(true);
+    const urlArea = searchParams.get("area");
+    const urlCc = searchParams.get("cc");
+
+    setSelectedArea(urlArea || "all");
+    if (urlCc && ["under125", "125to150", "above150", "all"].includes(urlCc)) {
+      setCcFilter(urlCc);
+    } else {
+      setCcFilter("all");
     }
-  }, [urlAreaId, areas, initialized]);
+  }, [searchParams]);
+
+  const handleAreaChange = (val) => {
+    setSelectedArea(val);
+    const params = new URLSearchParams(searchParams);
+    if (val === "all") {
+      params.delete("area");
+    } else {
+      params.set("area", val);
+    }
+    const q = params.toString();
+    navigate(q ? `/catalog?${q}` : "/catalog", { replace: true });
+  };
+
+  const handleCcChange = (val) => {
+    setCcFilter(val);
+    const params = new URLSearchParams(searchParams);
+    if (val === "all") {
+      params.delete("cc");
+    } else {
+      params.set("cc", val);
+    }
+    const q = params.toString();
+    navigate(q ? `/catalog?${q}` : "/catalog", { replace: true });
+  };
+
+  const clearAllFilters = () => {
+    setSelectedArea("all");
+    setCcFilter("all");
+    setStatusFilter("all");
+    navigate("/catalog", { replace: true });
+  };
 
   const getAreaName = (area) => {
     if (!area) return null;
@@ -1185,12 +1219,25 @@ const Catalog = () => {
         const hasAvailableBike = item.bikes && item.bikes.some(bike => bike.status === "available");
         if (!hasAvailableBike) return false;
       }
-      const areaId = item.isCluster ? item.area_id?._id || item.area_id : item.area_id;
+
+      // Robust area matching: checks item.area_id whether it's an object or an ID string
+      const rawArea = item.area_id;
+      const itemAreaId =
+        rawArea && typeof rawArea === "object"
+          ? String(rawArea._id || rawArea.id || "")
+          : String(rawArea || "");
+      const itemAreaName =
+        rawArea && typeof rawArea === "object"
+          ? String(rawArea.name || "").toLowerCase()
+          : "";
+
       const areaMatch =
         selectedArea === "all" ||
-        String(areaId) === String(selectedArea);
+        itemAreaId === String(selectedArea) ||
+        (itemAreaName !== "" && itemAreaName === String(selectedArea).toLowerCase());
 
-      const ccVal = item.isCluster ? item.bikes?.[0]?.cc || 125 : item.cc;
+      const rawCc = item.isCluster ? item.bikes?.[0]?.cc || 110 : item.cc || 110;
+      const ccVal = Number(rawCc);
       const ccMatch =
         ccFilter === "all" ||
         (ccFilter === "under125" && ccVal <= 125) ||
@@ -1216,9 +1263,16 @@ const Catalog = () => {
     const params = new URLSearchParams(searchParams);
     params.delete("start");
     params.delete("end");
-    // This updates the URL; React detects the change and re-renders
-    navigate(`/catalog?${params.toString()}`);
+    const q = params.toString();
+    navigate(q ? `/catalog?${q}` : "/catalog", { replace: true });
   };
+
+  const hasActiveFilters =
+    selectedArea !== "all" ||
+    ccFilter !== "all" ||
+    statusFilter !== "all" ||
+    Boolean(urlStart) ||
+    Boolean(urlEnd);
   const handleBookNow = (bikeId, isCluster = false) => {
     const params = new URLSearchParams();
     if (urlStart) params.set("start", urlStart);
@@ -1286,7 +1340,7 @@ const Catalog = () => {
                   <Select
                     key={selectedArea}
                     value={selectedArea}
-                    onValueChange={setSelectedArea}
+                    onValueChange={handleAreaChange}
                   >
                     <SelectTrigger className="bg-background border-border/80 h-9 text-xs">
                       <SelectValue placeholder="All Areas" />
@@ -1308,7 +1362,7 @@ const Catalog = () => {
                     <Gauge className="w-3.5 h-3.5 text-foreground" />
                     Engine Capacity
                   </label>
-                  <Select value={ccFilter} onValueChange={setCcFilter}>
+                  <Select value={ccFilter} onValueChange={handleCcChange}>
                     <SelectTrigger className="bg-background border-border/80 h-9 text-xs">
                       <SelectValue placeholder="All CC" />
                     </SelectTrigger>
@@ -1374,9 +1428,24 @@ const Catalog = () => {
                 </div>
               </div>
 
-              <div className="flex items-end gap-4">
-                {/* Add this block near your other filter dropdowns */}
-                {/* This button only pops up when a time filter is active */}
+              <div className="flex items-end gap-3 flex-wrap">
+                {hasActiveFilters && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-2"
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="border-dashed border-rose-300 text-rose-600 hover:bg-rose-50 hover:text-rose-700 gap-1.5 h-9 px-3 rounded-xl text-xs font-bold cursor-pointer"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Clear All Filters</span>
+                    </Button>
+                  </motion.div>
+                )}
                 {(urlStart || urlEnd) && (
                   <motion.div
                     initial={{ opacity: 0, x: -10 }}
@@ -1387,10 +1456,10 @@ const Catalog = () => {
                       variant="outline"
                       size="sm"
                       onClick={clearTimeFilter}
-                      className="border-dashed border-primary text-primary hover:bg-primary/5 gap-2 h-10 px-4 rounded-xl"
+                      className="border-dashed border-primary text-primary hover:bg-primary/5 gap-1.5 h-9 px-3 rounded-xl text-xs font-bold cursor-pointer"
                     >
-                      <XCircle className="w-4 h-4" />
-                      Clear Time Filter
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Clear Dates</span>
                     </Button>
                   </motion.div>
                 )}
@@ -1437,12 +1506,8 @@ const Catalog = () => {
               </p>
               <Button
                 variant="outline"
-                onClick={() => {
-                  setSelectedArea("all");
-                  setCcFilter("all");
-                  setStatusFilter("all");
-                }}
-                className="border-primary text-primary hover:bg-primary/10"
+                onClick={clearAllFilters}
+                className="border-primary text-primary hover:bg-primary/10 cursor-pointer"
               >
                 Clear Filters
               </Button>

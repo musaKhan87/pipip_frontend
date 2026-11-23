@@ -29,7 +29,7 @@ const plans = [
       "24 hours continuous rental",
       "Complimentary sanitized ISI helmet",
       "Full comprehensive insurance coverage",
-      "24/7 dedicated Mumbai roadside assistance",
+      "Dedicated customer and fleet assistance",
       "Zero surge pricing guarantee",
     ],
     ctaText: "Book Daily Ride",
@@ -48,7 +48,7 @@ const plans = [
       "7 days unlimited city commute",
       "Complimentary sanitized ISI helmet",
       "Full RTO commercial permit insurance",
-      "Priority 24/7 emergency roadside help",
+      "Priority customer and trip support",
       "15% flat multi-day discount applied",
     ],
     ctaText: "Choose Weekly",
@@ -90,8 +90,8 @@ const guarantees = [
   },
   {
     icon: Wrench,
-    title: "24/7 Roadside Assistance",
-    desc: "Instant spot repair or quick vehicle replacement across Mumbai.",
+    title: "Dedicated Trip Support",
+    desc: "Prompt customer support and assistance across our operating hubs.",
     color: "text-emerald-600 bg-emerald-50 border-emerald-200/80",
   },
   {

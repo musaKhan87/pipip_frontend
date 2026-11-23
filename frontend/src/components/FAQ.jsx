@@ -62,7 +62,7 @@ const faqs = [
     category: "support",
     question: "What happens in case of a flat tyre or mechanical breakdown?",
     answer:
-      "We provide 24/7 emergency roadside assistance across Mumbai. Simply call our hub hotline at +91 9967406205 or message us on WhatsApp. Our mobile fleet support team will assist you on-site or provide an immediate replacement vehicle at zero extra cost.",
+      "We provide prompt customer and breakdown assistance across our hubs. Simply call our hub hotline at +91 9967406205 or message us on WhatsApp. Our mobile fleet support team will assist you on-site or provide an immediate replacement vehicle at zero extra cost.",
   },
   {
     category: "booking",
@@ -139,7 +139,7 @@ const FAQ = () => {
               </span>
             </h2>
             <p className="text-xs sm:text-sm md:text-base text-slate-600 max-w-xl mx-auto font-normal leading-relaxed">
-              Transparent answers regarding the ₹200 token lock, original documents, ₹2,000 refundable security deposit, and 24/7 roadside assistance.
+              Transparent answers regarding the ₹200 token lock, original documents, ₹2,000 refundable security deposit, and fleet support.
             </p>
           </motion.div>
 

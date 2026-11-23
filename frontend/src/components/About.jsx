@@ -139,8 +139,8 @@ const features = [
     color: "from-rose-500 to-orange-500",
     bg: "bg-rose-50 text-rose-600 border-rose-200/80",
     title: "Daily Hub Hours: 7 AM – 11 PM",
-    description: "Our hubs are open 7 days a week, supported by round-the-clock emergency roadside assistance and rapid on-call fleet managers.",
-    perk: "24/7 Roadside Support",
+    description: "Our hubs are open 7 days a week, supported by dedicated customer assistance and rapid on-call fleet managers.",
+    perk: "Dedicated Support",
   },
 ];
 

@@ -415,32 +415,6 @@ export default function CustomerReviews() {
           </div>
         </div>
 
-        {/* Live Mumbai Activity Strip */}
-        <div className="pt-8 border-t border-border/40">
-          <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-2 text-foreground font-semibold">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span>Live Mumbai Activity:</span>
-            </div>
-            <div className="flex items-center gap-3 text-muted-foreground flex-wrap">
-              <span>🛵 Activa 6G picked up at Bandra West (2m ago)</span>
-              <span>•</span>
-              <span>⭐ 5.0 rated in Powai</span>
-              <span>•</span>
-              <span>🏍️ Hunter 350 rented in Colaba</span>
-            </div>
-            <Link
-              to="/catalog"
-              className="text-primary hover:text-primary/80 font-bold inline-flex items-center gap-1.5 transition-colors"
-            >
-              Explore Fleet <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-
       </div>
 
       {/* Video Story Modal with Interactive Simulated Player */}

@@ -34,7 +34,7 @@ const baseStories = [
     platform: "Google Play Store",
     location: "Wadala Hub",
     bike: "Honda Activa 125",
-    text: "Very reliable motorbikes and awesome roadside services are guaranteed. Customer service is spot on. Denzil has helped me very patiently to go over the terms and conditions. Definitely rent from Pipip again.",
+    text: "Very reliable motorbikes and awesome customer support are guaranteed. Customer service is spot on. Denzil has helped me very patiently to go over the terms and conditions. Definitely rent from Pipip again.",
   },
   {
     id: 5,
@@ -42,7 +42,7 @@ const baseStories = [
     platform: "Google Play Store",
     location: "Marine Drive / Colaba Hub",
     bike: "Suzuki Burgman 125",
-    text: "Vehicle was in very good condition and all the staff was very humble. Our vehicle got punctured near Marine Drive but we got full roadside assistance within 25 minutes after contacting their staff. We also got the deposit refund instantly on UPI. Absolutely reliable in Mumbai.",
+    text: "Vehicle was in very good condition and all the staff was very humble. Our vehicle got punctured near Marine Drive but we got full replacement assistance within 25 minutes after contacting their staff. We also got the deposit refund instantly on UPI. Absolutely reliable in Mumbai.",
   },
   {
     id: 6,

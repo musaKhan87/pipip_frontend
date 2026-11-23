@@ -136,7 +136,7 @@ const Footer = () => {
                 <div className="p-3.5 pt-1 space-y-2 text-xs text-slate-600 bg-slate-50/60 border-t border-slate-100">
                   <div className="flex items-start gap-2">
                     <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
-                    <span className="text-slate-700">Multiple city hubs: Mumbai Hub (Dongri), Surat Hubs (Adajan & Vesu)</span>
+                    <span className="text-slate-700">City hubs: Mumbai Hub (Dongri), Thane Hub (Near Majiwada / Station), Surat Hubs (Adajan & Vesu)</span>
                   </div>
                   <div className="flex items-center gap-2 text-[11px] text-slate-500">
                     <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -370,6 +370,16 @@ const Footer = () => {
                 </div>
 
                 <div className="flex items-start gap-2.5 p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+                  <MapPin className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-slate-900 font-bold">Thane Pickup Hub</p>
+                    <p className="text-[11px] text-slate-500 leading-snug">
+                      Near Thane Railway Station / Majiwada Junction, Thane (W) 400601
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
                   <MapPin className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-slate-900 font-bold">Surat Operations Hub</p>
@@ -390,7 +400,7 @@ const Footer = () => {
                     <span>Helpline: +91 9967406205</span>
                   </p>
                   <p className="text-blue-800/80 text-[10.5px]">
-                    24/7 Roadside breakdown & emergency assistance included with every rental.
+                    Dedicated customer support and assistance included with every rental.
                   </p>
                 </div>
               </div>

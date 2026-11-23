@@ -40,6 +40,21 @@ const FeaturedBikes = () => {
   const [viewMode, setViewMode] = useState("marquee"); // "marquee" (RTL animation) or "grid"
   const [isPaused, setIsPaused] = useState(false);
 
+  // Smooth switch preventing browser scroll jump
+  const handleSetViewMode = (mode) => {
+    const el = document.getElementById("featured-rides");
+    const topBefore = el ? el.getBoundingClientRect().top : null;
+    setViewMode(mode);
+    if (topBefore !== null) {
+      requestAnimationFrame(() => {
+        const topAfter = el.getBoundingClientRect().top;
+        if (Math.abs(topAfter - topBefore) > 1) {
+          window.scrollBy({ top: topAfter - topBefore, behavior: "instant" });
+        }
+      });
+    }
+  };
+
   const urlStart = searchParams.get("start");
   const urlEnd = searchParams.get("end");
 
@@ -63,8 +78,8 @@ const FeaturedBikes = () => {
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.2 } },
   };
 
   const handleBookNow = (bikeId) => {
@@ -75,7 +90,7 @@ const FeaturedBikes = () => {
   };
 
   return (
-    <section id="featured-rides" className="py-16 md:py-24 bg-gradient-to-b from-[#F8FAFC] via-[#F1F5F9]/60 to-[#F8FAFC] relative overflow-hidden">
+    <section id="featured-rides" className="py-16 md:py-24 bg-gradient-to-b from-[#F8FAFC] via-[#F1F5F9]/60 to-[#F8FAFC] relative overflow-hidden [overflow-anchor:none]">
       {/* Dynamic Background Aurora Glows */}
       <div className="absolute top-1/3 -left-32 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-10 -right-32 w-[450px] h-[450px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
@@ -95,10 +110,6 @@ const FeaturedBikes = () => {
                 Rides
               </span>
             </h2>
-            <p className="text-sm md:text-base text-slate-600 mt-2.5 max-w-xl font-normal leading-relaxed">
-              100% sanitized, full fuel telemetry inspected, and hub-ready. Lock any ride online for just a{" "}
-              <strong className="text-slate-900 font-black underline decoration-amber-400 decoration-2 underline-offset-2">₹200 token</strong> — pay the remainder upon physical handover!
-            </p>
           </div>
 
           <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end shrink-0">
@@ -106,7 +117,7 @@ const FeaturedBikes = () => {
             <div className="inline-flex items-center p-1 bg-white rounded-2xl border border-slate-200 shadow-2xs">
               <button
                 type="button"
-                onClick={() => setViewMode("marquee")}
+                onClick={() => handleSetViewMode("marquee")}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                   viewMode === "marquee"
                     ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs font-black"
@@ -120,7 +131,7 @@ const FeaturedBikes = () => {
 
               <button
                 type="button"
-                onClick={() => setViewMode("grid")}
+                onClick={() => handleSetViewMode("grid")}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                   viewMode === "grid"
                     ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs font-black"
@@ -163,13 +174,6 @@ const FeaturedBikes = () => {
               </button>
             ))}
           </div>
-
-          {viewMode === "marquee" && (
-            <div className="flex items-center gap-2 text-[11px] text-slate-500 font-semibold bg-white/80 border border-slate-200/60 px-3 py-1 rounded-full shadow-2xs">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Right-to-Left auto glide • Hover or tap any card to pause</span>
-            </div>
-          )}
         </div>
 
         {/* Skeleton Loading State */}
@@ -231,22 +235,6 @@ const FeaturedBikes = () => {
             ))}
           </motion.div>
         )}
-
-        {/* Bottom Pipip Assurance Strip */}
-        <div className="mt-12 p-4 sm:p-5 rounded-2xl bg-white/90 border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="font-black text-slate-900">Pipip Guarantee:</span>
-            <span>100% Refundable Deposit • Clean Physical Handover • Commercial RTO Permits</span>
-          </div>
-          <div className="flex items-center gap-3 font-semibold text-slate-500">
-            <span>⚡ 60-Sec Handover</span>
-            <span>•</span>
-            <span>🛡️ Zero Hidden Charges</span>
-            <span>•</span>
-            <span>📞 24/7 Roadside Assistance</span>
-          </div>
-        </div>
 
       </div>
     </section>

@@ -1,15 +1,16 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Contact from "../components/Contact";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import Hero from "../components/Hero";
 import RentalForm from "../components/RentalForm";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import FeaturedBikes from "../components/FeaturedBIke";
 import CustomerReviews from "../components/CustomerReviews";
 import CustomerStories from "../components/CustomerStories";
 import MobileBottomNav from "../components/MobileBottomNav";
 import useSEO from "../hooks/useSEO";
+import { useBikes } from "../hooks/useBikes";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -73,16 +74,43 @@ const stepsData = [
     glowColor: "rgba(16, 185, 129, 0.3)",
     perks: [
       "Instant hub handover in under 60 seconds",
-      "100% Sanitized vehicle with full fuel telemetry",
+      "Zero paperwork — 100% digital KYC check-in",
+      "Pay remaining rental balance only at hub during pickup",
       "Refundable security deposit returned on drop-off",
-      "Instant commercial RTO papers & 24/7 roadside assistance",
     ],
   },
 ];
 
 const Index = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { data: bikes } = useBikes();
   const [activeStep, setActiveStep] = useState(0);
+
+  // Dynamic live bike cards with actual rates from catalog & direct booking navigation
+  const fleetModels = useMemo(() => {
+    const defaultList = [
+      { key: "activa", name: "Honda Activa 6G", cc: "110cc", defaultRate: 600, tag: "Most Popular", fallbackCc: "under125" },
+      { key: "access", name: "Suzuki Access 125", cc: "125cc", defaultRate: 650, tag: "Top Comfort", fallbackCc: "under125" },
+      { key: "burgman", name: "Burgman Street", cc: "125cc", defaultRate: 700, tag: "Max Storage", fallbackCc: "under125" },
+      { key: "enfield", name: "Royal Enfield 350", cc: "350cc", defaultRate: 1100, tag: "Cruiser", fallbackCc: "above150" },
+    ];
+
+    return defaultList.map((item) => {
+      const match = (bikes || []).find((b) => {
+        const m = `${b.bike_name || ""} ${b.model || ""}`.toLowerCase();
+        return m.includes(item.key);
+      });
+
+      return {
+        ...item,
+        bikeId: match?._id,
+        name: match?.bike_name || match?.model || item.name,
+        cc: match?.cc ? `${match.cc}cc` : item.cc,
+        rate: `₹${match?.price_per_day || item.defaultRate}/day`,
+      };
+    });
+  }, [bikes]);
 
   useSEO({
     title: "Pipip Services | Self-Drive Bike & Scooty Rental",
@@ -268,11 +296,17 @@ const Index = () => {
                     {activeStep === 0 && (
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          {stepsData[0].models.map((model, i) => (
+                          {fleetModels.map((model, i) => (
                             <div
                               key={i}
                               className="p-3.5 rounded-2xl bg-slate-50/80 hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-300 transition-all text-center group cursor-pointer"
-                              onClick={scrollToFeatured}
+                              onClick={() => {
+                                if (model.bikeId) {
+                                  navigate(`/book/${model.bikeId}`);
+                                } else {
+                                  navigate(`/catalog?cc=${model.fallbackCc}`);
+                                }
+                              }}
                             >
                               <span className="text-[9px] font-bold text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded-full inline-block mb-1">
                                 {model.tag}
@@ -498,7 +532,7 @@ const Index = () => {
                   <motion.button
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={scrollToFeatured}
+                    onClick={() => navigate("/catalog")}
                     className="relative w-full md:w-auto overflow-hidden bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 font-black text-xs sm:text-sm py-2.5 sm:py-3 px-5 sm:px-6 rounded-xl sm:rounded-2xl shadow-md shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer group"
                   >
                     {/* Light Sweep Reflection Animation */}
@@ -524,7 +558,7 @@ const Index = () => {
         </section>
 
         {/* Featured Rides Section */}
-        <div className="content-auto">
+        <div>
           <FeaturedBikes />
         </div>
 

@@ -182,15 +182,16 @@ const Hero = () => {
     }
   };
 
-  const scrollToBooking = () => {
+  const handleRentScooter = () => {
     const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
-    const targetId = isMobile ? "booking-card-mobile" : "booking-card";
-    const el = document.getElementById(targetId);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      navigate("/catalog?cc=under125");
+    if (isMobile) {
+      const mobileEl = document.getElementById("booking-card-mobile");
+      if (mobileEl) {
+        mobileEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
     }
+    navigate("/catalog?cc=under125");
   };
 
   // Reusable interactive booking card (rendered on the right on desktop, docked right below video on mobile)
@@ -201,9 +202,8 @@ const Hero = () => {
 
       <div
         id={cardId}
-        className={`relative bg-white/95 backdrop-blur-2xl border border-white/80 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] rounded-[32px] ${
-          isMobile ? "p-5 sm:p-6" : "p-6 sm:p-8"
-        } text-slate-900 overflow-visible`}
+        className={`relative bg-white/95 backdrop-blur-2xl border border-white/80 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] rounded-[32px] ${isMobile ? "p-5 sm:p-6" : "p-6 sm:p-8"
+          } text-slate-900 overflow-visible`}
       >
         {/* Decorative Accent Sunbeam Rays on top right (matching mockup) */}
         <svg
@@ -246,11 +246,10 @@ const Hero = () => {
           <button
             type="button"
             onClick={() => setActiveCategory("scooter")}
-            className={`py-2.5 sm:py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
-              activeCategory === "scooter"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/35 border border-blue-500"
-                : "text-slate-700 hover:text-slate-950 bg-slate-50 hover:bg-white border border-slate-200/90 shadow-2xs"
-            }`}
+            className={`py-2.5 sm:py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${activeCategory === "scooter"
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-600/35 border border-blue-500"
+              : "text-slate-700 hover:text-slate-950 bg-slate-50 hover:bg-white border border-slate-200/90 shadow-2xs"
+              }`}
           >
             <span className="text-base">🛵</span>
             <span>Scooter</span>
@@ -259,11 +258,10 @@ const Hero = () => {
           <button
             type="button"
             onClick={() => setActiveCategory("motorcycle")}
-            className={`py-2.5 sm:py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
-              activeCategory === "motorcycle"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/35 border border-blue-500"
-                : "text-slate-700 hover:text-slate-950 bg-slate-50 hover:bg-white border border-slate-200/90 shadow-2xs"
-            }`}
+            className={`py-2.5 sm:py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${activeCategory === "motorcycle"
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-600/35 border border-blue-500"
+              : "text-slate-700 hover:text-slate-950 bg-slate-50 hover:bg-white border border-slate-200/90 shadow-2xs"
+              }`}
           >
             <span className="text-base">🏍️</span>
             <span>Bike</span>
@@ -281,11 +279,10 @@ const Hero = () => {
             <button
               type="button"
               onClick={() => setIsAreaOpen(!isAreaOpen)}
-              className={`w-full flex items-center justify-between bg-slate-50/90 hover:bg-white border rounded-2xl px-4 py-3 text-left text-xs sm:text-sm transition-all shadow-2xs cursor-pointer text-slate-900 ${
-                areaError
-                  ? "border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/50"
-                  : "border-slate-200/90 hover:border-blue-400"
-              }`}
+              className={`w-full flex items-center justify-between bg-slate-50/90 hover:bg-white border rounded-2xl px-4 py-3 text-left text-xs sm:text-sm transition-all shadow-2xs cursor-pointer text-slate-900 ${areaError
+                ? "border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/50"
+                : "border-slate-200/90 hover:border-blue-400"
+                }`}
             >
               <div className="flex items-center gap-2 truncate">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
@@ -300,9 +297,8 @@ const Hero = () => {
                 </span>
               </div>
               <ChevronDown
-                className={`w-4 h-4 text-slate-400 transition-transform ${
-                  isAreaOpen ? "rotate-180 text-blue-600" : ""
-                }`}
+                className={`w-4 h-4 text-slate-400 transition-transform ${isAreaOpen ? "rotate-180 text-blue-600" : ""
+                  }`}
               />
             </button>
 
@@ -542,10 +538,10 @@ const Hero = () => {
                 transition={{ duration: 0.45, delay: 0.25 }}
                 className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-3.5 w-full"
               >
-                {/* Primary Pill Button: Rent a Scooter (scrolls cleanly to booking card) */}
+                {/* Primary Pill Button: Rent a Scooter */}
                 <button
                   type="button"
-                  onClick={scrollToBooking}
+                  onClick={handleRentScooter}
                   className="w-full sm:w-auto h-12 px-8 rounded-full font-black text-sm bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-xl shadow-amber-500/25 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer group"
                 >
                   <span>Rent a Scooter</span>
