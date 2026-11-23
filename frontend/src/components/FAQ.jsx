@@ -59,12 +59,6 @@ const faqs = [
       "Fuel is not included in the standard tariff. You will receive the two-wheeler with sufficient fuel to reach the nearest fuel station. Simply return the vehicle with approximately the same fuel level as recorded during the physical handover inspection.",
   },
   {
-    category: "support",
-    question: "What happens in case of a flat tyre or mechanical breakdown?",
-    answer:
-      "We provide prompt customer and breakdown assistance across our hubs. Simply call our hub hotline at +91 9967406205 or message us on WhatsApp. Our mobile fleet support team will assist you on-site or provide an immediate replacement vehicle at zero extra cost.",
-  },
-  {
     category: "booking",
     question: "Can I extend my rental duration after picking up the vehicle?",
     answer:

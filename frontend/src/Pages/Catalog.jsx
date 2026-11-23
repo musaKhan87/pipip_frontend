@@ -763,7 +763,7 @@ const BikeCard = ({
             )}
             <span className="text-emerald-700 font-bold flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              100% Sanitized
+              Fully Verified
             </span>
           </div>
 
@@ -1256,7 +1256,13 @@ const Catalog = () => {
   }, [filteredItems]);
 
   const bikeItems = useMemo(() => {
-    return filteredItems.filter((item) => !item.isCluster);
+    const raw = filteredItems.filter((item) => !item.isCluster);
+    // Sort so available bikes appear first, and bikes currently on rent (booked) appear at the bottom
+    return [...raw].sort((a, b) => {
+      const aPriority = a.status === "available" ? 0 : a.status === "booked" ? 1 : 2;
+      const bPriority = b.status === "available" ? 0 : b.status === "booked" ? 1 : 2;
+      return aPriority - bPriority;
+    });
   }, [filteredItems]);
 
   const clearTimeFilter = () => {
@@ -1305,7 +1311,7 @@ const Catalog = () => {
           >
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 text-blue-800 border border-blue-300/40 text-xs font-black shadow-2xs mb-3.5">
               <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-              <span>LIVE MUMBAI FLEET • VERIFIED & SANITIZED</span>
+              <span>ACTIVE HUBS • VERIFIED FLEET</span>
             </div>
             <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 leading-[1.15] mb-3">
               Browse Bike & Scooter{" "}
@@ -1314,7 +1320,7 @@ const Catalog = () => {
               </span>
             </h1>
             <p className="text-xs sm:text-sm md:text-base text-slate-600 max-w-xl mx-auto font-normal leading-relaxed">
-              100% sanitized scooters and cruisers. Lock any vehicle category online with just a{" "}
+              Verified, well-maintained scooters and cruisers. Lock any vehicle category online with just a{" "}
               <span className="font-bold text-slate-900 underline decoration-amber-400 decoration-2 underline-offset-2">
                 ₹200 token
               </span>{" "}

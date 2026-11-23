@@ -137,7 +137,6 @@ const Header = () => {
     { id: "home", label: "Home", type: "section", icon: Home, badge: null },
     { id: "/catalog", label: "Fleet & Catalog", type: "page", icon: Bike, badge: null },
     { id: "/pricing", label: "Tariff Rates", type: "page", icon: Tag, badge: null },
-    { id: "reviews", label: "Reviews", type: "section", icon: Star, badge: "4.9★" },
     { id: "/about", label: "About Pipip", type: "page", icon: ShieldCheck, badge: null },
     { id: "/contact", label: "Contact & Hubs", type: "page", icon: MapPin, badge: null },
   ];

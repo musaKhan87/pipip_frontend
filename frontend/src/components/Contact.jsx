@@ -26,11 +26,12 @@ import useSEO from "../hooks/useSEO";
 
 const Contact = () => {
   useSEO({
-    title: "Contact & Hub Locations | Pipip Self-Drive Bike Rentals Mumbai",
-    description: "Get in touch with Pipip Rentals. Visit our central pickup hubs in Mumbai or call +91 9967406205 for instant, verified two-wheeler rentals.",
+    title: "Contact & Hub Locations | Pipip Self-Drive Bike & Scooter Rentals",
+    description: "Get in touch with Pipip Rentals. Visit our central pickup hubs in Mumbai, Thane, and Surat or call +91 9967406205 for instant, verified two-wheeler rentals.",
   });
 
-  const [copied, setCopied] = useState(false);
+  const [copiedHub, setCopiedHub] = useState(null);
+  const [activeHubId, setActiveHubId] = useState("mumbai");
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -38,13 +39,61 @@ const Contact = () => {
     message: "",
   });
 
-  const fullAddress =
-    "Rahat Tower, Nishanpada Road, Near City Heights, Khadak, Dongri, Mandvi, Mumbai, Maharashtra 400009";
+  const hubs = [
+    {
+      id: "mumbai",
+      city: "Mumbai",
+      name: "Mumbai Central Pickup Hub",
+      address: "Rahat Tower, Nishanpada Road, Near City Heights, Khadak, Dongri, Mandvi, Mumbai, Maharashtra 400009",
+      landmark: "Near Sandhurst Road & Masjid Bunder Railway Stations",
+      status: "Open Now",
+      mapEmbedUrl:
+        "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3773.4567469432895!2d72.83309717466226!3d18.955425455747825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7cf0507c305ad%3A0x7db754dae7717c61!2sPipip%20Bikes%20and%20Scooter%20Rental!5e0!3m2!1sen!2sin!4v1770816123179!5m2!1sen!2sin",
+      directionsUrl:
+        "https://www.google.com/maps/dir//Rahat+Tower,+Nishanpada+Rd,+Khadak,+Dongri,+Mandvi,+Mumbai,+Maharashtra+400009",
+    },
+    {
+      id: "thane",
+      city: "Thane",
+      name: "Thane Pickup Hub",
+      address: "Near Thane Railway Station / Majiwada Junction, Thane (West), Maharashtra 400601",
+      landmark: "Central Thane Commuter Corridor",
+      status: "Open Now",
+      mapEmbedUrl:
+        "https://maps.google.com/maps?q=Thane+Railway+Station+Majiwada+Thane+Maharashtra&t=&z=14&ie=UTF8&iwloc=&output=embed",
+      directionsUrl:
+        "https://www.google.com/maps/dir//Majiwada+Junction,+Thane,+Maharashtra+400601",
+    },
+    {
+      id: "surat",
+      city: "Surat",
+      name: "Surat Operations Hub",
+      address: "Adajan & Vesu Hubs, Surat, Gujarat 395009",
+      landmark: "Adajan Main Road & Vesu Commercial Area",
+      status: "Open Now",
+      mapEmbedUrl:
+        "https://maps.google.com/maps?q=Adajan+Vesu+Surat+Gujarat&t=&z=14&ie=UTF8&iwloc=&output=embed",
+      directionsUrl:
+        "https://www.google.com/maps/dir//Adajan,+Surat,+Gujarat",
+    },
+  ];
 
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(fullAddress);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+  const activeHub = hubs.find((h) => h.id === activeHubId) || hubs[0];
+
+  const handleSelectHub = (hubId) => {
+    setActiveHubId(hubId);
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      const mapElement = document.getElementById("interactive-hub-map");
+      if (mapElement) {
+        mapElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  };
+
+  const handleCopyHubAddress = (hubId, addressText) => {
+    navigator.clipboard.writeText(addressText);
+    setCopiedHub(hubId);
+    setTimeout(() => setCopiedHub(null), 2500);
   };
 
   const handleWhatsAppSubmit = (e) => {
@@ -66,7 +115,7 @@ const Contact = () => {
     {
       icon: Phone,
       title: "Direct Hub Helpline",
-      description: "Speak directly with our Mumbai hub fleet manager",
+      description: "Speak directly with our hub fleet managers",
       value: "+91 9967406205",
       href: "tel:9967406205",
       action: "Call Now",
@@ -79,7 +128,7 @@ const Contact = () => {
       title: "WhatsApp Quick Desk",
       description: "Instant bike verification & digital pickup tokens",
       value: "Chat on WhatsApp",
-      href: "https://wa.me/919967406205?text=Hi%20Pipip%20Rentals%2C%20I%20want%20to%20rent%20a%20bike%2Fscooter%20in%20Mumbai",
+      href: "https://wa.me/919967406205?text=Hi%20Pipip%20Rentals%2C%20I%20want%20to%20rent%20a%20bike%2Fscooter",
       action: "Open WhatsApp",
       gradient: "from-emerald-600 to-teal-600",
       accent: "text-emerald-600 bg-emerald-50 border-emerald-200",
@@ -108,9 +157,6 @@ const Contact = () => {
       live: false,
     },
   ];
-
-  const mapSrc =
-    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3773.4567469432895!2d72.83309717466226!3d18.955425455747825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7cf0507c305ad%3A0x7db754dae7717c61!2sPipip%20Bikes%20and%20Scooter%20Rental!5e0!3m2!1sen!2sin!4v1770816123179!5m2!1sen!2sin";
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 md:pb-0">
@@ -141,7 +187,7 @@ const Contact = () => {
                 </span>
               </h1>
               <p className="text-xs sm:text-sm md:text-base text-slate-600 leading-relaxed font-normal">
-                Need an Activa 6G, Suzuki Access, Burgman, or Royal Enfield Hunter? Our central Mumbai hub managers are on standby to verify your token and hand over the keys in 60 seconds.
+                Need an Activa 6G, Suzuki Access, Burgman, or Royal Enfield Hunter? Our central hub managers across Mumbai, Thane, and Surat are on standby to verify your token and hand over the keys in 60 seconds.
               </p>
             </motion.div>
           </div>
@@ -316,89 +362,178 @@ const Contact = () => {
                 Visit Our Rental Hubs
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 mt-2 font-normal">
-                Convenient pickup points situated within walking distance of central Mumbai railway stations.
+                Convenient, central pickup points situated across Mumbai, Thane, and Surat.
               </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Map View */}
-              <div className="lg:col-span-7 bg-white p-2.5 sm:p-3.5 rounded-3xl border border-slate-200/90 shadow-md overflow-hidden relative">
+              <div
+                id="interactive-hub-map"
+                className="lg:col-span-7 bg-white p-2.5 sm:p-3.5 rounded-3xl border border-slate-200/90 shadow-md overflow-hidden relative scroll-mt-24"
+              >
+                {/* Active Hub Label Banner */}
+                <div className="mb-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span className="text-xs font-black text-slate-900 truncate">
+                      {activeHub.name}
+                    </span>
+                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 shrink-0">
+                      {activeHub.city}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-500 hidden sm:inline-block">
+                    Showing on Map
+                  </span>
+                </div>
+
                 <div className="relative rounded-2xl overflow-hidden h-[340px] sm:h-[420px]">
                   <iframe
-                    src={mapSrc}
+                    key={activeHub.id}
+                    src={activeHub.mapEmbedUrl}
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
                     allowFullScreen
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
-                    title="Pipip Bikes Location - Bhendi Bazar, Mumbai"
+                    title={`Pipip Bikes Location - ${activeHub.name}`}
                   />
                   <a
-                    href="https://www.google.com/maps/dir//Bhendi+Bazaar,+Mumbai,+Maharashtra+400003"
+                    href={activeHub.directionsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="absolute bottom-4 right-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shadow-lg shadow-blue-600/30 transition-all active:scale-95 cursor-pointer"
                   >
                     <Navigation className="w-3.5 h-3.5" />
-                    <span>Get Google Directions</span>
+                    <span>Get Directions</span>
                   </a>
                 </div>
               </div>
 
               {/* Hub Cards Column */}
               <div className="lg:col-span-5 space-y-4">
-                
-                {/* Mumbai Main Hub Card */}
-                <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs hover:border-blue-400 transition-all">
-                  <div className="flex items-start gap-4">
-                    <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-200/70">
-                      <MapPin className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <h3 className="text-sm sm:text-base font-black text-slate-900 font-display">
-                          Main Mumbai Pickup Hub
-                        </h3>
-                        <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                          Open Now
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                        {fullAddress}
-                      </p>
-                      
-                      <div className="mt-3 flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={handleCopyAddress}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
-                        >
-                          {copied ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                              <span className="text-emerald-700">Copied to Clipboard!</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3.5 h-3.5" />
-                              <span>Copy Address</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-
-                      <p className="text-[11px] text-slate-400 mt-2 font-medium">
-                        (Near Sandhurst Road & Masjid Bunder Railway Stations)
-                      </p>
-                    </div>
-                  </div>
+                <div className="text-xs font-bold text-slate-500 px-1 flex items-center justify-between">
+                  <span>SELECT A HUB TO VIEW ON MAP:</span>
+                  <span className="text-blue-600 font-extrabold">{hubs.length} Hubs Active</span>
                 </div>
+
+                {/* Dynamic Multi-City Hubs: Mumbai, Thane, Surat */}
+                {hubs.map((hub) => {
+                  const isSelected = activeHubId === hub.id;
+                  return (
+                    <div
+                      key={hub.id}
+                      onClick={() => handleSelectHub(hub.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleSelectHub(hub.id);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-pressed={isSelected}
+                      className={`text-left rounded-3xl p-5 sm:p-6 transition-all cursor-pointer outline-none ${
+                        isSelected
+                          ? "bg-blue-50/40 border-2 border-blue-600 shadow-md ring-4 ring-blue-500/10"
+                          : "bg-white border border-slate-200/90 shadow-xs hover:border-blue-400 hover:bg-slate-50/60"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3.5">
+                        <div
+                          className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border transition-colors ${
+                            isSelected
+                              ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                              : "bg-blue-50 text-blue-600 border-blue-200/70"
+                          }`}
+                        >
+                          <MapPin className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h3 className="text-sm sm:text-base font-black text-slate-900 font-display truncate">
+                              {hub.name}
+                            </h3>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {isSelected ? (
+                                <span className="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-full shadow-xs">
+                                  Active Map
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                                  Click to view
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                            {hub.address}
+                          </p>
+                          <p className="text-[11px] text-slate-400 mt-1 font-medium">
+                            ({hub.landmark})
+                          </p>
+
+                          <div className="mt-3 flex items-center gap-2 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectHub(hub.id);
+                              }}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-blue-600 text-white shadow-xs"
+                                  : "bg-blue-50 hover:bg-blue-100 text-blue-700"
+                              }`}
+                            >
+                              <MapPin className="w-3.5 h-3.5" />
+                              <span>{isSelected ? "Showing on Map" : "Show on Map"}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyHubAddress(hub.id, hub.address);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+                            >
+                              {copiedHub === hub.id ? (
+                                <>
+                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span className="text-emerald-700">Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3.5 h-3.5" />
+                                  <span>Copy Address</span>
+                                </>
+                              )}
+                            </button>
+
+                            <a
+                              href={hub.directionsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold transition-all"
+                            >
+                              <Navigation className="w-3.5 h-3.5" />
+                              <span>Map Route</span>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
 
                 {/* Hub Hours & Assistance */}
                 <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs">
                   <div className="flex items-start gap-4">
-                    <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200/70">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200/70">
                       <Clock className="w-5 h-5" />
                     </div>
                     <div>

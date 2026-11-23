@@ -503,7 +503,7 @@ function BikeCard({ bike, onBook }) {
             <span className="text-slate-300">•</span>
             <span className="text-emerald-700 font-bold flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              100% Sanitized
+              Fully Verified
             </span>
           </div>
 

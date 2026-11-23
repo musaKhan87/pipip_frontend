@@ -26,10 +26,10 @@ import { Button } from "./ui/button";
 const stats = [
   {
     icon: Bike,
-    value: "500+",
-    label: "Inspected Vehicles",
+    value: "100%",
+    label: "Verified Fleet",
     sub: "Activa, Access & Enfields",
-    badge: "Sanitized Fleet",
+    badge: "Quality Checked",
     color: "from-blue-600 to-indigo-600",
     glow: "shadow-blue-500/10",
   },
@@ -37,8 +37,8 @@ const stats = [
     icon: Award,
     value: "4.9 / 5.0",
     label: "Customer Rating",
-    sub: "2,500+ Verified Riders",
-    badge: "Top Rated Mumbai",
+    sub: "Thousands of Happy Riders",
+    badge: "Top Rated Fleet",
     color: "from-amber-500 to-orange-500",
     glow: "shadow-amber-500/10",
   },
@@ -98,7 +98,7 @@ const features = [
     icon: Bike,
     color: "from-blue-600 to-indigo-600",
     bg: "bg-blue-50 text-blue-600 border-blue-200/80",
-    title: "100% Sanitized & 25-Point Checked",
+    title: "Quality Verified & 25-Point Checked",
     description: "Every scooter and motorcycle undergoes a 25-point mechanical inspection before handover with complimentary sanitized helmet.",
     perk: "Zero Breakdown Guarantee",
   },
@@ -107,7 +107,7 @@ const features = [
     color: "from-amber-500 to-orange-500",
     bg: "bg-amber-50 text-amber-600 border-amber-200/80",
     title: "Flexible Hourly & Daily Tariff",
-    description: "Rent by the hour or full 24-hour day starting from ₹600/day. Perfect for quick South Mumbai meetings or scenic coastal weekend getaways.",
+    description: "Rent by the hour (minimum 3 hours booking required) or full 24-hour day starting from ₹600/day. Perfect for quick city commutes, college, work meetings, or scenic weekend getaways across Mumbai, Thane, and Surat.",
     perk: "Zero Surge Pricing",
   },
   {
@@ -164,7 +164,7 @@ const About = () => {
         >
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 text-blue-900 border border-blue-300/40 text-xs font-black shadow-2xs mb-3.5">
             <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-            <span>THE PIPIP STORY • MUMBAI MOBILITY REIMAGINED</span>
+            <span>THE PIPIP STORY • URBAN MOBILITY REIMAGINED</span>
           </div>
 
           <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 leading-[1.15] mb-4">
@@ -175,7 +175,7 @@ const About = () => {
           </h1>
 
           <p className="text-xs sm:text-sm md:text-base text-slate-600 leading-relaxed font-normal">
-            Pipip Services simplifies urban commuting across Mumbai. No surge pricing, no taxi cancellations — just clean, fuel-inspected two-wheelers ready when you are.
+            Pipip Services simplifies urban commuting across Mumbai, Thane, and Surat. No surge pricing, no taxi cancellations — just clean, well-maintained two-wheelers ready when you are.
           </p>
         </motion.div>
 
@@ -290,14 +290,14 @@ const About = () => {
           <div className="flex-1">
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1.5">
               <h3 className="text-base sm:text-lg font-black text-slate-900 font-display">
-                Operated by Pipip Services
+                Part of Pipip Services
               </h3>
               <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
                 Official RTO Registered Operator
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-              Pipip Services provides professional self-drive two-wheeler fleet management, complete RTO compliance, and seamless digital token booking across central pickup hubs in Mumbai (near Sandhurst Road, Masjid Bunder, and Dongri).
+              Pipip is a flagship brand proudly operated under Pipip Services. We are committed to delivering the best self drive bike and scooty rentals across Mumbai and Surat. Whether you are looking for an affordable bike rental, daily scooty rental, or the cheapest two wheeler on rent, Pipip Services provides premium well-maintained fleets.
             </p>
           </div>
           <div className="shrink-0">
@@ -359,7 +359,7 @@ const About = () => {
           <div className="absolute inset-0 -translate-x-full hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
 
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black tracking-tight leading-tight">
-            Ready to experience hassle-free riding in Mumbai?
+            Ready to experience hassle-free riding across our hubs?
           </h2>
           <p className="text-xs sm:text-sm text-blue-100 max-w-lg mx-auto font-normal leading-relaxed">
             Choose from Activa, Access, Burgman, or Royal Enfield Hunter 350. Lock your vehicle online in 60 seconds with just a ₹200 token.
