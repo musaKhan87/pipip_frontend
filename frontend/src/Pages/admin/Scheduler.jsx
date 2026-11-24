@@ -78,20 +78,22 @@ export default function Scheduler() {
   const startDayOfWeek = monthStart.getDay();
   const paddingDays = Array(startDayOfWeek).fill(null);
 
-  // Map bookings to days
+  // Map bookings to days (includes active, confirmed, pending, completed; excludes cancelled)
   const bookingsByDay = useMemo(() => {
     if (!bookings) return new Map();
 
     const map = new Map();
 
     bookings
-      .filter((b) => b.status !== "cancelled" && b.status !== "completed")
+      .filter((b) => b.status !== "cancelled")
       .forEach((booking) => {
         try {
           const start = parseISO(booking.start_datetime);
           const end = parseISO(booking.end_datetime);
 
-          const days = eachDayOfInterval({ start, end });
+          // Handle single-day or valid intervals safely
+          const validEnd = end >= start ? end : start;
+          const days = eachDayOfInterval({ start, end: validEnd });
           days.forEach((day) => {
             const key = format(day, "yyyy-MM-dd");
             const existing = map.get(key) || [];
@@ -387,7 +389,7 @@ export default function Scheduler() {
                 {paddingDays.map((_, index) => (
                   <div
                     key={`pad-${index}`}
-                    className="min-h-[58px] sm:min-h-[82px] rounded-2xl bg-muted/10 opacity-30"
+                    className="min-h-[50px] sm:min-h-[82px] rounded-xl sm:rounded-2xl bg-muted/10 opacity-30"
                   />
                 ))}
 
@@ -403,7 +405,7 @@ export default function Scheduler() {
                       key={key}
                       onClick={() => handleDayClick(day)}
                       className={cn(
-                        "min-h-[58px] sm:min-h-[82px] p-1.5 sm:p-2.5 rounded-2xl transition-all duration-150 flex flex-col justify-between items-start text-left border cursor-pointer active:scale-95 group",
+                        "min-h-[50px] sm:min-h-[82px] p-1 sm:p-2.5 rounded-xl sm:rounded-2xl transition-all duration-150 flex flex-col justify-between items-start text-left border cursor-pointer active:scale-95 group",
                         isDaySelected
                           ? "bg-primary/10 border-primary ring-2 ring-primary/30 shadow-md"
                           : today
@@ -416,7 +418,7 @@ export default function Scheduler() {
                       <div className="flex items-center justify-between w-full">
                         <span
                           className={cn(
-                            "text-xs font-black w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-xl tabular-nums",
+                            "text-[10px] sm:text-xs font-black w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center rounded-lg sm:rounded-xl tabular-nums",
                             today
                               ? "bg-primary text-primary-foreground font-black shadow-xs"
                               : isDaySelected
@@ -428,27 +430,27 @@ export default function Scheduler() {
                         </span>
 
                         {count > 0 && (
-                          <span className="text-[10px] font-black text-primary bg-primary/15 px-1.5 py-0.5 rounded-md">
+                          <span className="text-[9px] sm:text-[10px] font-black text-primary bg-primary/15 px-1 sm:px-1.5 py-0.5 rounded-md">
                             {count}
                           </span>
                         )}
                       </div>
 
                       {/* Day Bookings Visual Dots */}
-                      <div className="w-full mt-1">
+                      <div className="w-full mt-0.5 sm:mt-1">
                         {count > 0 ? (
-                          <div className="flex flex-wrap gap-1 items-center">
+                          <div className="flex flex-wrap gap-0.5 sm:gap-1 items-center">
                             {dayBookingsList.slice(0, 3).map((b, idx) => (
                               <span
                                 key={idx}
-                                className="w-2 h-2 rounded-full"
+                                className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full"
                                 style={{
                                   backgroundColor: statusColors[b.status] || "#2563EB",
                                 }}
                               />
                             ))}
                             {count > 3 && (
-                              <span className="text-[9px] text-muted-foreground font-bold">
+                              <span className="text-[8px] sm:text-[9px] text-muted-foreground font-bold">
                                 +{count - 3}
                               </span>
                             )}

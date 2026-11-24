@@ -232,9 +232,9 @@ export default function Dashboard() {
     );
   }
 
-  // Active rentals
+  // Active & Confirmed rentals
   const activeRentals = (recentBookings || []).filter(
-    (booking) => booking.status === "active"
+    (booking) => booking.status === "active" || booking.status === "confirmed"
   );
 
   // Rented bike IDs
@@ -250,31 +250,49 @@ export default function Dashboard() {
     (bike) => bike.status === "maintenance"
   );
 
-  // Available bikes
+  // Available bikes: status is available, not maintenance, not booked, and not attached to an active rental
   const availableBikeList = (bikes || []).filter(
     (bike) =>
+      bike.status !== "maintenance" &&
+      bike.status !== "booked" &&
       !rentedBikeIds.has(String(bike._id)) &&
-      !rentedBikeIds.has(bike._id) &&
-      bike.status !== "maintenance"
+      !rentedBikeIds.has(bike._id)
   );
 
-  // Booked bikes from fleet
+  // Booked / On Rent bikes from fleet: explicitly booked status or currently attached to an active rental
   const bookedBikeListInFleet = (bikes || []).filter(
     (bike) =>
-      (rentedBikeIds.has(String(bike._id)) || rentedBikeIds.has(bike._id)) &&
-      bike.status !== "maintenance"
+      bike.status !== "maintenance" &&
+      (bike.status === "booked" ||
+        rentedBikeIds.has(String(bike._id)) ||
+        rentedBikeIds.has(bike._id))
   );
 
-  const bookedBikeList = activeRentals.filter((booking) => {
-    const bId = booking.bike_id?._id || booking.bike_id;
-    return (
-      bId &&
-      (bikes || []).some(
-        (b) =>
-          (String(b._id) === String(bId) || b._id === bId) &&
-          b.status !== "maintenance"
-      )
-    );
+  // Comprehensive on-rent items matching every bike in bookedBikeListInFleet
+  const comprehensiveOnRentList = bookedBikeListInFleet.map((bike) => {
+    // Find active booking for this bike, if any
+    const booking = (activeRentals || []).find((b) => {
+      const bId = b.bike_id?._id || b.bike_id;
+      return String(bId) === String(bike._id);
+    }) || (recentBookings || []).find((b) => {
+      const bId = b.bike_id?._id || b.bike_id;
+      return (
+        String(bId) === String(bike._id) &&
+        (b.status === "active" || b.status === "confirmed")
+      );
+    });
+
+    return {
+      _id: booking?._id || `bike-${bike._id}`,
+      bike,
+      booking,
+      model: bike.model || booking?.bike_id?.model || "Fleet Vehicle",
+      number_plate: bike.number_plate || booking?.bike_id?.number_plate || "N/A",
+      customerName: booking?.customer_id?.name || null,
+      customerPhone: booking?.customer_id?.phone || null,
+      areaName: bike.area_id?.name || booking?.areaName || "",
+      end_datetime: booking?.end_datetime || null,
+    };
   });
 
   const availableBikes = availableBikeList.length;
@@ -319,7 +337,7 @@ export default function Dashboard() {
               Welcome back, {user?.fullName || "Operator"}
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl font-normal leading-relaxed">
-              Managing <strong className="text-white font-bold">{totalFleetCount} vehicles</strong> across active Mumbai hubs with real-time slot telemetry.
+              Managing <strong className="text-white font-bold">{totalFleetCount} vehicles</strong> across active operational hubs (Mumbai, Thane, Surat) with real-time slot telemetry.
             </p>
           </div>
 
@@ -922,13 +940,13 @@ export default function Dashboard() {
         }}
       >
         <DialogContent className="max-w-xl max-h-[85vh] flex flex-col p-0 overflow-hidden rounded-3xl">
-          <DialogHeader className="p-5 border-b border-border bg-slate-50 dark:bg-slate-900">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-lg font-black font-display flex items-center gap-2">
-                <Bike className="w-5 h-5 text-primary" />
-                {selectedFleet} Fleet List
+          <DialogHeader className="p-4 sm:p-5 pr-14 sm:pr-16 border-b border-border bg-slate-50 dark:bg-slate-900">
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
+              <DialogTitle className="text-base sm:text-lg font-black font-display flex items-center gap-2 text-foreground">
+                <Bike className="w-5 h-5 text-primary shrink-0" />
+                <span>{selectedFleet} Fleet List</span>
               </DialogTitle>
-              <Badge variant="outline" className="text-xs font-bold">
+              <Badge variant="outline" className="text-xs font-bold px-2.5 py-0.5 rounded-full shrink-0">
                 {selectedFleet === "Available"
                   ? availableBikes
                   : selectedFleet === "On Rent"
@@ -952,7 +970,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="p-4 space-y-2.5 overflow-y-auto max-h-[50vh]">
+          <div className="p-3 sm:p-4 space-y-2.5 overflow-y-auto max-h-[60vh] flex-1 min-h-0">
             {selectedFleet === "Available" &&
               availableBikeList
                 .filter(
@@ -976,50 +994,61 @@ export default function Dashboard() {
                         </p>
                       </div>
                     </div>
-                    <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-bold">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/50 shrink-0">
                       Available
-                    </Badge>
+                    </span>
                   </div>
                 ))}
 
             {selectedFleet === "On Rent" &&
-              bookedBikeList
+              comprehensiveOnRentList
                 .filter(
-                  (booking) =>
-                    booking.bike_id?.model?.toLowerCase().includes(fleetSearch.toLowerCase()) ||
-                    booking.bike_id?.number_plate?.toLowerCase().includes(fleetSearch.toLowerCase()) ||
-                    booking.customer_id?.name?.toLowerCase().includes(fleetSearch.toLowerCase())
+                  (item) =>
+                    item.model?.toLowerCase().includes(fleetSearch.toLowerCase()) ||
+                    item.number_plate?.toLowerCase().includes(fleetSearch.toLowerCase()) ||
+                    (item.customerName && item.customerName.toLowerCase().includes(fleetSearch.toLowerCase())) ||
+                    (item.customerPhone && item.customerPhone.includes(fleetSearch))
                 )
-                .map((booking) => (
+                .map((item) => (
                   <div
-                    key={booking._id}
-                    className="p-3.5 border border-border/80 rounded-2xl bg-card hover:bg-muted/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                    key={item._id}
+                    className="p-3 sm:p-3.5 border border-border/80 rounded-2xl bg-card hover:bg-muted/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full min-w-0"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                      <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
                         <Bike className="w-4 h-4" />
                       </div>
-                      <div>
-                        <p className="font-bold text-sm text-foreground font-display">{booking.bike_id?.model}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Customer: <span className="font-bold text-foreground">{booking.customer_id?.name || "N/A"}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-sm text-foreground font-display truncate">{item.model}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          Customer: <span className="font-bold text-foreground">{item.customerName || "Active Rider"}</span>
                         </p>
                         <p className="text-[11px] text-muted-foreground font-mono">
-                          {booking.bike_id?.number_plate}
+                          {item.number_plate} {item.areaName ? `· ${item.areaName}` : ""}
                         </p>
                       </div>
                     </div>
-                    <div className="text-left sm:text-right flex items-center sm:flex-col justify-between">
-                      <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-xs font-bold">
-                        Return {format(new Date(booking.end_datetime), "MMM d, h:mm a")}
-                      </Badge>
-                      {booking.customer_id?.phone && (
+                    <div className="text-left sm:text-right flex items-center sm:flex-col justify-between gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
+                      {item.end_datetime ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/50 shrink-0">
+                          Return {format(new Date(item.end_datetime), "MMM d, h:mm a")}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/50 shrink-0">
+                          On Road
+                        </span>
+                      )}
+                      {item.customerPhone ? (
                         <a
-                          href={`tel:${booking.customer_id.phone}`}
-                          className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1 mt-1"
+                          href={`tel:${item.customerPhone}`}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border border-emerald-200 transition-colors text-xs font-mono font-bold shrink-0 no-underline"
+                          title={`Call ${item.customerName || "Customer"}`}
                         >
-                          <Phone className="w-3 h-3" /> Call
+                          <Phone className="w-3 h-3 text-emerald-600" />
+                          <span>{item.customerPhone}</span>
                         </a>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground font-medium hidden sm:inline">Fleet active</span>
                       )}
                     </div>
                   </div>
@@ -1048,9 +1077,9 @@ export default function Dashboard() {
                         </p>
                       </div>
                     </div>
-                    <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs font-bold">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/50 shrink-0">
                       Maintenance
-                    </Badge>
+                    </span>
                   </div>
                 ))}
           </div>

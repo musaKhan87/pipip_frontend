@@ -45,6 +45,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "../../components/ui/tabs";
+import AdminLoadingState from "../../components/admin/AdminLoadingState";
 import { useAuth } from "../../lib/AuthProvider";
 import { useAllAreas, useActiveAreas } from "../../hooks/useAreas";
 import { API_BASE_URL } from "../../config/api";
@@ -658,19 +659,20 @@ export default function Settings() {
       </div>
 
       {/* Your Account Card */}
-      <Card className="bg-card border border-border/80 rounded-2xl shadow-2xs overflow-hidden">
-        <CardContent className="p-4 sm:p-5">
+      <Card className="bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white border border-white/10 rounded-3xl shadow-xl overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-60 h-60 bg-blue-500/15 rounded-full blur-[70px] pointer-events-none" />
+        <CardContent className="p-4 sm:p-6 relative z-10">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-orange-500 text-primary-foreground font-extrabold text-base flex items-center justify-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-base flex items-center justify-center shadow-md shadow-blue-600/30 border border-white/20">
                 {(user?.fullName || user?.email || "A").substring(0, 2).toUpperCase()}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-base text-foreground leading-tight">
+                  <h3 className="font-bold text-base sm:text-lg text-white leading-tight">
                     {user?.fullName || "Administrator"}
                   </h3>
-                  <Badge className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize bg-primary/15 text-primary border border-primary/30">
+                  <Badge className="text-[10px] font-black px-2 py-0.5 rounded-full capitalize bg-blue-500/20 text-blue-300 border border-blue-400/30">
                     {user?.role === "super_admin" || user?.role === "admin"
                       ? "Administrator"
                       : user?.role === "manager"
@@ -678,13 +680,13 @@ export default function Settings() {
                       : user?.role}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 font-medium">{user?.email}</p>
+                <p className="text-xs text-slate-300 mt-1 font-medium">{user?.email}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:self-center border-t sm:border-t-0 pt-2 sm:pt-0">
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="flex items-center gap-2 sm:self-center border-t border-white/10 sm:border-t-0 pt-2 sm:pt-0">
+              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 Active Session
               </span>
             </div>
@@ -694,41 +696,50 @@ export default function Settings() {
 
       {/* Team Management Section (Admin Only) */}
       {hasAdminRights && (
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-foreground text-xl">
+        <Card className="bg-card border border-border/80 rounded-3xl shadow-sm">
+          <CardHeader className="pb-3 border-b border-border/50">
+            <CardTitle className="flex items-center gap-2 text-foreground text-lg sm:text-xl font-display font-black">
               <Users className="w-5 h-5 text-primary" />
               Team Management
             </CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardDescription className="text-muted-foreground text-xs sm:text-sm">
               Manage Staff and Area Managers with area assignments and login credentials
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-4">
             <Tabs defaultValue="staff" className="space-y-5">
-              <TabsList className="bg-muted/60 p-1 border border-border/80 w-full overflow-x-auto flex flex-nowrap gap-1">
-                <TabsTrigger value="staff" className="flex items-center gap-1.5 text-sm font-medium px-3 py-2 whitespace-nowrap flex-shrink-0">
-                  <Users className="w-4 h-4 text-primary" />
+              {/* Native App-Style Segmented Control for Mobile & Desktop */}
+              <TabsList className="bg-muted/70 p-1.5 border border-border/80 w-full grid grid-cols-3 gap-1 rounded-2xl h-auto">
+                <TabsTrigger
+                  value="staff"
+                  className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold py-2 rounded-xl transition-all data-[state=active]:bg-card data-[state=active]:shadow-xs"
+                >
+                  <Users className="w-4 h-4 text-primary shrink-0" />
                   <span>Staff</span>
-                  <span className="hidden md:inline">Members</span>
-                  <Badge variant="secondary" className="ml-0.5 px-1.5 py-0 text-xs font-bold">
+                  <Badge variant="secondary" className="ml-0.5 px-1.5 py-0 text-[10px] font-black hidden xs:inline-flex">
                     {staffList.length}
                   </Badge>
                 </TabsTrigger>
 
-                <TabsTrigger value="managers" className="flex items-center gap-1.5 text-sm font-medium px-3 py-2 whitespace-nowrap flex-shrink-0">
-                  <UserCheck className="w-4 h-4 text-primary" />
+                <TabsTrigger
+                  value="managers"
+                  className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold py-2 rounded-xl transition-all data-[state=active]:bg-card data-[state=active]:shadow-xs"
+                >
+                  <UserCheck className="w-4 h-4 text-primary shrink-0" />
                   <span>Managers</span>
-                  <Badge variant="secondary" className="ml-0.5 px-1.5 py-0 text-xs font-bold">
+                  <Badge variant="secondary" className="ml-0.5 px-1.5 py-0 text-[10px] font-black hidden xs:inline-flex">
                     {managersList.length}
                   </Badge>
                 </TabsTrigger>
 
-                <TabsTrigger value="investors" className="flex items-center gap-1.5 text-sm font-medium px-3 py-2 whitespace-nowrap flex-shrink-0">
-                  <TrendingUp className="w-4 h-4 text-primary" />
+                <TabsTrigger
+                  value="investors"
+                  className="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold py-2 rounded-xl transition-all data-[state=active]:bg-card data-[state=active]:shadow-xs"
+                >
+                  <TrendingUp className="w-4 h-4 text-primary shrink-0" />
                   <span>Investors</span>
-                  <Badge variant="secondary" className="ml-0.5 px-1.5 py-0 text-xs font-bold">
+                  <Badge variant="secondary" className="ml-0.5 px-1.5 py-0 text-[10px] font-black hidden xs:inline-flex">
                     {investorsList.length}
                   </Badge>
                 </TabsTrigger>
@@ -741,25 +752,25 @@ export default function Settings() {
                 {/* Search & Add Action Bar */}
                 <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
                   <div className="relative max-w-md flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     <Input
                       placeholder="Search staff by name, email, or area..."
                       value={staffSearch}
                       onChange={(e) => setStaffSearch(e.target.value)}
-                      className="pl-10 bg-input border-border"
+                      className="pl-10 h-10 rounded-xl bg-card border-border/80 text-xs sm:text-sm"
                     />
                   </div>
 
-                  <div className="flex items-center gap-3 self-end sm:self-auto">
-                    <Badge variant="outline" className="px-3 py-1.5 border-primary/30 text-primary hidden sm:inline-flex">
+                  <div className="flex items-center gap-3 self-end sm:self-auto w-full sm:w-auto">
+                    <Badge variant="outline" className="px-3 py-1.5 border-primary/30 text-primary hidden sm:inline-flex text-xs font-bold">
                       Total Staff: {staffList.length}
                     </Badge>
 
                     <Button
-                      className="gradient-sunset text-primary-foreground shadow-golden"
+                      className="w-full sm:w-auto h-10 px-4 rounded-xl text-xs font-black bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-600/25 active:scale-95 transition-all cursor-pointer"
                       onClick={handleOpenAddStaff}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus className="w-4 h-4 mr-1.5 stroke-[2.5]" />
                       Add Staff
                     </Button>
                   </div>
@@ -767,9 +778,7 @@ export default function Settings() {
 
                 {/* Staff Cards Grid */}
                 {isStaffLoading ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
+                  <AdminLoadingState title="Loading Staff..." minHeight="min-h-[220px]" />
                 ) : filteredStaff.length === 0 ? (
                   <div className="text-center py-12 border border-dashed border-border rounded-xl">
                     <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-40" />
@@ -869,10 +878,10 @@ export default function Settings() {
                     </Badge>
 
                     <Button
-                      className="gradient-sunset text-primary-foreground shadow-golden"
+                      className="w-full sm:w-auto h-10 px-4 rounded-xl text-xs font-black bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-600/25 active:scale-95 transition-all cursor-pointer"
                       onClick={handleOpenAddManager}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus className="w-4 h-4 mr-1.5 stroke-[2.5]" />
                       Add Area Manager
                     </Button>
                   </div>
@@ -880,9 +889,7 @@ export default function Settings() {
 
                 {/* Managers Cards Grid */}
                 {isManagersLoading ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
+                  <AdminLoadingState title="Loading Managers..." minHeight="min-h-[220px]" />
                 ) : filteredManagers.length === 0 ? (
                   <div className="text-center py-12 border border-dashed border-border rounded-xl">
                     <UserCheck className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-40" />
@@ -980,10 +987,10 @@ export default function Settings() {
                     </Badge>
 
                     <Button
-                      className="gradient-sunset text-primary-foreground shadow-golden"
+                      className="w-full sm:w-auto h-10 px-4 rounded-xl text-xs font-black bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-600/25 active:scale-95 transition-all cursor-pointer"
                       onClick={handleOpenAddInvestor}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus className="w-4 h-4 mr-1.5 stroke-[2.5]" />
                       Add Investor
                     </Button>
                   </div>
@@ -991,9 +998,7 @@ export default function Settings() {
 
                 {/* Investors Cards Grid */}
                 {isInvestorsLoading ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
+                  <AdminLoadingState title="Loading Investors..." minHeight="min-h-[220px]" />
                 ) : filteredInvestors.length === 0 ? (
                   <div className="text-center py-12 border border-dashed border-border rounded-xl">
                     <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-40" />

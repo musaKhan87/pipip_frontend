@@ -37,6 +37,7 @@ import {
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { useAuth } from "../../lib/AuthProvider";
+import AdminLoadingState from "../../components/admin/AdminLoadingState";
 
 export default function Areas() {
   const [isOpen, setIsOpen] = useState(false);
@@ -64,7 +65,16 @@ export default function Areas() {
   const updateArea = useUpdateArea();
   const deleteArea = useDeleteArea();
 
-  const activeCount = areas?.filter((a) => a.is_active).length || 0;
+  // Robust check: An area is active if not explicitly set to false/inactive/deleted
+  const isHubActive = (area) => {
+    if (!area) return false;
+    if (area.is_deleted) return false;
+    if (area.is_active === false) return false;
+    if (area.status === "inactive") return false;
+    return true;
+  };
+
+  const activeCount = areas?.filter(isHubActive).length || 0;
   const inactiveCount = (areas?.length || 0) - activeCount;
 
   const filteredAreas = areas?.filter(
@@ -275,65 +285,65 @@ export default function Areas() {
         )}
       </div>
 
-      {/* ── KPI Stats Strip ───────────────────────────────────────── */}
+      {/* ── KPI Stats Strip (Native App Grid on Mobile) ────────── */}
       {areas && (
-        <div className="flex sm:grid sm:grid-cols-3 gap-3 overflow-x-auto pb-1 scrollbar-none">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           {/* Total Hubs */}
-          <div className="min-w-[150px] sm:min-w-0 flex-1 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+          <div className="bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-blue-900/70 dark:text-blue-300">
                 Total Hubs
               </span>
-              <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                <Building2 className="w-3.5 h-3.5" />
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-100 dark:bg-blue-900/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <Building2 className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
               </div>
             </div>
             <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-2xl sm:text-3xl font-extrabold text-blue-950 dark:text-blue-100">
+              <span className="text-xl sm:text-3xl font-extrabold text-blue-950 dark:text-blue-100">
                 {areas.length}
               </span>
-              <span className="text-[11px] font-semibold text-blue-700/80 dark:text-blue-300">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-blue-700/80 dark:text-blue-300 hidden xs:inline">
                 Registered
               </span>
             </div>
           </div>
 
           {/* Active Hubs */}
-          <div className="min-w-[150px] sm:min-w-0 flex-1 bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+          <div className="bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/60 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between shadow-2xs">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-900/70 dark:text-emerald-300 flex items-center gap-1.5">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-900/70 dark:text-emerald-300 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Active Hubs
+                Active
               </span>
-              <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="w-3.5 h-3.5" />
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
               </div>
             </div>
             <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-950 dark:text-emerald-100">
+              <span className="text-xl sm:text-3xl font-extrabold text-emerald-950 dark:text-emerald-100">
                 {activeCount}
               </span>
-              <span className="text-[11px] font-semibold text-emerald-700/80 dark:text-emerald-300">
-                Open for Bookings
+              <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-700/80 dark:text-emerald-300 hidden xs:inline">
+                Open
               </span>
             </div>
           </div>
 
-          {/* Inactive */}
-          <div className="min-w-[150px] sm:min-w-0 flex-1 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+          {/* Inactive Hubs */}
+          <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-amber-900/70 dark:text-amber-300">
-                Inactive Hubs
+                Inactive
               </span>
-              <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                <AlertCircle className="w-3.5 h-3.5" />
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                <AlertCircle className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
               </div>
             </div>
             <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-2xl sm:text-3xl font-extrabold text-amber-950 dark:text-amber-100">
+              <span className="text-xl sm:text-3xl font-extrabold text-amber-950 dark:text-amber-100">
                 {inactiveCount}
               </span>
-              <span className="text-[11px] font-semibold text-amber-700/80 dark:text-amber-300">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-amber-700/80 dark:text-amber-300 hidden xs:inline">
                 Paused
               </span>
             </div>
@@ -362,52 +372,49 @@ export default function Areas() {
 
       {/* ── Hub Cards Grid ────────────────────────────────────────── */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="animate-pulse bg-card border-border/70 rounded-2xl p-4 space-y-3">
-              <div className="h-5 bg-muted rounded w-2/3" />
-              <div className="h-4 bg-muted rounded w-1/3" />
-              <div className="h-8 bg-muted rounded w-full" />
-            </Card>
-          ))}
-        </div>
+        <AdminLoadingState
+          title="Loading Operational Hubs..."
+          subtitle="Fetching territory locations & fleet boundaries"
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-          {filteredAreas?.map((area, index) => (
-            <motion.div
-              key={area._id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.02 }}
-            >
-              <Card className="bg-card border border-border/80 hover:border-slate-400 dark:hover:border-slate-600 rounded-2xl shadow-2xs hover:shadow-xs transition-all p-3.5 sm:p-4 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
-                        <MapPin className="w-4 h-4" />
+          {filteredAreas?.map((area, index) => {
+            const active = isHubActive(area);
+            return (
+              <motion.div
+                key={area._id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.02 }}
+              >
+                <Card className="bg-card border border-border/80 hover:border-slate-400 dark:hover:border-slate-600 rounded-2xl shadow-2xs hover:shadow-xs transition-all p-3.5 sm:p-4 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                          <MapPin className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-bold text-foreground text-sm truncate">
+                            {area.name}
+                          </h3>
+                          <p className="text-[11px] text-muted-foreground font-medium truncate">
+                            {area.city || "Mumbai"}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-foreground text-sm truncate">
-                          {area.name}
-                        </h3>
-                        <p className="text-[11px] text-muted-foreground font-medium">
-                          {area.city || "Mumbai"}
-                        </p>
-                      </div>
-                    </div>
 
-                    <Badge
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 border capitalize ${
-                        area.is_active
-                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                          : "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
-                      }`}
-                    >
-                      {area.is_active ? "Active" : "Inactive"}
-                    </Badge>
+                      <Badge
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 border capitalize ${
+                          active
+                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                            : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                        }`}
+                      >
+                        {active ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
 
                 {isAdmin && (
                   <div className="flex items-center gap-2 pt-3 mt-2 border-t border-border/50">
@@ -434,7 +441,8 @@ export default function Areas() {
                 )}
               </Card>
             </motion.div>
-          ))}
+          );
+        })}
 
           {filteredAreas?.length === 0 && (
             <div className="col-span-full text-center py-12 border border-dashed border-border rounded-2xl bg-card/20">

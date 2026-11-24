@@ -352,17 +352,17 @@ export default function ActiveRentals() {
           {/* Search & Sort Controls */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1 sm:w-72">
-              <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
               <Input
                 placeholder="Search bike, plate, rider..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9.5 pr-8 h-10 rounded-2xl bg-card border-border/80 text-xs sm:text-sm font-medium shadow-xs"
+                className="pl-10 pr-8 h-10 rounded-2xl bg-card border-border/80 text-xs sm:text-sm font-medium shadow-xs"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer z-10"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>

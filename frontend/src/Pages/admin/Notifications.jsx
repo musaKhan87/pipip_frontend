@@ -124,28 +124,32 @@ export default function NotificationsCenter() {
   };
 
   return (
-    <div className="w-full space-y-6">
-      {/* Header matching the layout of other panels */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="w-full space-y-5 sm:space-y-6">
+      {/* Header matching the modern app layout */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div>
-          <h1 className="text-3xl font-display text-gradient-sunset">Notifications Center</h1>
-          <p className="text-muted-foreground">Manage real-time online orders and bike document validity alerts</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-extrabold tracking-tight text-foreground">
+            Notification Center
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Real-time online orders, hub requests, and fleet compliance alerts
+          </p>
         </div>
       </div>
 
       {/* Sleek, premium designed Mobile push Link card */}
-      <Card className="bg-card border-border shadow-golden overflow-hidden">
-        <CardContent className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-rose-500/10 dark:bg-rose-500/5 rounded-xl border border-rose-500/20 shrink-0">
-              <Smartphone className="w-6 h-6 text-rose-500 animate-pulse" />
+      <Card className="bg-card border-border shadow-sm overflow-hidden">
+        <CardContent className="p-4 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-3 bg-blue-500/10 dark:bg-blue-500/15 rounded-2xl border border-blue-500/20 shrink-0">
+              <Smartphone className="w-6 h-6 text-blue-600 dark:text-blue-400 animate-pulse" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg text-foreground">
+              <h3 className="font-bold text-base sm:text-lg text-foreground">
                 Mobile Push Notification Handshake
               </h3>
-              <p className="text-muted-foreground text-sm mt-1 max-w-xl leading-relaxed">
-                Connect your smartphone browser to register for high-priority lock screen push banners the exact second a client checkouts online.
+              <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 max-w-xl leading-relaxed">
+                Connect your mobile browser to receive instant lock-screen notifications the exact second a rider books online.
               </p>
             </div>
           </div>
@@ -157,7 +161,7 @@ export default function NotificationsCenter() {
               "w-full md:w-auto h-11 px-5 rounded-xl font-semibold transition-all duration-300 shadow-md flex items-center justify-center gap-2",
               deviceLinked
                 ? "bg-zinc-100 text-zinc-500 border border-zinc-200 hover:bg-zinc-100 shadow-none cursor-default dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400"
-                : "gradient-sunset text-primary-foreground hover:scale-[1.02]"
+                : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/25 active:scale-95 cursor-pointer"
             )}
           >
             {deviceLinked ? (
@@ -306,7 +310,7 @@ export default function NotificationsCenter() {
                   "rounded-2xl border transition-all duration-200 overflow-hidden",
                   log.read
                     ? "bg-card/50 border-border/60 opacity-75 shadow-none"
-                    : "bg-card border-l-4 border-l-rose-500 border-border shadow-xs ring-1 ring-zinc-500/5",
+                    : "bg-card border-l-4 border-l-blue-600 border-border shadow-sm ring-1 ring-blue-500/10",
                   hasRedirect && "cursor-pointer hover:bg-muted/40"
                 )}
               >
@@ -316,7 +320,7 @@ export default function NotificationsCenter() {
                       className={cn(
                         "p-2 rounded-xl shrink-0 mt-0.5",
                         log.type === "order"
-                          ? "bg-rose-500/15 text-rose-600 animate-bounce"
+                          ? "bg-blue-500/15 text-blue-600 animate-pulse"
                           : log.type === "expiry"
                           ? "bg-amber-500/15 text-amber-600"
                           : "bg-muted text-muted-foreground",

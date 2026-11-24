@@ -1361,17 +1361,17 @@ const filteredBikes = (bikes || []).filter((bike) => {
           <div className="flex flex-col sm:flex-row items-center gap-2.5 flex-1 max-w-2xl">
             {/* Search Input */}
             <div className="relative flex-1 w-full">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" />
               <Input
                 placeholder="Search by model, plate, or vehicle name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9.5 pr-8 h-10 bg-white border-slate-200 rounded-2xl text-xs sm:text-sm font-medium shadow-xs"
+                className="pl-10 pr-8 h-10 bg-white border-slate-200 rounded-2xl text-xs sm:text-sm font-medium shadow-xs"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer z-10"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>

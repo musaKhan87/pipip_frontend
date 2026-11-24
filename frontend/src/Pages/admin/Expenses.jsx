@@ -728,11 +728,11 @@ export default function Expenses() {
             transition={{ duration: 0.15 }}
             className="space-y-4 sm:space-y-6"
           >
-            {/* 📊 Total Expense Calculation & Summary Metric Cards */}
-            <div className="flex sm:grid sm:grid-cols-4 gap-3 overflow-x-auto pb-1 scrollbar-none">
-              <div className="min-w-[160px] sm:min-w-0 flex-1 bg-rose-50/70 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+            {/* 📊 Total Expense Calculation & Summary Metric Cards (Native 2x2 App Grid on Mobile) */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+              <div className="bg-rose-50/70 dark:bg-rose-950/20 border border-rose-200/80 dark:border-rose-900/60 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-rose-900/70 dark:text-rose-300">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-rose-900/70 dark:text-rose-300 truncate">
                     {periodFilter === "day"
                       ? "Today's Total"
                       : periodFilter === "weekly"
@@ -743,65 +743,65 @@ export default function Expenses() {
                             ? "Custom Total"
                             : "Total Expenses"}
                   </span>
-                  <div className="w-7 h-7 rounded-full bg-rose-100 dark:bg-rose-900/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
-                    <Coins className="w-3.5 h-3.5" />
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-rose-100 dark:bg-rose-900/60 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+                    <Coins className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline justify-between">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-rose-950 dark:text-rose-100">
+                  <span className="text-xl sm:text-3xl font-extrabold text-rose-950 dark:text-rose-100 truncate">
                     ₹{totalExpenseAmount.toLocaleString()}
                   </span>
-                  <span className="text-[11px] font-semibold text-rose-700/80 dark:text-rose-300">
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-rose-700/80 dark:text-rose-300">
                     {totalExpenseCount} Claims
                   </span>
                 </div>
               </div>
 
-              <div className="min-w-[160px] sm:min-w-0 flex-1 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+              <div className="bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-blue-900/70 dark:text-blue-300">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-blue-900/70 dark:text-blue-300 truncate">
                     Total Claims
                   </span>
-                  <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                    <FileText className="w-3.5 h-3.5" />
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-100 dark:bg-blue-900/60 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                    <FileText className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline justify-between">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-blue-950 dark:text-blue-100">
+                  <span className="text-xl sm:text-3xl font-extrabold text-blue-950 dark:text-blue-100 truncate">
                     {totalExpenseCount}
                   </span>
-                  <span className="text-[11px] font-semibold text-blue-700/80 dark:text-blue-300">
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-blue-700/80 dark:text-blue-300 truncate">
                     Avg ₹{averageExpense.toLocaleString()}
                   </span>
                 </div>
               </div>
 
-              <div className="min-w-[160px] sm:min-w-0 flex-1 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+              <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-amber-900/70 dark:text-amber-300">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-amber-900/70 dark:text-amber-300 truncate">
                     Highest Claim
                   </span>
-                  <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                    <TrendingUp className="w-3.5 h-3.5" />
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                    <TrendingUp className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline justify-between">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-amber-950 dark:text-amber-100">
+                  <span className="text-xl sm:text-3xl font-extrabold text-amber-950 dark:text-amber-100 truncate">
                     ₹{highestExpense.toLocaleString()}
                   </span>
-                  <span className="text-[11px] font-semibold text-amber-700/80 dark:text-amber-300">
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-amber-700/80 dark:text-amber-300">
                     Single Peak
                   </span>
                 </div>
               </div>
 
-              <div className="min-w-[160px] sm:min-w-0 flex-1 bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200/80 dark:border-indigo-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+              <div className="bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200/80 dark:border-indigo-900/60 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-indigo-900/70 dark:text-indigo-300">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-indigo-900/70 dark:text-indigo-300 truncate">
                     Active Period
                   </span>
-                  <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                    <Calendar className="w-3.5 h-3.5" />
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                    <Calendar className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-baseline justify-between">

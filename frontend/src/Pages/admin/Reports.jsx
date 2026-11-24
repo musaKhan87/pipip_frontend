@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import {api , useBookingStats, useBikeRevenueReport, useIdleBikesReport, useDailyRevenueReport} from '../../hooks/useReports';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line , Legend } from 'recharts';
-import { Download, TrendingUp, Bike, DollarSign, Calendar, AlertTriangle , Filter , X , CheckCircle2 } from 'lucide-react';
+import { Download, TrendingUp, Bike, DollarSign, Calendar, AlertTriangle, Filter, X, CheckCircle2, Clock } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import * as XLSX from "xlsx"; // Import SheetJS (the package you installed)
 import {useAuth} from "../../lib/AuthProvider";
@@ -1076,88 +1076,88 @@ export default function Reports() {
         </CardContent>
       </Card>
 
-      {/* ── Summary Cards ─────────────────────────────────────────────── */}
-      <div className="flex sm:grid sm:grid-cols-4 gap-3 overflow-x-auto pb-1 scrollbar-none">
+      {/* ── Summary Cards (Native 2x2 App Grid on Mobile) ─────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         {/* Total Bookings */}
-        <div className="min-w-[155px] sm:min-w-0 flex-1 bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+        <div className="bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/60 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-blue-900/70 dark:text-blue-300">
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-blue-900/70 dark:text-blue-300 truncate">
               Total Bookings
             </span>
-            <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <Calendar className="w-3.5 h-3.5" />
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-100 dark:bg-blue-900/60 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+              <Calendar className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl sm:text-3xl font-extrabold text-blue-950 dark:text-blue-100">
+            <span className="text-xl sm:text-3xl font-extrabold text-blue-950 dark:text-blue-100 truncate">
               {stats?.total_bookings ?? 0}
             </span>
-            <span className="text-[11px] font-semibold text-blue-700/80 dark:text-blue-300">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-blue-700/80 dark:text-blue-300">
               Rentals
             </span>
           </div>
         </div>
 
         {/* Fleet Revenue */}
-        <div className="min-w-[155px] sm:min-w-0 flex-1 bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+        <div className="bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/60 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-900/70 dark:text-emerald-300">
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-900/70 dark:text-emerald-300 truncate">
               Fleet Revenue
             </span>
-            <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <DollarSign className="w-3.5 h-3.5" />
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+              <DollarSign className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl sm:text-3xl font-extrabold text-emerald-950 dark:text-emerald-100 truncate">
+            <span className="text-xl sm:text-3xl font-extrabold text-emerald-950 dark:text-emerald-100 truncate">
               ₹{(stats?.total_revenue ?? 0).toLocaleString()}
             </span>
-            <span className="text-[11px] font-semibold text-emerald-700/80 dark:text-emerald-300">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-700/80 dark:text-emerald-300">
               Earned
             </span>
           </div>
         </div>
 
         {/* Completion Rate */}
-        <div className="min-w-[155px] sm:min-w-0 flex-1 bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200/80 dark:border-indigo-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+        <div className="bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200/80 dark:border-indigo-900/60 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-indigo-900/70 dark:text-indigo-300">
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-indigo-900/70 dark:text-indigo-300 truncate">
               Completion Rate
             </span>
-            <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <TrendingUp className="w-3.5 h-3.5" />
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+              <TrendingUp className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl sm:text-3xl font-extrabold text-indigo-950 dark:text-indigo-100">
+            <span className="text-xl sm:text-3xl font-extrabold text-indigo-950 dark:text-indigo-100">
               {stats?.total_bookings
                 ? Math.round(
                     (stats.completed_bookings / stats.total_bookings) * 100,
                   )
                 : 0}%
             </span>
-            <span className="text-[11px] font-semibold text-indigo-700/80 dark:text-indigo-300">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-indigo-700/80 dark:text-indigo-300">
               Success
             </span>
           </div>
         </div>
 
         {/* Idle Bikes */}
-        <div className="min-w-[155px] sm:min-w-0 flex-1 bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 rounded-2xl p-3.5 flex flex-col justify-between shadow-2xs">
+        <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/60 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-amber-900/70 dark:text-amber-300">
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-amber-900/70 dark:text-amber-300 truncate">
               Idle Vehicles
             </span>
-            <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
-              <AlertTriangle className="w-3.5 h-3.5" />
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-amber-100 dark:bg-amber-900/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+              <Clock className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl sm:text-3xl font-extrabold text-amber-950 dark:text-amber-100">
+            <span className="text-xl sm:text-3xl font-extrabold text-amber-950 dark:text-amber-100">
               {idleBikes?.length ?? 0}
             </span>
-            <span className="text-[11px] font-semibold text-amber-700/80 dark:text-amber-300">
-              Standby
+            <span className="text-[10px] sm:text-[11px] font-semibold text-amber-700/80 dark:text-amber-300">
+              Ready
             </span>
           </div>
         </div>

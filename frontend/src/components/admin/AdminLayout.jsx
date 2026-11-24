@@ -1,7 +1,8 @@
 import { Outlet, Navigate, useLocation, Link } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 import NotFound from "../../Pages/NotFound";
-import { Loader2, MapPin, Bell, Radio } from "lucide-react";
+import { MapPin, Bell, Radio } from "lucide-react";
+import AdminLoadingState from "./AdminLoadingState";
 import { useAuth } from "../../lib/AuthProvider";
 import { useAdminArea } from "../../lib/AreaContext";
 import HubChecklistDropdown from "./HubChecklistDropdown";
@@ -235,11 +236,12 @@ export default function AdminLayout() {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <AdminLoadingState
+          title="Loading Operations Console..."
+          subtitle="Verifying administrative session & synchronizing fleet telemetry"
+          minHeight="min-h-[400px]"
+        />
       </div>
     );
   }

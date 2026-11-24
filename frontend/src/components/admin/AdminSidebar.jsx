@@ -548,7 +548,7 @@ export default function AdminSidebar({ unreadCount }) {
 
         {/* 3. Center Elevated Quick-Action Button (⚡ New Booking) */}
         <NavLink
-          to="/admin/panel/booking"
+          to="/admin/panel/bookings"
           className={({ isActive }) =>
             cn(
               "relative -top-3 flex items-center justify-center w-12 h-12 rounded-2xl shadow-xl transition-all cursor-pointer active:scale-90 border-2 border-slate-950",
@@ -562,22 +562,22 @@ export default function AdminSidebar({ unreadCount }) {
           <Plus className="w-6 h-6 stroke-[3]" />
         </NavLink>
 
-        {/* 4. Fleet Scheduler */}
+        {/* 4. Fleet Vehicles */}
         <NavLink
-          to="/admin/panel/scheduler"
+          to="/admin/panel/bikes"
           className={({ isActive }) =>
             cn(
               "flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl transition-all cursor-pointer min-w-[50px] relative active:scale-90",
-              isActive ? "text-blue-400 font-black" : "text-slate-400 hover:text-white font-semibold"
+              isActive ? "text-cyan-400 font-black" : "text-slate-400 hover:text-white font-semibold"
             )
           }
         >
           {({ isActive }) => (
             <>
-              <Calendar className={`w-4 h-4 mb-0.5 ${isActive ? "text-blue-400 stroke-[2.5]" : ""}`} />
-              <span className="text-[10px] leading-tight">Plan</span>
+              <Bike className={`w-4 h-4 mb-0.5 ${isActive ? "text-cyan-400 stroke-[2.5]" : ""}`} />
+              <span className="text-[10px] leading-tight">Fleet</span>
               {isActive && (
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 absolute -bottom-0.5 shadow-sm shadow-blue-400 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 absolute -bottom-0.5 shadow-sm shadow-cyan-400 animate-pulse" />
               )}
             </>
           )}
