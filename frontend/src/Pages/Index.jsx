@@ -86,6 +86,18 @@ const Index = () => {
   const navigate = useNavigate();
   const { data: bikes } = useBikes();
   const [activeStep, setActiveStep] = useState(0);
+  const [isAutoPlayPaused, setIsAutoPlayPaused] = useState(false);
+
+  // Auto-advance through 3 steps smoothly with auto-play
+  useEffect(() => {
+    if (isAutoPlayPaused) return;
+
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % stepsData.length);
+    }, 4500);
+
+    return () => clearInterval(timer);
+  }, [isAutoPlayPaused]);
 
   // Dynamic live bike cards with actual rates from catalog & direct booking navigation
   const fleetModels = useMemo(() => {
@@ -149,18 +161,18 @@ const Index = () => {
         {/* ======================================================== */}
         {/* 🛣️ INTERACTIVE CONNECTED HIGHWAY: 3-STEP JOURNEY        */}
         {/* ======================================================== */}
-        <section className="bg-gradient-to-b from-[#F1F5F9]/90 via-white to-[#F8FAFC] border-y border-slate-200/80 py-14 sm:py-20 relative overflow-hidden">
+        <section className="bg-gradient-to-b from-[#F1F5F9]/90 via-white to-[#F8FAFC] border-y border-slate-200/80 py-12 sm:py-16 relative overflow-hidden">
           {/* Subtle Ambient Radial Lighting */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[380px] bg-blue-500/5 rounded-full blur-[140px] pointer-events-none" />
 
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
             {/* Section Header */}
-            <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
+            <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 text-blue-800 border border-blue-300/40 text-xs font-black shadow-2xs mb-3.5"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 text-blue-800 border border-blue-300/40 text-xs font-black shadow-2xs mb-3"
               >
                 <Sparkles className="w-3.5 h-3.5 text-blue-600" />
                 <span>EFFORTLESS 3-STEP JOURNEY</span>
@@ -179,25 +191,19 @@ const Index = () => {
                 </span>
               </motion.h2>
 
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="text-xs sm:text-sm md:text-base text-slate-600 mt-3 max-w-xl mx-auto leading-relaxed"
-              >
+              <p className="text-xs sm:text-sm md:text-base text-slate-600 mt-2.5 max-w-xl mx-auto leading-relaxed">
                 Choose your ride, reserve with a{" "}
                 <span className="font-bold text-slate-900 underline decoration-amber-400 decoration-2 underline-offset-2">
                   ₹200 token
                 </span>
                 , and pick up from any Mumbai hub in under 60 seconds.
-              </motion.p>
+              </p>
             </div>
 
-            {/* Highway Connected Station Rail (No Plain Cards!) */}
-            <div className="max-w-4xl mx-auto mb-8">
+            {/* Highway Connected Station Rail */}
+            <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
               <div className="relative flex items-start justify-between">
-                {/* Connecting Neon Track Line - perfectly centered through the station discs */}
+                {/* Connecting Neon Track Line */}
                 <div className="absolute left-6 sm:left-7 right-6 sm:right-7 top-6 sm:top-7 -translate-y-1/2 h-1.5 bg-slate-200 rounded-full z-0 overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-blue-600 via-amber-500 to-emerald-500"
@@ -205,7 +211,7 @@ const Index = () => {
                     animate={{
                       width: activeStep === 0 ? "0%" : activeStep === 1 ? "50%" : "100%",
                     }}
-                    transition={{ duration: 0.4 }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
                   />
                 </div>
 
@@ -222,7 +228,7 @@ const Index = () => {
                     >
                       {/* Station Disc */}
                       <div
-                        className={`w-12 sm:w-14 h-12 sm:h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-md ${
+                        className={`w-12 sm:w-14 h-12 sm:h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-md ${
                           isActive
                             ? `bg-gradient-to-br ${step.color} text-white ring-4 ring-blue-500/20 scale-110 shadow-lg`
                             : isDone
@@ -238,9 +244,9 @@ const Index = () => {
                       </div>
 
                       {/* Station Label */}
-                      <div className="mt-2.5 text-center">
+                      <div className="mt-2 text-center">
                         <span
-                          className={`text-xs font-black tracking-tight block ${
+                          className={`text-xs font-black tracking-tight block transition-colors duration-300 ${
                             isActive
                               ? "text-blue-700 font-extrabold"
                               : "text-slate-600 group-hover:text-slate-900"
@@ -258,48 +264,67 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Interactive Live Stage Display (Dynamic Content based on Active Step) */}
-            <div className="max-w-4xl mx-auto">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeStep}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.25 }}
-                  className="bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-900/5 relative overflow-hidden"
-                >
-                  {/* Subtle Accent Glow */}
-                  <div
-                    className="absolute -top-20 -right-20 w-60 h-60 rounded-full blur-3xl pointer-events-none opacity-50"
-                    style={{ background: stepsData[activeStep].glowColor }}
+            {/* Interactive Live Stage Display */}
+            <div
+              className="max-w-4xl mx-auto"
+              onMouseEnter={() => setIsAutoPlayPaused(true)}
+              onMouseLeave={() => setIsAutoPlayPaused(false)}
+              onTouchStart={() => setIsAutoPlayPaused(true)}
+              onTouchEnd={() => {
+                setTimeout(() => setIsAutoPlayPaused(false), 3000);
+              }}
+            >
+              <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-8 shadow-xl shadow-slate-900/5 relative overflow-hidden">
+                {/* Subtle Auto-Play Micro Progress Line */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-slate-100 overflow-hidden">
+                  <motion.div
+                    key={activeStep + (isAutoPlayPaused ? "-paused" : "-play")}
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: isAutoPlayPaused ? 0 : 1 }}
+                    transition={{
+                      duration: isAutoPlayPaused ? 0 : 4.5,
+                      ease: "linear",
+                    }}
+                    style={{ originX: 0 }}
+                    className="h-full w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-amber-500 will-change-transform"
                   />
+                </div>
 
-                  {/* Header info */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-5 border-b border-slate-100">
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                        PHASE {stepsData[activeStep].stepNum} OF 03
-                      </span>
-                      <h3 className="text-xl sm:text-2xl font-display font-black text-slate-900 mt-1">
-                        {stepsData[activeStep].title}
-                      </h3>
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-500 max-w-md sm:text-right">
-                      {stepsData[activeStep].desc}
-                    </p>
+                {/* Subtle Accent Glow */}
+                <div
+                  className="absolute -top-20 -right-20 w-60 h-60 rounded-full blur-3xl pointer-events-none opacity-40 transition-colors duration-500"
+                  style={{ background: stepsData[activeStep].glowColor }}
+                />
+
+                {/* Header info */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 sm:pb-5 border-b border-slate-100 relative z-10">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                      PHASE {stepsData[activeStep].stepNum} OF 03
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-display font-black text-slate-900 mt-1 transition-opacity duration-300">
+                      {stepsData[activeStep].title}
+                    </h3>
                   </div>
+                  <p className="text-xs sm:text-sm text-slate-500 max-w-md sm:text-right transition-opacity duration-300">
+                    {stepsData[activeStep].desc}
+                  </p>
+                </div>
 
-                  {/* Body Content based on Step */}
-                  <div className="py-6">
+                {/* Smooth GPU Hardware-Accelerated Sliding Track */}
+                <div className="pt-4 sm:pt-6 overflow-hidden relative z-10">
+                  <div
+                    className="flex transition-transform duration-500 ease-in-out will-change-transform"
+                    style={{ transform: `translate3d(-${activeStep * 100}%, 0, 0)` }}
+                  >
                     {/* STEP 1: FLEET SHOWCASE */}
-                    {activeStep === 0 && (
+                    <div className="w-full shrink-0">
                       <div className="space-y-4">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                           {fleetModels.map((model, i) => (
                             <div
                               key={i}
-                              className="p-3.5 rounded-2xl bg-slate-50/80 hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-300 transition-all text-center group cursor-pointer"
+                              className="p-3 sm:p-3.5 rounded-2xl bg-slate-50/80 hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-300 transition-all text-center group cursor-pointer"
                               onClick={() => {
                                 if (model.bikeId) {
                                   navigate(`/book/${model.bikeId}`);
@@ -335,12 +360,12 @@ const Index = () => {
                           </button>
                         </div>
                       </div>
-                    )}
+                    </div>
 
                     {/* STEP 2: ₹200 TOKEN VALUE COMPARISON */}
-                    {activeStep === 1 && (
+                    <div className="w-full shrink-0">
                       <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                           {/* Traditional Way */}
                           <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/80 space-y-2">
                             <div className="flex items-center gap-2 text-rose-700 font-bold text-xs uppercase tracking-wider">
@@ -386,12 +411,12 @@ const Index = () => {
                           </button>
                         </div>
                       </div>
-                    )}
+                    </div>
 
                     {/* STEP 3: PICKUP CHECKLIST & HANDOVER */}
-                    {activeStep === 2 && (
+                    <div className="w-full shrink-0">
                       <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                           {stepsData[2].perks.map((perk, i) => (
                             <div
                               key={i}
@@ -423,10 +448,10 @@ const Index = () => {
                           </button>
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </motion.div>
-              </AnimatePresence>
+                </div>
+              </div>
             </div>
           </div>
         </section>
