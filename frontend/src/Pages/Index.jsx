@@ -6,6 +6,7 @@ import Hero from "../components/Hero";
 import RentalForm from "../components/RentalForm";
 import { useEffect, useState, useMemo, useRef } from "react";
 import FeaturedBikes from "../components/FeaturedBIke";
+import CarRentalBanner from "../components/CarRentalBanner";
 import CustomerReviews from "../components/CustomerReviews";
 import CustomerStories from "../components/CustomerStories";
 import MobileBottomNav from "../components/MobileBottomNav";
@@ -616,6 +617,11 @@ const Index = () => {
         {/* Featured Rides Section */}
         <div>
           <FeaturedBikes />
+        </div>
+
+        {/* Car Rental Promotional Banner & Inquiry Modal */}
+        <div className="content-auto">
+          <CarRentalBanner />
         </div>
 
         {/* Customer Reviews & Live Mumbai Activity */}

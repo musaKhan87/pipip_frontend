@@ -189,6 +189,30 @@ export default function AdminLayout() {
       ]);
     });
 
+    socket.on("carRentalRequestStream", (incomingAlert) => {
+      const dynamicChimeSound = new Audio(
+        "https://assets.mixkit.co/active_storage/sfx/2869/2869-600.wav",
+      );
+      dynamicChimeSound
+        .play()
+        .catch(() =>
+          console.log(
+            "Audio play blocked by browser sandbox until click gesture.",
+          ),
+        );
+
+      setLogs((prev) => [
+        {
+          ...incomingAlert,
+          id: incomingAlert.id || Date.now(),
+          type: incomingAlert.type || "car_rental",
+          read: false,
+          time: incomingAlert.time || "Just Now",
+        },
+        ...prev,
+      ]);
+    });
+
     return () => {
       socket.disconnect();
     };

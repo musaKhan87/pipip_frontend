@@ -11,6 +11,8 @@ import {
   Layers,
   ArrowRight,
   AlertTriangle,
+  Car,
+  Phone,
 } from "lucide-react";
 import axios from "axios";
 import { useOutletContext, useNavigate } from "react-router-dom";
@@ -235,6 +237,7 @@ export default function NotificationsCenter() {
           {[
             { id: "all", label: "All Alerts", count: logs.length },
             { id: "order", label: "Orders", count: logs.filter((l) => l.type === "order").length },
+            { id: "car_rental", label: "Car Rentals", count: logs.filter((l) => l.type === "car_rental").length },
             { id: "expiry", label: "Expiry / Compliance", count: logs.filter((l) => l.type === "expiry").length },
             { id: "unread", label: "Unread Only", count: logs.filter((l) => !l.read).length },
           ].map((tab) => {
@@ -273,12 +276,14 @@ export default function NotificationsCenter() {
           {logs
             .filter((log) => {
               if (activeFilter === "order") return log.type === "order";
+              if (activeFilter === "car_rental") return log.type === "car_rental";
               if (activeFilter === "expiry") return log.type === "expiry";
               if (activeFilter === "unread") return !log.read;
               return true;
             })
             .map((log) => {
             const isOrder = log.type === "order" && log.bookingData;
+            const isCarRental = log.type === "car_rental";
             const isExpiry = log.type === "expiry";
             const hasRedirect = isOrder || isExpiry;
             return (
@@ -310,6 +315,8 @@ export default function NotificationsCenter() {
                   "rounded-2xl border transition-all duration-200 overflow-hidden",
                   log.read
                     ? "bg-card/50 border-border/60 opacity-75 shadow-none"
+                    : isCarRental
+                    ? "bg-card border-l-4 border-l-emerald-500 border-border shadow-sm ring-1 ring-emerald-500/15"
                     : "bg-card border-l-4 border-l-blue-600 border-border shadow-sm ring-1 ring-blue-500/10",
                   hasRedirect && "cursor-pointer hover:bg-muted/40"
                 )}
@@ -321,6 +328,8 @@ export default function NotificationsCenter() {
                         "p-2 rounded-xl shrink-0 mt-0.5",
                         log.type === "order"
                           ? "bg-blue-500/15 text-blue-600 animate-pulse"
+                          : log.type === "car_rental"
+                          ? "bg-emerald-500/15 text-emerald-600"
                           : log.type === "expiry"
                           ? "bg-amber-500/15 text-amber-600"
                           : "bg-muted text-muted-foreground",
@@ -328,6 +337,8 @@ export default function NotificationsCenter() {
                     >
                       {log.type === "order" ? (
                         <Volume2 className="w-4 h-4" />
+                      ) : log.type === "car_rental" ? (
+                        <Car className="w-4 h-4" />
                       ) : log.type === "expiry" ? (
                         <AlertTriangle className="w-4 h-4" />
                       ) : (
@@ -346,6 +357,11 @@ export default function NotificationsCenter() {
                           >
                             {log.title}
                           </h4>
+                          {isCarRental && (
+                            <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.2 rounded-full border border-emerald-500/20 shrink-0">
+                              Car Rental Inquiry
+                            </span>
+                          )}
                           {log.areaName && (
                             <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.2 rounded-full border border-amber-500/20 shrink-0">
                               📍 {log.areaName}
@@ -359,6 +375,18 @@ export default function NotificationsCenter() {
                       <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line leading-relaxed break-words">
                         {log.message}
                       </p>
+                      {isCarRental && log.bookingData?.phone && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <a
+                            href={`tel:${log.bookingData.phone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 px-2.5 py-1 rounded-lg transition-colors"
+                          >
+                            <Phone className="w-3 h-3" />
+                            Call {log.bookingData.phone}
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
 
