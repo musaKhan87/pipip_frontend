@@ -4,14 +4,14 @@ import Footer from "../components/Footer";
 import Header from "../components/Header";
 import Hero from "../components/Hero";
 import RentalForm from "../components/RentalForm";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import FeaturedBikes from "../components/FeaturedBIke";
 import CustomerReviews from "../components/CustomerReviews";
 import CustomerStories from "../components/CustomerStories";
 import MobileBottomNav from "../components/MobileBottomNav";
 import useSEO from "../hooks/useSEO";
 import { useBikes } from "../hooks/useBikes";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import {
   Sparkles,
   ChevronRight,
@@ -86,18 +86,56 @@ const Index = () => {
   const navigate = useNavigate();
   const { data: bikes } = useBikes();
   const [activeStep, setActiveStep] = useState(0);
-  const [isAutoPlayPaused, setIsAutoPlayPaused] = useState(false);
+  const journeyRef = useRef(null);
+  const activeStepRef = useRef(0);
+  activeStepRef.current = activeStep;
 
-  // Auto-advance through 3 steps smoothly with auto-play
-  useEffect(() => {
-    if (isAutoPlayPaused) return;
+  // Native sticky scroll (zero spring-loop overhead, zero wheel hijacking):
+  // Only triggers a state update when crossing 0.33 / 0.67 thresholds.
+  const { scrollYProgress } = useScroll({
+    target: journeyRef,
+    offset: ["start start", "end end"],
+  });
 
-    const timer = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % stepsData.length);
-    }, 4500);
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    const next = latest < 0.33 ? 0 : latest < 0.67 ? 1 : 2;
+    if (next !== activeStepRef.current) {
+      setActiveStep(next);
+    }
+  });
 
-    return () => clearInterval(timer);
-  }, [isAutoPlayPaused]);
+  const handleStepClick = (index) => {
+    const el = journeyRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollable = el.offsetHeight - window.innerHeight;
+    const targets = [0.06, 0.5, 0.94];
+    const targetY = scrollTop + rect.top + Math.max(0, scrollable * targets[index]);
+    window.scrollTo({ top: targetY, behavior: "smooth" });
+  };
+
+  // Horizontal touch swipe support on mobile (scrolls smoothly to corresponding step)
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e) => {
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+      if (deltaX < 0 && activeStepRef.current < 2) {
+        handleStepClick(activeStepRef.current + 1);
+      } else if (deltaX > 0 && activeStepRef.current > 0) {
+        handleStepClick(activeStepRef.current - 1);
+      }
+    }
+  };
 
   // Dynamic live bike cards with actual rates from catalog & direct booking navigation
   const fleetModels = useMemo(() => {
@@ -161,291 +199,278 @@ const Index = () => {
         {/* ======================================================== */}
         {/* 🛣️ INTERACTIVE CONNECTED HIGHWAY: 3-STEP JOURNEY        */}
         {/* ======================================================== */}
-        <section className="bg-gradient-to-b from-[#F1F5F9]/90 via-white to-[#F8FAFC] border-y border-slate-200/80 py-12 sm:py-16 relative overflow-hidden">
-          {/* Subtle Ambient Radial Lighting */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[380px] bg-blue-500/5 rounded-full blur-[140px] pointer-events-none" />
+        <section
+          ref={journeyRef}
+          id="effortless-journey"
+          className="relative h-[280vh] sm:h-[300vh] bg-gradient-to-b from-[#F1F5F9]/90 via-white to-[#F8FAFC] border-y border-slate-200/80"
+        >
+          {/* Sticky Viewport-Aligned Frame */}
+          <div className="sticky top-14 sm:top-20 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-5rem)] flex flex-col justify-center py-2 sm:py-6 overflow-hidden">
+            {/* Subtle Ambient Radial Lighting (GPU-light gradient, zero blur filter lag) */}
+            <div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[380px] rounded-full pointer-events-none"
+              style={{
+                background: "radial-gradient(circle, rgba(59,130,246,0.06) 0%, rgba(59,130,246,0) 70%)",
+              }}
+            />
 
-          <div className="container mx-auto px-4 lg:px-8 relative z-10">
-            {/* Section Header */}
-            <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 text-blue-800 border border-blue-300/40 text-xs font-black shadow-2xs mb-3"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                <span>EFFORTLESS 3-STEP JOURNEY</span>
-              </motion.div>
-
-              <motion.h2
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4 }}
-                className="text-2xl sm:text-4xl lg:text-5xl font-display font-black text-slate-900 tracking-tight leading-[1.15]"
-              >
-                Rent in Minutes,{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500">
-                  Ride for Hours.
-                </span>
-              </motion.h2>
-
-              <p className="text-xs sm:text-sm md:text-base text-slate-600 mt-2.5 max-w-xl mx-auto leading-relaxed">
-                Choose your ride, reserve with a{" "}
-                <span className="font-bold text-slate-900 underline decoration-amber-400 decoration-2 underline-offset-2">
-                  ₹200 token
-                </span>
-                , and pick up from any Mumbai hub in under 60 seconds.
-              </p>
-            </div>
-
-            {/* Highway Connected Station Rail */}
-            <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
-              <div className="relative flex items-start justify-between">
-                {/* Connecting Neon Track Line */}
-                <div className="absolute left-6 sm:left-7 right-6 sm:right-7 top-6 sm:top-7 -translate-y-1/2 h-1.5 bg-slate-200 rounded-full z-0 overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-blue-600 via-amber-500 to-emerald-500"
-                    initial={{ width: "0%" }}
-                    animate={{
-                      width: activeStep === 0 ? "0%" : activeStep === 1 ? "50%" : "100%",
-                    }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                  />
+            <div className="container mx-auto px-3 sm:px-6 lg:px-8 relative z-10 w-full max-w-4xl">
+              {/* Section Header */}
+              <div className="text-center max-w-2xl mx-auto mb-3 sm:mb-6">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-800 border border-blue-300/40 text-[10px] sm:text-xs font-black shadow-2xs mb-1.5 sm:mb-2.5">
+                  <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600" />
+                  <span>EFFORTLESS 3-STEP JOURNEY</span>
                 </div>
 
-                {/* 3 Interactive Station Stops */}
-                {stepsData.map((step) => {
-                  const isActive = activeStep === step.id;
-                  const isDone = activeStep > step.id;
+                <h2 className="text-xl sm:text-3xl lg:text-4xl font-display font-black text-slate-900 tracking-tight leading-[1.15]">
+                  Rent in Minutes,{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500">
+                    Ride for Hours.
+                  </span>
+                </h2>
 
-                  return (
-                    <button
-                      key={step.id}
-                      onClick={() => setActiveStep(step.id)}
-                      className="relative z-10 flex flex-col items-center group cursor-pointer active:scale-95 transition-transform"
-                    >
-                      {/* Station Disc */}
-                      <div
-                        className={`w-12 sm:w-14 h-12 sm:h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-md ${
-                          isActive
-                            ? `bg-gradient-to-br ${step.color} text-white ring-4 ring-blue-500/20 scale-110 shadow-lg`
-                            : isDone
-                            ? "bg-slate-900 text-emerald-400"
-                            : "bg-white text-slate-400 border-2 border-slate-200 hover:border-slate-300"
-                        }`}
+                <p className="text-[11px] sm:text-xs md:text-sm text-slate-600 mt-1 sm:mt-1.5 max-w-xl mx-auto leading-relaxed">
+                  Choose your ride, reserve with a{" "}
+                  <span className="font-bold text-slate-900 underline decoration-amber-400 decoration-2 underline-offset-2">
+                    ₹200 token
+                  </span>
+                  , and pick up from any Mumbai hub in under 60 seconds.
+                </p>
+              </div>
+
+              {/* Highway Connected Station Rail */}
+              <div className="max-w-4xl mx-auto mb-3 sm:mb-6">
+                <div className="relative flex items-start justify-between">
+                  {/* Connecting Neon Track Line (pure CSS compositor scaleX) */}
+                  <div className="absolute left-6 sm:left-7 right-6 sm:right-7 top-5 sm:top-7 -translate-y-1/2 h-1.5 bg-slate-200 rounded-full z-0 overflow-hidden">
+                    <div
+                      className="h-full w-full bg-gradient-to-r from-blue-600 via-amber-500 to-emerald-500 will-change-transform"
+                      style={{
+                        transformOrigin: "left center",
+                        transform: `scaleX(${activeStep === 0 ? 0 : activeStep === 1 ? 0.5 : 1})`,
+                        transition: "transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)",
+                      }}
+                    />
+                  </div>
+
+                  {/* 3 Interactive Station Stops */}
+                  {stepsData.map((step) => {
+                    const isActive = activeStep === step.id;
+                    const isDone = activeStep > step.id;
+
+                    return (
+                      <button
+                        key={step.id}
+                        onClick={() => handleStepClick(step.id)}
+                        className="relative z-10 flex flex-col items-center group cursor-pointer active:scale-95 transition-transform"
                       >
-                        {isDone ? (
-                          <Check className="w-5 h-5 stroke-[3]" />
-                        ) : (
-                          <step.icon className="w-5 sm:w-6 h-5 sm:h-6" />
-                        )}
-                      </div>
-
-                      {/* Station Label */}
-                      <div className="mt-2 text-center">
-                        <span
-                          className={`text-xs font-black tracking-tight block transition-colors duration-300 ${
+                        {/* Station Disc */}
+                        <div
+                          className={`w-10 sm:w-14 h-10 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center transition-transform duration-300 shadow-md ${
                             isActive
-                              ? "text-blue-700 font-extrabold"
-                              : "text-slate-600 group-hover:text-slate-900"
+                              ? `bg-gradient-to-br ${step.color} text-white ring-4 ring-blue-500/20 scale-105 sm:scale-110 shadow-lg`
+                              : isDone
+                              ? "bg-slate-900 text-emerald-400"
+                              : "bg-white text-slate-400 border-2 border-slate-200 hover:border-slate-300"
                           }`}
                         >
-                          {step.label}
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-semibold uppercase">
-                          Step {step.stepNum}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Interactive Live Stage Display */}
-            <div
-              className="max-w-4xl mx-auto"
-              onMouseEnter={() => setIsAutoPlayPaused(true)}
-              onMouseLeave={() => setIsAutoPlayPaused(false)}
-              onTouchStart={() => setIsAutoPlayPaused(true)}
-              onTouchEnd={() => {
-                setTimeout(() => setIsAutoPlayPaused(false), 3000);
-              }}
-            >
-              <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-8 shadow-xl shadow-slate-900/5 relative overflow-hidden">
-                {/* Subtle Auto-Play Micro Progress Line */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-slate-100 overflow-hidden">
-                  <motion.div
-                    key={activeStep + (isAutoPlayPaused ? "-paused" : "-play")}
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: isAutoPlayPaused ? 0 : 1 }}
-                    transition={{
-                      duration: isAutoPlayPaused ? 0 : 4.5,
-                      ease: "linear",
-                    }}
-                    style={{ originX: 0 }}
-                    className="h-full w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-amber-500 will-change-transform"
-                  />
-                </div>
-
-                {/* Subtle Accent Glow */}
-                <div
-                  className="absolute -top-20 -right-20 w-60 h-60 rounded-full blur-3xl pointer-events-none opacity-40 transition-colors duration-500"
-                  style={{ background: stepsData[activeStep].glowColor }}
-                />
-
-                {/* Header info */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 sm:pb-5 border-b border-slate-100 relative z-10">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                      PHASE {stepsData[activeStep].stepNum} OF 03
-                    </span>
-                    <h3 className="text-xl sm:text-2xl font-display font-black text-slate-900 mt-1 transition-opacity duration-300">
-                      {stepsData[activeStep].title}
-                    </h3>
-                  </div>
-                  <p className="text-xs sm:text-sm text-slate-500 max-w-md sm:text-right transition-opacity duration-300">
-                    {stepsData[activeStep].desc}
-                  </p>
-                </div>
-
-                {/* Smooth GPU Hardware-Accelerated Sliding Track */}
-                <div className="pt-4 sm:pt-6 overflow-hidden relative z-10">
-                  <div
-                    className="flex transition-transform duration-500 ease-in-out will-change-transform"
-                    style={{ transform: `translate3d(-${activeStep * 100}%, 0, 0)` }}
-                  >
-                    {/* STEP 1: FLEET SHOWCASE */}
-                    <div className="w-full shrink-0">
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-                          {fleetModels.map((model, i) => (
-                            <div
-                              key={i}
-                              className="p-3 sm:p-3.5 rounded-2xl bg-slate-50/80 hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-300 transition-all text-center group cursor-pointer"
-                              onClick={() => {
-                                if (model.bikeId) {
-                                  navigate(`/book/${model.bikeId}`);
-                                } else {
-                                  navigate(`/catalog?cc=${model.fallbackCc}`);
-                                }
-                              }}
-                            >
-                              <span className="text-[9px] font-bold text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded-full inline-block mb-1">
-                                {model.tag}
-                              </span>
-                              <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                                {model.name}
-                              </p>
-                              <p className="text-[11px] text-slate-500">{model.cc}</p>
-                              <p className="text-xs font-black text-blue-600 mt-1">
-                                {model.rate}
-                              </p>
-                            </div>
-                          ))}
+                          {isDone ? (
+                            <Check className="w-4 sm:w-5 h-4 sm:h-5 stroke-[3]" />
+                          ) : (
+                            <step.icon className="w-4 sm:w-6 h-4 sm:h-6" />
+                          )}
                         </div>
-                        <div className="flex items-center justify-between pt-2">
-                          <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            Live Hub Availability • Sanity Inspected
+
+                        {/* Station Label */}
+                        <div className="mt-1.5 text-center">
+                          <span
+                            className={`text-[10px] sm:text-xs font-black tracking-tight block transition-colors duration-300 ${
+                              isActive
+                                ? "text-blue-700 font-extrabold"
+                                : "text-slate-600 group-hover:text-slate-900"
+                            }`}
+                          >
+                            {step.label}
                           </span>
-                          <button
-                            onClick={() => setActiveStep(1)}
-                            className="text-xs font-extrabold text-blue-700 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
-                          >
-                            <span>Next: See How ₹200 Token Works</span>
-                            <ChevronRight className="w-4 h-4" />
-                          </button>
+                          <span className="text-[8px] sm:text-[10px] text-slate-400 font-semibold uppercase">
+                            Step {step.stepNum}
+                          </span>
                         </div>
-                      </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Interactive Live Stage Display */}
+              <div
+                className="max-w-4xl mx-auto"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-7 shadow-xl shadow-slate-900/5 relative overflow-hidden">
+                  {/* Subtle Accent Glow (lightweight radial gradient for 60fps transitions) */}
+                  <div
+                    className="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none opacity-45"
+                    style={{
+                      background: `radial-gradient(circle, ${stepsData[activeStep].glowColor} 0%, transparent 70%)`,
+                    }}
+                  />
+
+                  {/* Header info */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-3 sm:pb-4 border-b border-slate-100 relative z-10">
+                    <div>
+                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        PHASE {stepsData[activeStep].stepNum} OF 03
+                      </span>
+                      <h3 className="text-base sm:text-2xl font-display font-black text-slate-900 mt-1 transition-opacity duration-300">
+                        {stepsData[activeStep].title}
+                      </h3>
                     </div>
+                    <p className="text-[11px] sm:text-xs md:text-sm text-slate-500 max-w-md sm:text-right transition-opacity duration-300">
+                      {stepsData[activeStep].desc}
+                    </p>
+                  </div>
 
-                    {/* STEP 2: ₹200 TOKEN VALUE COMPARISON */}
-                    <div className="w-full shrink-0">
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                          {/* Traditional Way */}
-                          <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/80 space-y-2">
-                            <div className="flex items-center gap-2 text-rose-700 font-bold text-xs uppercase tracking-wider">
-                              <XCircle className="w-4 h-4 text-rose-500" />
-                              <span>Traditional Rentals</span>
-                            </div>
-                            <p className="text-xs text-rose-900/80 leading-relaxed">
-                              {stepsData[1].comparison.traditional}
-                            </p>
-                            <span className="inline-block text-[10px] font-extrabold text-rose-700 bg-rose-100/80 px-2 py-0.5 rounded-md">
-                              Heavy Cash Locked Upfront ❌
-                            </span>
-                          </div>
-
-                          {/* Pipip Flexi-Token */}
-                          <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-300 space-y-2 shadow-xs">
-                            <div className="flex items-center gap-2 text-emerald-800 font-extrabold text-xs uppercase tracking-wider">
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                              <span>Pipip Flexi-Reserve</span>
-                            </div>
-                            <p className="text-xs text-emerald-950 leading-relaxed font-medium">
-                              {stepsData[1].comparison.pipip}
-                            </p>
-                            <span className="inline-block text-[10px] font-black text-emerald-800 bg-emerald-200/70 px-2.5 py-0.5 rounded-md">
-                              Just ₹200 to Lock • 100% Peace of Mind ✅
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2">
-                          <button
-                            onClick={() => setActiveStep(0)}
-                            className="text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
-                          >
-                            ← Back to Fleet
-                          </button>
-                          <button
-                            onClick={() => setActiveStep(2)}
-                            className="text-xs font-extrabold text-amber-700 hover:text-amber-800 flex items-center gap-1 cursor-pointer"
-                          >
-                            <span>Next: See 60-Second Pickup & Perks</span>
-                            <ChevronRight className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* STEP 3: PICKUP CHECKLIST & HANDOVER */}
-                    <div className="w-full shrink-0">
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                          {stepsData[2].perks.map((perk, i) => (
-                            <div
-                              key={i}
-                              className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 flex items-center gap-2.5"
-                            >
-                              <div className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0">
-                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  {/* Pure CSS GPU Compositor Sliding Track (zero JS frame overhead, always lands on full card) */}
+                  <div className="pt-3 sm:pt-5 overflow-hidden relative z-10" style={{ contain: "layout paint" }}>
+                    <div
+                      className="flex will-change-transform"
+                      style={{
+                        transform: `translate3d(-${activeStep * 100}%, 0, 0)`,
+                        transition: "transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)",
+                      }}
+                    >
+                      {/* STEP 1: FLEET SHOWCASE */}
+                      <div className="w-full shrink-0">
+                        <div className="space-y-3 sm:space-y-4">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                            {fleetModels.map((model, i) => (
+                              <div
+                                key={i}
+                                className="p-2 sm:p-3.5 rounded-xl sm:rounded-2xl bg-slate-50/80 hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-300 transition-all text-center group cursor-pointer"
+                                onClick={() => {
+                                  if (model.bikeId) {
+                                    navigate(`/book/${model.bikeId}`);
+                                  } else {
+                                    navigate(`/catalog?cc=${model.fallbackCc}`);
+                                  }
+                                }}
+                              >
+                                <span className="text-[8px] sm:text-[9px] font-bold text-blue-700 bg-blue-100/70 px-1.5 sm:px-2 py-0.5 rounded-full inline-block mb-1">
+                                  {model.tag}
+                                </span>
+                                <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                                  {model.name}
+                                </p>
+                                <p className="text-[10px] sm:text-[11px] text-slate-500">{model.cc}</p>
+                                <p className="text-xs sm:text-sm font-black text-blue-600 mt-0.5 sm:mt-1">
+                                  {model.rate}
+                                </p>
                               </div>
-                              <span className="text-xs font-semibold text-slate-800">
-                                {perk}
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between pt-1 sm:pt-2">
+                            <span className="text-[10px] sm:text-xs font-bold text-slate-500 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              Live Hub Availability • Sanity Inspected
+                            </span>
+                            <button
+                              onClick={() => handleStepClick(1)}
+                              className="text-[11px] sm:text-xs font-extrabold text-blue-700 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>Next: See How ₹200 Token Works</span>
+                              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* STEP 2: ₹200 TOKEN VALUE COMPARISON */}
+                      <div className="w-full shrink-0">
+                        <div className="space-y-3 sm:space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
+                            {/* Traditional Way */}
+                            <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-rose-50/60 border border-rose-200/80 space-y-1.5 sm:space-y-2">
+                              <div className="flex items-center gap-2 text-rose-700 font-bold text-[11px] sm:text-xs uppercase tracking-wider">
+                                <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500" />
+                                <span>Traditional Rentals</span>
+                              </div>
+                              <p className="text-[11px] sm:text-xs text-rose-900/80 leading-relaxed">
+                                {stepsData[1].comparison.traditional}
+                              </p>
+                              <span className="inline-block text-[9px] sm:text-[10px] font-extrabold text-rose-700 bg-rose-100/80 px-2 py-0.5 rounded-md">
+                                Heavy Cash Locked Upfront ❌
                               </span>
                             </div>
-                          ))}
-                        </div>
 
-                        <div className="flex items-center justify-between pt-2">
-                          <button
-                            onClick={() => setActiveStep(1)}
-                            className="text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
-                          >
-                            ← Back to ₹200 Token
-                          </button>
-                          <button
-                            onClick={scrollToFeatured}
-                            className="text-xs font-black text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
-                          >
-                            <span>Ready to Ride? Browse Available Vehicles</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </button>
+                            {/* Pipip Flexi-Token */}
+                            <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-emerald-50/80 border border-emerald-300 space-y-1.5 sm:space-y-2 shadow-xs">
+                              <div className="flex items-center gap-2 text-emerald-800 font-extrabold text-[11px] sm:text-xs uppercase tracking-wider">
+                                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
+                                <span>Pipip Flexi-Reserve</span>
+                              </div>
+                              <p className="text-[11px] sm:text-xs text-emerald-950 leading-relaxed font-medium">
+                                {stepsData[1].comparison.pipip}
+                              </p>
+                              <span className="inline-block text-[9px] sm:text-[10px] font-black text-emerald-800 bg-emerald-200/70 px-2.5 py-0.5 rounded-md">
+                                Just ₹200 to Lock • 100% Peace of Mind ✅
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1 sm:pt-2">
+                            <button
+                              onClick={() => handleStepClick(0)}
+                              className="text-[11px] sm:text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
+                            >
+                              ← Back to Fleet
+                            </button>
+                            <button
+                              onClick={() => handleStepClick(2)}
+                              className="text-[11px] sm:text-xs font-extrabold text-amber-700 hover:text-amber-800 flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>Next: See 60-Second Pickup & Perks</span>
+                              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* STEP 3: PICKUP CHECKLIST & HANDOVER */}
+                      <div className="w-full shrink-0">
+                        <div className="space-y-3 sm:space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                            {stepsData[2].perks.map((perk, i) => (
+                              <div
+                                key={i}
+                                className="p-2.5 sm:p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 flex items-center gap-2 sm:gap-2.5"
+                              >
+                                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0">
+                                  <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[3]" />
+                                </div>
+                                <span className="text-[11px] sm:text-xs font-semibold text-slate-800">
+                                  {perk}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1 sm:pt-2">
+                            <button
+                              onClick={() => handleStepClick(1)}
+                              className="text-[11px] sm:text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
+                            >
+                              ← Back to ₹200 Token
+                            </button>
+                            <button
+                              onClick={scrollToFeatured}
+                              className="text-[11px] sm:text-xs font-black text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
+                            >
+                              <span>Ready to Ride? Browse Available Vehicles</span>
+                              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -474,11 +499,17 @@ const Index = () => {
               className="absolute -inset-[150%] bg-[conic-gradient(from_0deg,#f59e0b,#fbbf24,#3b82f6,#10b981,#f59e0b)] opacity-70 group-hover:opacity-100 transition-opacity"
             />
 
-            {/* Inner Glassmorphic Luxury Body */}
-            <div className="relative bg-gradient-to-r from-slate-950 via-[#0A1020] to-slate-950 rounded-2xl sm:rounded-3xl px-4 py-4 sm:px-7 sm:py-5 backdrop-blur-xl">
-              {/* Ambient Glowing Halo */}
-              <div className="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
+            {/* Inner Dark Luxury Body (opaque gradient, no heavy backdrop-blur-xl over rotating border) */}
+            <div className="relative bg-gradient-to-r from-slate-950 via-[#0A1020] to-slate-950 rounded-2xl sm:rounded-3xl px-4 py-4 sm:px-7 sm:py-5">
+              {/* Ambient Glowing Halo (lightweight radial-gradient, zero blur-3xl lag) */}
+              <div
+                className="absolute -top-12 -right-12 w-48 h-48 rounded-full pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(245,158,11,0.16) 0%, transparent 70%)" }}
+              />
+              <div
+                className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(59,130,246,0.16) 0%, transparent 70%)" }}
+              />
 
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
                 {/* Left: Animated 3D Floating Token & Headline */}
