@@ -390,7 +390,7 @@ const Hero = () => {
     <>
       <section
         id="home"
-        className="relative min-h-[75vh] sm:min-h-[82vh] lg:min-h-[92vh] flex flex-col justify-center pt-24 md:pt-32 pb-12 lg:pb-16 overflow-hidden bg-slate-950"
+        className="relative min-h-[75vh] sm:min-h-[82vh] lg:min-h-[92vh] flex flex-col justify-start sm:justify-center pt-20 sm:pt-24 md:pt-32 pb-6 sm:pb-12 lg:pb-16 overflow-hidden bg-slate-950"
       >
         {/* Visually Hidden SEO Header for search engines */}
         <h1 className="sr-only">
@@ -427,64 +427,67 @@ const Hero = () => {
           </defs>
         </svg>
 
-        <div className="container mx-auto px-4 lg:px-8 relative z-20 my-auto">
+        <div className="container mx-auto px-4 lg:px-8 relative z-20 my-0 sm:my-auto">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-14">
 
             {/* ======================================================== */}
             {/* HERO CONTENT: APP-LIKE, CLEAN & HIGH VISIBILITY          */}
             {/* ======================================================== */}
-            <div className="w-full lg:w-7/12 text-center lg:text-left">
+            <div className="w-full lg:w-7/12 text-center lg:text-left flex flex-col justify-between sm:block min-h-[63vh] sm:min-h-0">
 
-              {/* Brand Header: Pipip SERVICES */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35 }}
-                className="mb-2 sm:mb-3"
-              >
-                <div className="flex items-baseline gap-2 justify-center lg:justify-start">
-                  <span className="text-4xl sm:text-5xl font-display font-black text-amber-500 tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
-                    Pipip
+              {/* Top Text Block (elevated to top on mobile for video visibility) */}
+              <div>
+                {/* Brand Header: Pipip SERVICES */}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35 }}
+                  className="mt-1 sm:mt-0 mb-1.5 sm:mb-3"
+                >
+                  <div className="flex items-baseline gap-2 justify-center lg:justify-start">
+                    <span className="text-4xl sm:text-5xl font-display font-black text-amber-500 tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]">
+                      Pipip
+                    </span>
+                  </div>
+                  <span className="text-[11px] sm:text-xs font-black tracking-[0.28em] text-white/90 uppercase block mt-0.5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+                    SERVICES
                   </span>
-                </div>
-                <span className="text-[11px] sm:text-xs font-black tracking-[0.28em] text-white/90 uppercase block mt-0.5 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
-                  SERVICES
-                </span>
-              </motion.div>
+                </motion.div>
 
-              {/* Bold Headline: Explore [Rotating City] Your Way! */}
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: 0.05 }}
-                className="mb-4"
-              >
-                <h1 className="text-3xl sm:text-5xl lg:text-[54px] font-display font-black tracking-tight text-white leading-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.95)]">
-                  Explore{" "}
-                  <span className="relative inline-block">
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={rotatingCities[cityIndex]}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -12 }}
-                        transition={{ duration: 0.35, ease: "easeOut" }}
-                        className="inline-block text-[#00D2FF] drop-shadow-[0_0_24px_rgba(0,210,255,0.45)]"
-                      >
-                        {rotatingCities[cityIndex]}
-                      </motion.span>
-                    </AnimatePresence>
-                  </span>{" "}
-                  Your Way!
-                </h1>
-              </motion.div>
+                {/* Bold Headline: Explore [Rotating City] Your Way! */}
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.05 }}
+                  className="mb-2 sm:mb-4"
+                >
+                  <h1 className="text-3xl sm:text-5xl lg:text-[54px] font-display font-black tracking-tight text-white leading-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.95)]">
+                    Explore{" "}
+                    <span className="relative inline-block">
+                      <AnimatePresence mode="wait">
+                        <motion.span
+                          key={rotatingCities[cityIndex]}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -12 }}
+                          transition={{ duration: 0.35, ease: "easeOut" }}
+                          className="inline-block text-[#00D2FF] drop-shadow-[0_0_24px_rgba(0,210,255,0.45)]"
+                        >
+                          {rotatingCities[cityIndex]}
+                        </motion.span>
+                      </AnimatePresence>
+                    </span>{" "}
+                    Your Way!
+                  </h1>
+                </motion.div>
+              </div>
 
-              {/* 3 Checklist Bullet Points (with Cyan Checkmarks) */}
+              {/* 3 Checklist Bullet Points (hidden on mobile so video shows through) */}
               <motion.div
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, delay: 0.1 }}
-                className="space-y-2 sm:space-y-2.5 mb-5 sm:mb-6 max-w-md mx-auto lg:mx-0 inline-block text-left"
+                className="hidden sm:inline-block space-y-2 sm:space-y-2.5 mb-5 sm:mb-6 max-w-md mx-auto lg:mx-0 text-left"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-5 h-5 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center shrink-0">
@@ -514,12 +517,12 @@ const Hero = () => {
                 </div>
               </motion.div>
 
-              {/* Price Badge Pill: ₹ Scooters from Rs. 600/day */}
+              {/* Price Badge Pill: ₹ Scooters from Rs. 600/day (hidden on mobile) */}
               <motion.div
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, delay: 0.2 }}
-                className="block mb-6 sm:mb-7"
+                className="hidden sm:block mb-6 sm:mb-7"
               >
                 <div className="inline-flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-slate-900/80 backdrop-blur-md border border-white/20 shadow-xl">
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-amber-500 text-slate-950 font-black flex items-center justify-center text-xs sm:text-sm shadow-md">
@@ -531,12 +534,12 @@ const Hero = () => {
                 </div>
               </motion.div>
 
-              {/* Action Row: Rent a Scooter & View Pricing */}
+              {/* Action Row: Rent a Scooter & View Pricing (positioned down on mobile below motorcycle wheels) */}
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, delay: 0.25 }}
-                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-3.5 w-full"
+                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-3.5 w-full mt-auto sm:mt-7 lg:mt-6 pt-16 sm:pt-0 pb-3 sm:pb-0"
               >
                 {/* Primary Pill Button: Rent a Scooter */}
                 <button
